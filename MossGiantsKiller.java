@@ -63,10 +63,10 @@ import org.rsbot.script.wrappers.RSTile;
 
 
 
-@ScriptManifest(authors = { "BinaryX, XScripting Inc" }, 
-		category = "Combat", 
-		name = "MossGiantsKiller", 
-		version = 7.6, 
+@ScriptManifest(authors = { "BinaryX"},
+		category = "Combat",
+		name = "MossGiantsKiller",
+		version = 9.0,
 		description = "  <html>"
 		+ "<body>"
 		+ "Click OK to start the GUI."
@@ -78,7 +78,7 @@ public class MossGiantsKiller extends Script implements PaintListener,
 		ServerMessageListener {
 
 
-	
+
 	class MossXGui extends JFrame implements ListSelectionListener,
 			ActionListener {
 		private JButton btnExit;
@@ -182,7 +182,7 @@ public class MossGiantsKiller extends Script implements PaintListener,
 			btnForum = new JButton();
 			lblLogo = new JLabel();
 			panel3 = new JPanel();
-			
+
 			// ======== this ========
 			setResizable(false);
 			setIconImage(new ImageIcon("http://binaryx.nl/xscripting/binaryx/mossgiantskiller/x.jpg").getImage());
@@ -263,7 +263,7 @@ public class MossGiantsKiller extends Script implements PaintListener,
 									pnlSpecial.setMinimumSize(preferredSize);
 									pnlSpecial.setPreferredSize(preferredSize);
 								}
-							
+
 							tabCombat.addTab("Special Attack", pnlSpecial);
 
 						}
@@ -694,7 +694,7 @@ public class MossGiantsKiller extends Script implements PaintListener,
 				log("Please fill in the required fields for special attack.");
 				stopScript(true);
 				}
-		    }		
+		    }
 			if (eat_food) {
 				food_id = Integer.parseInt(txtFoodID.getText());
 			}
@@ -809,23 +809,23 @@ public class MossGiantsKiller extends Script implements PaintListener,
      rng2,rng3,range1,range2,str1,str2,drawn,str3,Strength1,Strength2,
      AtkHit,DefHit,RngHit,StrHit,SelectedFood, startexp, ATTACKstartexp, STRENGTHstartexp,
 		ItemPrice,DEFENSEstartexp, HITPOINTSstartexp, RANGEstartexp, MAGICstartexp,LevelsGained,MoneyGained;
-	
+
     // ---------------------------------------------------//
 	public int[] CUSTOM_ID = {};
 	private long drawTime,startTime;
 	// ---------------------------------------------------//
 	public final int[] FAIL_AREA = { 3251, 3257, 5542, 5547 }; //fire giants
 	public final int[] FAIL_AREA2 = { 3255, 3265, 5560, 5565 }; //spiders
-	
+
 	public int food_id;
 	private boolean guiWait = true, guiExit;
 	private BufferedImage image;
-	
+
 	// ---------------------------------------------------//
 	public int ItemArray[] = { 5100, 563, 562, 561, 564, 5303, 5299, 5302,
 			5295, 5300, 5304, 5316, 5321, 985, 987, 12158, 12159, 12160, 12163,
 			5323 };
-	
+
 	// ---------------------------------------------------//
 	public String ItemNames[] = { "Limpwurt seed", "Law rune",
 			"Chaos rune", "Nature rune", "Cosmic rune", "Dwarf weed seed",
@@ -836,7 +836,7 @@ public class MossGiantsKiller extends Script implements PaintListener,
 	// ---------------------------------------------------//
 	int[] ItemPrices;
 	public int[] Junk = {995,7869,15173,2353,1141,1285,1179};
-	
+
 	long lastUsed;
 	public ArrayList list;
 	// ---------------------------------------------------//
@@ -854,13 +854,13 @@ public class MossGiantsKiller extends Script implements PaintListener,
 	public int TAB_ID = 8015;
 	// ---------------------------------------------------//
 	RSItemTile tile, Tile;
-     
+
 	public boolean UseSpecial,stopAtLVL,AdvancedPaint,Busy,AttackNext,AttackFree, versionFailed, PickupCustom, BuryBones,
 			anti_ban, PickupBones, PickupItems, eat_food, B2P_Tab, inDungeon,
 			HitPredict;
 
 	private double xp_gain;
-	
+
 	public void BonesToPeaches(){
     	if (getInventoryCount(BONE_ID) == 0 && getInventoryCount(PEACH_ID) == 0 && getInventoryCount(TAB_ID) == 0) {
 			log("Out of bones,peaches & tabs!");
@@ -943,16 +943,16 @@ public class MossGiantsKiller extends Script implements PaintListener,
 	public void dropJunk(){
 	if(!B2P_Tab && !PickupBones){
 	 for(int i = 0;i < BONE_ID.length; i++){
-	    if(inventoryContains(BONE_ID[i])){	
-	       atInventoryItem(BONE_ID[i],"Drop");	
+	    if(inventoryContains(BONE_ID[i])){
+	       atInventoryItem(BONE_ID[i],"Drop");
 	       log("Dropping bones.");
 	       wait(random(800,1200));
 	    }
 	 }
   }
   for(int i =0; i < Junk.length; i++){
-	    if(inventoryContains(Junk[i])){	
-		   atInventoryItem(Junk[i],"Drop");	
+	    if(inventoryContains(Junk[i])){
+		   atInventoryItem(Junk[i],"Drop");
 		   log("Dropping junk.");
 		   wait(random(800,1200));
 		}
@@ -1101,17 +1101,17 @@ public class MossGiantsKiller extends Script implements PaintListener,
 			inDungeon = true;
 		} else {
 			inDungeon = false;
-		}
-		int CurrHP = skills.getCurrentSkillLevel(STAT_HITPOINTS);
-		int RealHP = skills.getRealSkillLevel(STAT_HITPOINTS);
-		if (eat_food && CurrHP <= random(RealHP / 2, RealHP / 1.5)) {
+		};
+		if(getMyPlayer().getHPPercent() <= 50 + random(-10,10)){
+		if (eat_food) {
 			EAT_FOOD();
 			return random(1000, 1500);
 		}
-		if (B2P_Tab && CurrHP <= random(RealHP / 2, RealHP / 1.5)) {
+		if (B2P_Tab) {
 			BonesToPeaches();
 			return random(1000, 1500);
 		}
+	}
 		if (anti_ban) {
 			if (!t.isAlive()) {
 				t.start();
@@ -1146,7 +1146,7 @@ public class MossGiantsKiller extends Script implements PaintListener,
 		if (inDungeon) {
 			dropJunk();
 			if(AttackNext && getMyPlayer().getAnimation() == -1 && getMyPlayer().getInteracting() == null){
-		    Busy = false;	
+		    Busy = false;
 			if (PickupItems) {
 				try{
 				for (int i = 0; i < ItemArray.length; i++) {
@@ -1196,7 +1196,7 @@ public class MossGiantsKiller extends Script implements PaintListener,
 						}
 					}
 				}
-			  } 
+			  }
 			  catch(NullPointerException e){
               }
 			  catch(ArrayIndexOutOfBoundsException e){
@@ -1300,7 +1300,7 @@ public class MossGiantsKiller extends Script implements PaintListener,
 						status = "In Combat";
 					}
 				}
-			  } 
+			  }
 			  catch (NullPointerException e) {
 			  log("Could not find moss giant");
 			  }
@@ -1357,38 +1357,6 @@ public class MossGiantsKiller extends Script implements PaintListener,
 		moveMouse(x, y);
 	}
 
-	public Boolean needToUpdate() {
-		URLConnection url = null;
-		BufferedReader in = null;
-		BufferedWriter out = null;
-
-		try {
-			url = new URL(
-			"http://binaryx.nl/xscripting/binaryx/mossgiantskiller/version.txt")
-			.openConnection();
-			
-			in = new BufferedReader(new InputStreamReader(url.getInputStream()));
-			if (Double.parseDouble(in.readLine()) == properties.version()) {
-				log("You have the latest version.");
-				return false; // we are up to date.
-			} else {
-				JOptionPane.showMessageDialog(null,
-				"A new update has been found, please check the thread for more information.");
-				return true;
-			}
-		} catch (MalformedURLException e) {
-			log("MailformedURLException.");
-			return true;
-		} catch (UnknownHostException e) {
-			log("UnknownHostException.");
-			return true;
-		} catch (IOException e) {
-			log("IOException.");
-			return true;
-		}
-	}
-
-
 	public void onFinish() {
 
 		Bot.getEventManager().removeListener(PaintListener.class, this);
@@ -1409,7 +1377,7 @@ public class MossGiantsKiller extends Script implements PaintListener,
 			}
 			catch(NullPointerException e5){
 			}
-			
+
 			if(AdvancedPaint){
 			drawMouse(g);
 			}
@@ -1655,7 +1623,7 @@ public class MossGiantsKiller extends Script implements PaintListener,
 				if(PickupItems){
 				float MoneyPerSec = ((float) MoneyGained) / (float) (seconds + (minutes * 60) + (hours * 60 * 60));
 				float MoneyPerHour = MoneyPerSec * 60 * 60;
-				
+
 				g.drawString("GP Gain/Hr:" + Math.round(MoneyPerHour), x + 10, y += 15);
 				g.drawString("Total GP Gained:" + Math.round(MoneyGained), x + 10, y += 15);
 				}
@@ -1707,13 +1675,7 @@ public class MossGiantsKiller extends Script implements PaintListener,
 
 	public boolean onStart(Map<String, String> args) {
 		MossXGui gui = new MossXGui();
-		if (needToUpdate()) {
-			versionFailed = true;
-			gui.setVisible(false);
-			stopScript(true);
-		} else{
-			gui.setVisible(true);
-		}
+		gui.setVisible(true);
 		while (guiWait) {
 			wait(100);
 		}
