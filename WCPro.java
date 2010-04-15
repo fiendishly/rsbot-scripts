@@ -665,8 +665,7 @@ public class WCPro extends Script implements PaintListener {
 
 						if (bank.isOpen()) {
 							if (wieldAxe()) {
-								clickMouse(random(430, 458), random(300, 317),
-	                                       true);
+								bank.depositAll();
 							} else {
 								bank.depositAllExcept(axeIDs);
 							}

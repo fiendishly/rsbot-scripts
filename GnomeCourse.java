@@ -1,102 +1,92 @@
 import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.Point;
-import java.util.ArrayList;
+import java.awt.event.KeyEvent;
 import java.util.Map;
 
+import org.rsbot.bot.Bot;
 import org.rsbot.event.listeners.PaintListener;
 import org.rsbot.script.Calculations;
 import org.rsbot.script.Constants;
+import org.rsbot.script.Methods;
 import org.rsbot.script.Script;
 import org.rsbot.script.ScriptManifest;
-import org.rsbot.script.wrappers.RSInterface;
-import org.rsbot.script.wrappers.RSInterfaceChild;
-import org.rsbot.script.wrappers.RSPlayer;
 import org.rsbot.script.wrappers.RSTile;
 
-@ScriptManifest(authors = { "Jacmob" }, category = "Agility", name = "Gnome Course", version = 1.0, description = "<html>\n<body style=\"font-family: Arial; background-color: #DDFFDD;\">\n<div style=\"width: 100%; height: 35px; background-color: #BBEEBB; text-align: center;\"\n<h2 style=\"color: #118811;\">Gnome Agility Course</h2>\n</div>\n<div style=\"width:100%; background-color: #007700; text-align:center; color: #FFFFFF; height: 15px;\">Jacmob | Version 1.0</div>\n<div style=\"width: 100%; padding: 10px; padding-bottom: 12px; background-color: #EEFFEE;\">Start at the beginning of the Gnome Agility Course.<br><br>Energy potions are supported, but not really needed.</div>\n<div style=\"width: 100%; padding: 10px;\">\n<h3>Auto Stop (Enter Runtime to Enable)</h3><input type=\"text\" name=\"hours\" id=\"hrs\" size=3 /><label for=\"hrs\" > : </label><input type=\"text\" name=\"mins\" id=\"mins\" size=3 /><label for=\"mins\"> : </label><input type=\"text\" name=\"secs\" id=\"secs\" size=3 /><label for=\"secs\"> (hrs:mins:secs)</label><br /><br /><input type=\"checkbox\" name=\"chkXP\" id=\"chkXP\" value=\"true\" /><label for=\"debug\">Check XP (Extra AntiBan)</label></div>\n</body>\n</html>")
+@ScriptManifest(authors = { "Jacmob" }, category = "Agility", name = "Gnome Course", version = 2.0, description = "<html>\n<body style=\"font-family: Arial; background-color: #DDFFDD;\">\n<div style=\"width: 100%; height: 35px; background-color: #BBEEBB; text-align: center;\"\n<h2 style=\"color: #118811;\">Gnome Agility Course</h2>\n</div>\n<div style=\"width:100%; background-color: #007700; text-align:center; color: #FFFFFF; height: 15px;\">Jacmob | Version 2.0</div>\n<div style=\"width: 100%; padding: 10px; padding-bottom: 12px; background-color: #EEFFEE;\">Start at the beginning of the Gnome Agility Course.<br><br>Food and energy potions are supported.</div>\n<div style=\"width: 100%; padding: 10px;\">\n<h3>Auto Stop (Enter Runtime to Enable)</h3><input type=\"text\" name=\"hours\" id=\"hrs\" size=3 /><label for=\"hrs\" > : </label><input type=\"text\" name=\"mins\" id=\"mins\" size=3 /><label for=\"mins\"> : </label><input type=\"text\" name=\"secs\" id=\"secs\" size=3 /><label for=\"secs\"> (hrs:mins:secs)</label></div>\n</body>\n</html>")
 public class GnomeCourse extends Script implements PaintListener {
-	public static final int[] Food = new int[] { 333, 385, 379, 285, 373, 365,
-			7946, 361, 397, 391, 1963, 329, 2118 };
-	public static final int[] energyPot = new int[] { 3014, 3012, 3010, 3008,
-			3022, 3020, 3018, 3016 };
-	public int LapsDone = 0;
 
-	private boolean lapJustDone = false;
-	private boolean lapBegun = false;
-	private boolean checkXP = false;
-	private int RunningEnergy = random(15, 30);
-	private int DrinkingEnergy = -1;
-	private int currentFails = 0;
-	private int startingxp = -1;
-	private long startTime = -1;
-	private long stopTime = -1;
+	public static final int[] FOOD = new int[] {
+		333, 385, 379, 285, 373, 365, 7946, 361, 397, 391, 1963, 329, 2118 };
+	public static final int[] ENERGY_POTIONS = new int[] {
+		3014, 3012, 3010, 3008, 3022, 3020, 3018, 3016 };
 
-	private final Color BG = new Color(123, 123, 123, 100);
-	private final Color GREEN = new Color(0, 200, 0, 255);
-	private final Color GREENBAR = new Color(0, 255, 0, 150);
-	private final Color RED = new Color(255, 0, 0, 150);
+	public static final Color BG = new Color(123, 123, 123, 100);
+	public static final Color GREEN = new Color(0, 200, 0, 255);
+	public static final Color GREENBAR = new Color(0, 255, 0, 150);
+	public static final Color RED = new Color(255, 0, 0, 150);
 
-	private boolean atTile3(final RSTile tile, final String action) {
-		return atTile3(tile, action, 0, 0, 10);
-	}
+	public static final RSArea AREA_ON_LOG = new RSArea(new RSTile(2474, 3430), new RSTile(2474, 3435), 0);
+	public static final RSArea AREA_NET = new RSArea(new RSTile(2470, 3425), new RSTile(2478, 3429), 0);
+	public static final RSArea AREA_BRANCH = new RSArea(new RSTile(2471, 3422), new RSTile(2476, 3424), 1);
+	public static final RSArea AREA_ROPE = new RSArea(new RSTile(2472, 3418), new RSTile(2477, 3421), 2);
+	public static final RSArea AREA_BRANCH_DOWN = new RSArea(new RSTile(2483, 3418), new RSTile(2488, 3421), 2);
+	public static final RSArea AREA_NET_END = new RSArea(new RSTile(2481, 3418), new RSTile(2490, 3426), 0);
+	public static final RSArea AREA_PIPE = new RSArea(new RSTile(2481, 3427), new RSTile(2489, 3431), 0);
 
-	private boolean atTile3(final RSTile tile, final String action,
-			final int xOffset, final int yOffset) {
-		return atTile3(tile, action, xOffset, yOffset, 10);
-	}
-
-	// atTile3 -Jacmob
-	private boolean atTile3(final RSTile tile, final String action,
-			final int xOffset, final int yOffset, final int variation) {
-		try {
-			final Point location = Calculations.tileToScreen(tile);
-			if (location.x == -1 || location.y == -1) {
-				return false;
-			}
-			moveMouse(location.x + xOffset, location.y + yOffset, variation,
-					variation);
-			wait(random(30, 60));
-			getMenuItems();
-			final ArrayList<String> mis = getMenuItems();
-			if (mis.get(0).contains(action)) {
-				clickMouse(true);
-			} else {
-				for (int i = 1; i < mis.size(); i++) {
-					if (mis.get(i).contains(action)) {
-						clickMouse(false);
-						if (atMenu(action)) {
-							return true;
-						}
-					}
-				}
-				return false;
-			}
-			return true;
-		} catch (final Exception e) {
-			return false;
+	public static final Obstacle OBSTACLE_LOG = new Obstacle(2474, 3435, -10, "Walk-across", new Obstacle.PassedListener() {
+		public void onPassed(GnomeCourse ctx) {
+			ctx.turnToTile(OBSTACLE_NET);
 		}
-	}
-
-	private RSTile checkTile(final RSTile tile) { // most credits to Fusion89k
-		if (distanceTo(tile) < 15) {
-			return tile;
+	});
+	public static final Obstacle OBSTACLE_NET = new Obstacle(2474, 3425, 50, "Climb-over");
+	public static final Obstacle OBSTACLE_BRANCH = new Obstacle(2473, 3422, 120, "Climb");
+	public static final Obstacle OBSTACLE_ROPE = new Obstacle(2478, 3420, 0, "Walk-on");
+	public static final Obstacle OBSTACLE_BRANCH_DOWN = new Obstacle(2486, 3419, 60, "Climb-down", new Obstacle.PassedListener() {
+		public void onPassed(GnomeCourse ctx) {
+			ctx.turner.setTarget(OBSTACLE_NET_END);
 		}
-		final RSTile loc = getMyPlayer().getLocation();
-		final RSTile walk = new RSTile((loc.getX() + tile.getX()) / 2, (loc
-				.getY() + tile.getY()) / 2);
-		return tileOnMap(walk) ? walk : checkTile(walk);
-	}
+	});
+	public static final Obstacle OBSTACLE_NET_END = new Obstacle(2486, 3426, 100, "Climb-over");
+	public static final Obstacle OBSTACLE_PIPE = new Obstacle(2483, 3431, 60, "Squeeze-through", new Obstacle.PassedListener() {
+		public void onPassed(GnomeCourse ctx) {
+			ctx.turner.setTarget(OBSTACLE_LOG);
+		}
+	});
 
-	private void Drink() {
-		while (getInventoryCount(GnomeCourse.energyPot) >= 1
-				&& getEnergy() <= DrinkingEnergy) {
-			DrinkingEnergy = random(10, 40);
-			for (final int element : GnomeCourse.energyPot) {
+	private CameraTurner turner = new CameraTurner();
+	private int eatingHealth = random(10, 20);
+	private int drinkingEnergy = random(20, 40);
+	private int laps;
+	private int startXp = -1;
+	private long startTime;
+	private long stopTime;
+
+	private void eat() {
+		if (getInventoryCount(GnomeCourse.FOOD) >= 1
+				&& getEnergy() <= eatingHealth) {
+			eatingHealth = random(10, 20);
+			for (int element : GnomeCourse.FOOD) {
 				if (getInventoryCount(element) == 0) {
 					continue;
 				}
-				log("Drinking energy potion.");
+				log.info("Eating.");
+				atInventoryItem(element, "Eat");
+				wait(random(500, 800));
+				break;
+			}
+		}
+	}
+
+	private void drink() {
+		if (getInventoryCount(GnomeCourse.ENERGY_POTIONS) >= 1
+				&& getEnergy() <= drinkingEnergy) {
+			drinkingEnergy = random(20, 40);
+			for (int element : GnomeCourse.ENERGY_POTIONS) {
+				if (getInventoryCount(element) == 0) {
+					continue;
+				}
+				log.info("Drinking energy potion.");
 				atInventoryItem(element, "Drink");
 				wait(random(500, 800));
 				break;
@@ -104,33 +94,162 @@ public class GnomeCourse extends Script implements PaintListener {
 		}
 	}
 
-	private RSTile[] generatePath(int startX, int startY,
-			final int destinationX, final int destinationY) { // most credits to
-		// aftermath
-		double dx, dy;
-		final ArrayList<RSTile> list = new ArrayList<RSTile>();
-
-		list.add(new RSTile(startX, startY));
-		while (Math.hypot(destinationY - startY, destinationX - startX) > 8) {
-			dx = destinationX - startX;
-			dy = destinationY - startY;
-			final int gamble = random(14, 17);
-			while (Math.hypot(dx, dy) > gamble) {
-				dx *= .95;
-				dy *= .95;
+	@Override
+	public int loop() {
+		if (startXp == -1) {
+			if (isLoggedIn() && skills.getRealSkillLevel(Constants.STAT_AGILITY) > 1) {
+				setInitialState();
 			}
-			startX += (int) dx;
-			startY += (int) dy;
-			list.add(new RSTile(startX, startY));
+			return 100;
 		}
-		list.add(new RSTile(destinationX, destinationY));
-		return list.toArray(new RSTile[list.size()]);
-
+		if (getMyPlayer().getAnimation() == -1) {
+			eat();
+			drink();
+			Obstacle obstacle = getObstacle();
+			if (obstacle != null) {
+				if (obstacle.doAction(this)) {
+					obstacle.onPassed(this);
+					waitForChange(obstacle, 5000);
+				} else if (!obstacle.isOnScreen()) {
+					if (distanceTo(obstacle) > 5) {
+						walkTileOnScreen(obstacle);
+						wait(500);
+					} else {
+						turner.setTarget(obstacle);
+					}
+				}
+			}
+		}
+		if (stopTime > 0 && System.currentTimeMillis() - startTime > stopTime) {
+			log.info("Stop time reached.");
+			return -1;
+		}
+		return random(100, 200);
 	}
 
-	private RSTile[] generatePath(final RSTile tile) {
-		return generatePath(getMyPlayer().getLocation().getX(), getMyPlayer()
-				.getLocation().getY(), tile.getX(), tile.getY());
+	public void waitForChange(Obstacle current, int timeout) {
+		long end = System.currentTimeMillis() + timeout;
+		while (current.equals(getObstacle()) &&
+				System.currentTimeMillis() < end) {
+			wait(100);
+		}
+	}
+
+	public Obstacle getObstacle() {
+		RSTile loc = getMyPlayer().getLocation();
+		int plane = getPlane();
+		if (AREA_NET.contains(loc, plane)) {
+			return OBSTACLE_NET;
+		} else if (AREA_BRANCH.contains(loc, plane)) {
+			return OBSTACLE_BRANCH;
+		} else if (AREA_ROPE.contains(loc, plane)) {
+			return OBSTACLE_ROPE;
+		} else if (AREA_BRANCH_DOWN.contains(loc, plane)) {
+			return OBSTACLE_BRANCH_DOWN;
+		} else if (AREA_NET_END.contains(loc, plane)) {
+			return OBSTACLE_NET_END;
+		} else if (AREA_PIPE.contains(loc, plane)) {
+			return OBSTACLE_PIPE;
+		} else if (plane == 0 && !AREA_ON_LOG.contains(loc, plane)) {
+			return OBSTACLE_LOG;
+		}
+		return null;
+	}
+
+	public void setInitialState() {
+		laps = 0;
+		startXp = skills.getCurrentSkillExp(Constants.STAT_AGILITY);
+		startTime = System.currentTimeMillis();
+	}
+
+	public void onRepaint(final Graphics g) {
+		if (isLoggedIn() && skills.getRealSkillLevel(Constants.STAT_AGILITY) > 1) {
+			int x = 13;
+			int y = 21;
+
+			int levelsGained = skills.getRealSkillLevel(Constants.STAT_AGILITY)
+					- skills.getLvlByExp(startXp);
+			long runSeconds = (System.currentTimeMillis() - startTime) / 1000;
+
+			g.setColor(BG);
+			if (runSeconds != 0) {
+				g.fill3DRect(8, 25, 210, 164, true);
+			} else {
+				g.fill3DRect(8, 25, 210, 123, true);
+			}
+
+			g.setColor(GREEN);
+			g.drawString("GnomeCourse v2.0", x, y += 20);
+			g.drawString("GnomeCourse v2.0", x, y);
+			g.drawString("Runtime: " + getFormattedTime(
+					System.currentTimeMillis() - startTime) + ".", x, y += 20);
+
+			if (levelsGained == 1) {
+				g.drawString("Gained: " + (skills.getCurrentSkillExp(
+											Constants.STAT_AGILITY) - startXp)
+										+ " XP (" + levelsGained + " lvl)", x, y += 20);
+			} else {
+				g.drawString("Gained: " + (skills.getCurrentSkillExp(
+											Constants.STAT_AGILITY) - startXp)
+										+ " XP (" + levelsGained + " lvls)", x, y += 20);
+			}
+
+			if (runSeconds > 0) {
+				g.drawString("Averaging: " + (skills.getCurrentSkillExp(
+											Constants.STAT_AGILITY) - startXp)
+										* 3600 / runSeconds + " XP/hr", x, 	y += 20);
+			}
+
+			g.drawString("Laps done: " + laps, x, y += 20);
+			g.drawString("Current level: "
+					+ skills.getRealSkillLevel(Constants.STAT_AGILITY), x,
+					y += 20);
+			g.drawString("Next level: "
+					+ skills.getXPToNextLevel(Constants.STAT_AGILITY) + " XP",
+					x, y += 20);
+			if (runSeconds != 0) {
+				g.setColor(RED);
+				g.fill3DRect(x, y += 9, 200, 13, true);
+				g.setColor(GREENBAR);
+				g.fill3DRect(x, y, skills
+					.getPercentToNextLevel(Constants.STAT_AGILITY) * 2, 13, true);
+			}
+		}
+	}
+
+	@Override
+	public boolean onStart(final Map<String, String> args) {
+		if (!(args.get("hours").equals("") && args.get("mins").equals("") && args
+				.get("secs").equals(""))) {
+			int sHours = 0, sMins = 0, sSecs = 0;
+			if (!args.get("hours").equals("")) {
+				sHours = Integer.parseInt(args.get("hours"));
+			}
+			if (!args.get("mins").equals("")) {
+				sMins = Integer.parseInt(args.get("mins"));
+			}
+			if (!args.get("secs").equals("")) {
+				sSecs = Integer.parseInt(args.get("secs"));
+			}
+			stopTime = sHours * 3600000 + sMins * 60000 + sSecs * 1000;
+			log("Script will stop after " + getFormattedTime(stopTime));
+		}
+		new Thread(turner).start();
+		return true;
+	}
+
+	@Override
+	public void onFinish() {
+		turner.stop();
+		log("Gained " + (skills.getCurrentSkillExp(Constants.STAT_AGILITY) - startXp)
+					  + " XP (" + (skills.getRealSkillLevel(Constants.STAT_AGILITY) -
+						skills.getLvlByExp(startXp)) + " levels) in "
+					  + getFormattedTime(System.currentTimeMillis() - startTime) + ".");
+	}
+
+	@Override
+	protected int getMouseSpeed() {
+		return random(6, 8);
 	}
 
 	private String getFormattedTime(final long timeMillis) {
@@ -156,348 +275,133 @@ public class GnomeCourse extends Script implements PaintListener {
 			hoursString = hours + ":";
 			type = "hours";
 		}
-		if (minutes < 10 && type != "seconds") {
+		if (minutes < 10 && !type.equals("seconds")) {
 			minutesString = "0" + minutesString;
 		}
-		if (hours < 10 && type == "hours") {
+		if (hours < 10 && type.equals("hours")) {
 			hoursString = "0" + hoursString;
 		}
-		if (seconds < 10 && type != "seconds") {
+		if (seconds < 10 && !type.equals("seconds")) {
 			secondsString = "0" + secondsString;
 		}
-
 		return hoursString + minutesString + secondsString + " " + type;
 	}
 
-	private int getState() {
+	class CameraTurner implements Runnable {
 
-		final RSTile StartCoord = new RSTile(2474, 3436);
-		final RSTile NetCoord = new RSTile(2474, 3427);
-		final RSTile BranchCoord = new RSTile(2473, 3423);
-		final RSTile RopeCoord = new RSTile(2473, 3420);
-		final RSTile TreeCoord = new RSTile(2484, 3420);
-		final RSTile Net2Coord = new RSTile(2487, 3423);
-		final RSTile PipeCoord = new RSTile(2485, 3429);
-		final RSTile EndCoord = new RSTile(2485, 3436);
+		private final Object targetLock = new Object();
 
-		if (distanceTo(StartCoord) < 5) {
-			return 1;
-		}
-		if (distanceTo(NetCoord) < 3 && getPlane() == 0) {
-			return 2;
-		}
-		if (distanceTo(BranchCoord) < 4 && getPlane() == 1) {
-			return 3;
-		}
-		if (distanceTo(RopeCoord) < 6 && getPlane() == 2) {
-			return 4;
-		}
-		if (distanceTo(TreeCoord) < 5 && getPlane() == 2) {
-			return 5;
-		}
-		if (distanceTo(Net2Coord) < 7 && getPlane() == 0
-				&& getMyPlayer().getLocation().getY() <= 3425) {
-			return 6;
-		}
-		if (distanceTo(PipeCoord) < 7 && getPlane() == 0
-				&& getMyPlayer().getLocation().getY() <= 3431) {
-			return 7;
-		}
-		if (distanceTo(EndCoord) < 5 && getPlane() == 0) {
-			return 8;
-		}
+		private volatile boolean running;
+		private Obstacle target;
 
-		return -1;
-	}
-
-	private void hoverAgility() {
-		final RSInterfaceChild agitab = RSInterface.getInterface(320).getChild(
-				134);
-		openTab(Constants.TAB_STATS);
-		moveMouse(new Point(agitab.getAbsoluteX()
-				+ random(2, agitab.getWidth() - 1), agitab.getAbsoluteY()
-				+ random(2, agitab.getHeight() - 1)));
-		wait(random(900, 2000));
-		openTab(Constants.TAB_INVENTORY);
-	}
-
-	@Override
-	public int loop() {
-		try {
-
-			if (currentFails > 100) {
-				log("The script has failed multiple times. Logging off.");
-				stopScript();
-			}
-
-			if (stopTime != -1 && startTime != -1
-					&& System.currentTimeMillis() - startTime > stopTime) {
-				log("Stop Time Reached. Logging off in 10 seconds.");
-				wait(random(10000, 12000));
-				stopScript();
-			}
-
-			if (checkXP && random(1, 1000) == 1) {
-				hoverAgility();
-			}
-
-			if (getEnergy() >= RunningEnergy && !isRunning()) {
-				setRun(true);
-				RunningEnergy = random(15, 30);
-				wait(random(400, 500));
-			}
-
-			if (getEnergy() != 0 && getEnergy() <= DrinkingEnergy) {
-				Drink();
-			}
-
-			final RSPlayer me = getMyPlayer();
-			final int state = getState();
-
-			if (me.getAnimation() != -1 || me.isMoving()) {
-				if (lapJustDone) {
-					setCameraRotation(random(175, 185));
-					if (lapBegun) {
-						LapsDone++;
-					}
-					lapBegun = false;
-					lapJustDone = false;
-				}
-				return random(50, 200);
-			}
-
-			switch (state) {
-			case 0:
-				break;
-			case -1: // Failure!
-				if (currentFails > 30 && getPlane() == 0) {
-					walkPathMM(randomizePath(
-							generatePath(new RSTile(2474, 3437)), 1, 1), 16);
-				}
-				currentFails++;
-				break;
-			case 1: // Log
-				if (atTile3(new RSTile(2474, 3435), "Walk-across")) {
-					setCameraRotation(random(175, 185));
-					wait(random(1200, 1450));
-					moveMouse(random(240, 340), random(14, 29));
-				} else {
-					currentFails++;
-				}
-				lapBegun = true;
-				break;
-			case 2: // Net
-				if (atTile3(new RSTile(2474 + random(0, -1), 3425),
-						"Climb-over", 0, -10)) {
-					wait(random(900, 1100));
-				} else {
-					currentFails++;
-				}
-				break;
-			case 3: // Branch
-				if (atTile3(new RSTile(2473, 3422), "Climb", 0, -10)) {
-					wait(random(650, 800));
-				} else {
-					currentFails++;
-				}
-				break;
-			case 4: // Rope
-				if (!tileOnScreen(new RSTile(2478, 3420))) {
-					turnToTile(new RSTile(2478, 3420));
-				}
-				int var = 3;
-				if (currentFails > 10) {
-					var = 15;
-				}
-				if (atTile3(new RSTile(2478, 3420), "Walk-on", 1, 6, var)) {
-					wait(random(600, 850));
-					moveMouse(random(85, 135), random(105, 150));
-					int waited = 0;
-					while (getState() != 5 && waited < 15) {
-						wait(random(70, 100));
-						waited++;
-					}
-				} else {
-					currentFails++;
-				}
-				break;
-			case 5: // Tree
-				if (atTile3(new RSTile(2486, 3419), "Climb-down", -5, -2)) {
-					wait(random(800, 1000));
-				} else if (currentFails > 0 && currentFails % 10 == 0) {
-					turnToTile(new RSTile(2486, 3419));
-				} else {
-					currentFails++;
-				}
-				break;
-			case 6: // Net2
-				final RSTile wtt = randomizeTile(new RSTile(2486, 3423), 2, 2);
-				if (me.getLocation().getY() < 3423) {
-					if (tileOnScreen(wtt)) {
-						if (atTile(wtt, "Walk Here")) {
-							wait(random(500, 900));
+		public void run() {
+			running = true;
+			while (running) {
+				synchronized (targetLock) {
+					if (target != null && !target.isOnScreen()) {
+						char key = KeyEvent.VK_LEFT;
+						Bot.getInputManager().pressKey(key);
+						int i = 60;
+						while (!target.isOnScreen() && --i >= 0) {
+							GnomeCourse.this.wait(50);
 						}
-					} else {
-						walkTo(wtt);
+						GnomeCourse.this.wait(random(150, 300));
+						Bot.getInputManager().releaseKey(key);
+						if (i >= 0 && !target.isOnScreen()) {
+							key = KeyEvent.VK_LEFT;
+							i = 20;
+							while (!target.isOnScreen() && --i >= 0) {
+								GnomeCourse.this.wait(50);
+							}
+							Bot.getInputManager().releaseKey(key);
+						}
+						target = null;
 					}
 				}
-				final RSTile net2Loc = getNearestObjectByID(2286).getLocation();
-				if (!tileOnScreen(net2Loc)) {
-					turnToTile(net2Loc, 40);
-				}
-				int yOff = -5;
-				if (net2Loc.getY() == 3425) {
-					yOff = -37;
-				}
-				if (atTile3(net2Loc, "Climb-over", 0, yOff)) {
-					wait(random(1300, 1700));
-				} else {
-					currentFails++;
-				}
-				break;
-			case 7: // Pipe
-				final RSTile pipeLoc = getNearestObjectByID(43544, 43543)
-						.getLocation();
-				if (!tileOnScreen(pipeLoc)) {
-					turnToTile(pipeLoc, 10);
-				}
-				if (atTile3(pipeLoc, "Squeeze-through", 0, -3)) {
-					wait(random(1400, 2000));
-				} else {
-					currentFails++;
-				}
-				break;
-			case 8:
-				currentFails = 0;
-				lapJustDone = true;
-				walkTo(checkTile(new RSTile(2473, 3437)));
-				wait(random(150, 350));
-				break;
-			default: // Stop Script
-				return -1;
-			}
-
-		} catch (final Exception e) {
-			log.severe("SCRIPT ERROR");
-			return 0;
-		}
-		return random(100, 200);
-	}
-
-	@Override
-	public void onFinish() {
-		log("Gained "
-				+ (skills.getCurrentSkillExp(Constants.STAT_AGILITY) - startingxp)
-				+ " XP ("
-				+ (skills.getRealSkillLevel(Constants.STAT_AGILITY) - skills
-						.getLvlByExp(startingxp)) + " levels) in "
-				+ getFormattedTime(System.currentTimeMillis() - startTime)
-				+ ".");
-	}
-
-	public void onRepaint(final Graphics g) {
-		if (isLoggedIn()
-				&& skills.getRealSkillLevel(Constants.STAT_AGILITY) > 1) {
-			if (startingxp == -1) {
-				startingxp = skills.getCurrentSkillExp(Constants.STAT_AGILITY);
-				startTime = System.currentTimeMillis();
-				DrinkingEnergy = random(10, 40);
-				if (getState() == -1) {
-					walkPathMM(randomizePath(
-							generatePath(new RSTile(2474, 3436)), 2, 2), 16);
-				}
-			}
-
-			final int x = 13;
-			int y = 21;
-
-			final int levelsGained = skills
-					.getRealSkillLevel(Constants.STAT_AGILITY)
-					- skills.getLvlByExp(startingxp);
-			final long runSeconds = (System.currentTimeMillis() - startTime) / 1000;
-
-			g.setColor(BG);
-			if (runSeconds != 0) {
-				g.fill3DRect(8, 25, 210, 164, true);
-			} else {
-				g.fill3DRect(8, 25, 210, 123, true);
-			}
-
-			g.setColor(GREEN);
-			g.drawString("GnomeCourse v1.0", x, y += 20);
-			g.drawString("GnomeCourse v1.0", x, y);
-			g.drawString("Runtime: "
-					+ getFormattedTime(System.currentTimeMillis() - startTime)
-					+ ".", x, y += 20);
-
-			if (levelsGained < 0) {
-				startingxp = skills.getCurrentSkillExp(Constants.STAT_AGILITY);
-			} else if (levelsGained == 1) {
-				g
-						.drawString(
-								"Gained: "
-										+ (skills
-												.getCurrentSkillExp(Constants.STAT_AGILITY) - startingxp)
-										+ " XP (" + levelsGained + " lvl)", x,
-								y += 20);
-			} else {
-				g
-						.drawString(
-								"Gained: "
-										+ (skills
-												.getCurrentSkillExp(Constants.STAT_AGILITY) - startingxp)
-										+ " XP (" + levelsGained + " lvls)", x,
-								y += 20);
-			}
-
-			if (runSeconds > 0) {
-				g
-						.drawString(
-								"Averaging: "
-										+ (skills
-												.getCurrentSkillExp(Constants.STAT_AGILITY) - startingxp)
-										* 3600 / runSeconds + " XP/hr", x,
-								y += 20);
-			}
-
-			g.drawString("Laps done: " + LapsDone, x, y += 20);
-			g.drawString("Current level: "
-					+ skills.getRealSkillLevel(Constants.STAT_AGILITY), x,
-					y += 20);
-			g.drawString("Next level: "
-					+ skills.getXPToNextLevel(Constants.STAT_AGILITY) + " XP",
-					x, y += 20);
-			if (runSeconds != 0) {
-				g.setColor(RED);
-				g.fill3DRect(x, y += 9, 200, 13, true);
-				g.setColor(GREENBAR);
-				g.fill3DRect(x, y, skills
-						.getPercentToNextLevel(Constants.STAT_AGILITY) * 2, 13,
-						true);
+				GnomeCourse.this.wait(100);
 			}
 		}
+
+		public void setTarget(Obstacle target) {
+			synchronized (targetLock) {
+				this.target = target;
+			}
+		}
+
+		public void stop() {
+			running = false;
+		}
+
 	}
 
-	@Override
-	public boolean onStart(final Map<String, String> args) {
-		if (args.get("chkXP") == null) {
-			checkXP = false;
+	static class RSArea {
+
+		private final int x, y, width, height, plane;
+
+		public RSArea(RSTile sw, RSTile ne, int plane) {
+			this.x = sw.getX();
+			this.y = sw.getY();
+			this.width = ne.getX() - sw.getX();
+			this.height = ne.getY() - sw.getY();
+			this.plane = plane;
 		}
-		if (!(args.get("hours").equals("") && args.get("mins").equals("") && args
-				.get("secs").equals(""))) {
-			int sHours = 0, sMins = 0, sSecs = 0;
-			if (!args.get("hours").equals("")) {
-				sHours = Integer.parseInt(args.get("hours"));
-			}
-			if (!args.get("mins").equals("")) {
-				sMins = Integer.parseInt(args.get("mins"));
-			}
-			if (!args.get("secs").equals("")) {
-				sSecs = Integer.parseInt(args.get("secs"));
-			}
-			stopTime = sHours * 3600000 + sMins * 60000 + sSecs * 1000;
-			log("Script will stop after " + getFormattedTime(stopTime));
+
+		public boolean contains(int x, int y, int plane) {
+			return this.plane == plane &&
+					(x >= this.x) &&
+					(x <= this.x + this.width) &&
+					(y >= this.y) &&
+					(y <= this.y + this.height);
 		}
-		return true;
+
+		public boolean contains(RSTile tile, int plane) {
+			return contains(tile.getX(), tile.getY(), plane);
+		}
+
 	}
+
+	static class Obstacle extends RSTile {
+
+		private int clickHeight;
+		private String action;
+		private PassedListener listener;
+
+		public Obstacle(int x, int y, int clickHeight, String action) {
+			this(x, y, clickHeight, action, null);
+		}
+
+		public Obstacle(int x, int y, int clickHeight,
+						String action, PassedListener listener) {
+			super(x, y);
+			this.clickHeight = clickHeight;
+			this.action = action;
+			this.listener = listener;
+		}
+
+		public boolean doAction(Methods ctx) {
+			Point p = Calculations.tileToScreen(this, clickHeight);
+			if (p.x != -1) {
+				ctx.moveMouse(p, 5, 5);
+				ctx.wait(ctx.random(50, 300));
+				return ctx.atMenu(action);
+			}
+			return false;
+		}
+
+		public boolean isOnScreen() {
+			return Calculations.tileToScreen(this).x >= 0;
+		}
+
+		public void onPassed(GnomeCourse ctx) {
+			if (listener != null) {
+				listener.onPassed(ctx);
+			}
+		}
+
+		public static interface PassedListener {
+			public void onPassed(GnomeCourse ctx);
+		}
+
+	}
+
 }
