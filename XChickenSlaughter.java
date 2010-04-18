@@ -49,7 +49,7 @@ import org.rsbot.script.Constants;
 import org.rsbot.script.Script;
 import org.rsbot.script.ScriptManifest;
 import org.rsbot.script.Skills;
-import org.rsbot.script.randoms.WelcomeScreen;
+import org.rsbot.script.randoms.antiban.LoginBot;
 import org.rsbot.script.wrappers.RSInterface;
 import org.rsbot.script.wrappers.RSItemTile;
 import org.rsbot.script.wrappers.RSNPC;
@@ -87,7 +87,7 @@ public class XChickenSlaughter extends Script implements PaintListener,
 						mouse = new Point(Bot.getClient().getMouse().x, Bot
 								.getClient().getMouse().y);
 						Thread.sleep(50);
-					} catch (final Exception e) {
+					} catch (final Exception ignored) {
 					}
 				}
 			}
@@ -1502,8 +1502,8 @@ public class XChickenSlaughter extends Script implements PaintListener,
 	}
 
 	private State getState() {
-		if (RSInterface.getInterface(WelcomeScreen.WELCOME_SCREEN_ID).getChild(
-				WelcomeScreen.WELCOME_SCREEN_BUTTON_PLAY).getAbsoluteY() > 2) {
+		if (RSInterface.getInterface(LoginBot.WELCOME_SCREEN_ID).getChild(
+				LoginBot.WELCOME_SCREEN_BUTTON_PLAY).getAbsoluteY() > 2) {
 			status = "WelcomeScreen";
 			return State.WELCOMESCREEN;
 		}

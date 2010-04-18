@@ -27,7 +27,7 @@ import org.rsbot.script.wrappers.RSItemTile;
 import org.rsbot.script.wrappers.RSObject;
 import org.rsbot.script.wrappers.RSTile;
 
-@ScriptManifest(authors = { "Weirded" }, category = "Hunter", name = "wRedChins", description = "<html><head><style type='text/css'> body {font-family: 'Tahoma'; font-size: 10px; margin-left: 10px;}</style></head><body><h3>wRedChins by Weirded<h3><br/><b>Timeout: </b><input type=\"text\" name=\"timeout\" value=\"3000\"/>(Increase this if you lag and have problems)<br /></p><p><b>Notice: </b>Make sure you turn off BreakHandler unless you want to lose alot of traps!</p><br /><p>Log in and stand where you want to hunt before starting.</p><br /><p><b>Purchase MultiHunterPro at http://www.rsbot.org/vb/showthread.php?t=123802</b></p></body></html>", version = 3.1)
+@ScriptManifest(authors = { "Weirded" }, category = "Hunter", name = "wRedChins", description = "<html><head><style type='text/css'> body {font-family: 'Tahoma'; font-size: 10px; margin-left: 10px;}</style></head><body><h3>wRedChins by Weirded<h3><br/><b>Timeout: </b><input type=\"text\" name=\"timeout\" value=\"3000\"/>(Increase this if you lag and have problems)<br /></p><p><b>Notice: </b>Make sure you turn off BreakHandler unless you want to lose alot of traps!</p><br /><p>Log in and stand where you want to hunt before starting.</p><br /><p><b>Purchase MultiHunterPro at http://www.rsbot.org/vb/showthread.php?t=123802</b></p></body></html>", version = 3.2)
 public class wRedChins extends Script implements PaintListener,
 		ServerMessageListener {
 
@@ -39,9 +39,6 @@ public class wRedChins extends Script implements PaintListener,
 	private final int trapCaught = 19190;
 	private final int trapSetup = 19187;
 	private final double expPer = 265;
-
-	// private int trapLayAnim = 5208;
-	// private int trapRetrieveAnim = 5212;
 
 	private int numCaught = 0;
 	private boolean notOurs = false;
@@ -97,7 +94,7 @@ public class wRedChins extends Script implements PaintListener,
 
 	/**
 	 * Do something at inventory item
-	 * 
+	 *
 	 * @param itemID
 	 *            The ID of the item
 	 * @param hover
@@ -164,7 +161,7 @@ public class wRedChins extends Script implements PaintListener,
 
 	/**
 	 * Estimates the menu length.
-	 * 
+	 *
 	 * @return A pixel estimate of the menu length.
 	 */
 	public int getMenuLengthEstimate() {
@@ -218,7 +215,7 @@ public class wRedChins extends Script implements PaintListener,
 	/**
 	 * Simple tile walk function Picks between minimap or tile if it's on
 	 * screen.
-	 * 
+	 *
 	 * @param tile
 	 *            The RSTile
 	 */
@@ -305,7 +302,7 @@ public class wRedChins extends Script implements PaintListener,
 
 	/**
 	 * Wait until we setup a trap.
-	 * 
+	 *
 	 * @param tile
 	 *            The tile we're setting it on.
 	 * @return <tt>true</tt> if the trap was set; <tt>false</tt> after timeout.
@@ -323,7 +320,7 @@ public class wRedChins extends Script implements PaintListener,
 
 	/**
 	 * Wait til we have retrieved trap.
-	 * 
+	 *
 	 * @param tile
 	 *            The tile to retrieve the trap from.
 	 * @return <tt>true</tt> if the trap was retrieved; <tt>false</tt> after
@@ -343,7 +340,7 @@ public class wRedChins extends Script implements PaintListener,
 
 	/**
 	 * Wait while we're moving.
-	 * 
+	 *
 	 * @return <tt>true</tt> if the player stopped; <tt>false</tt> after
 	 *         timeout.
 	 */
@@ -360,7 +357,7 @@ public class wRedChins extends Script implements PaintListener,
 
 	/**
 	 * Wait til we arrive at a given tile.
-	 * 
+	 *
 	 * @param tile
 	 *            The RSTile to arrive at.
 	 * @return <tt>true</tt> if the player arrived at the tile; <tt>false</tt>
@@ -380,7 +377,7 @@ public class wRedChins extends Script implements PaintListener,
 
 	/**
 	 * Wait until character is idle..
-	 * 
+	 *
 	 * @return <tt>true</tt> if the player is idle; <tt>false</tt> after
 	 *         timeout.
 	 */
@@ -397,7 +394,7 @@ public class wRedChins extends Script implements PaintListener,
 
 	/**
 	 * Finds a fallen trap, if it's mine lay it else pick it up.
-	 * 
+	 *
 	 * @return True if we succeeded.
 	 */
 	public boolean fixTrap() {
@@ -427,14 +424,14 @@ public class wRedChins extends Script implements PaintListener,
 				waitWhileMoving();
 				setTraps.remove(fallenTrap);
 			}
-		} else {
+		/*} else {
 			if (getInventoryCount() < 28 - numTrapsTotal()) {
 				atTile(fallenTrap, "Take");
 				if (!waitToMove(timeout)) {
 					return false;
 				}
 				waitWhileMoving();
-			}
+			}*/
 		}
 
 		return false;
@@ -442,7 +439,7 @@ public class wRedChins extends Script implements PaintListener,
 
 	/**
 	 * Retrieve a trap.
-	 * 
+	 *
 	 * @return True if we succeeded.
 	 */
 	public boolean retrieveTrap() {
@@ -494,7 +491,7 @@ public class wRedChins extends Script implements PaintListener,
 
 	/**
 	 * Lay a trap.
-	 * 
+	 *
 	 * @return True if we succeeded.
 	 */
 	public boolean layTrap() {
@@ -536,7 +533,7 @@ public class wRedChins extends Script implements PaintListener,
 
 	/**
 	 * Find a free spot.
-	 * 
+	 *
 	 * @return The RSTile.
 	 */
 	public RSTile findFreeSpot() {
@@ -545,7 +542,7 @@ public class wRedChins extends Script implements PaintListener,
 
 	/**
 	 * Find a free preferred tile to lay a trap on.
-	 * 
+	 *
 	 * @return The RSTile.
 	 */
 	public RSTile getNearestPrefTile() {
@@ -575,7 +572,7 @@ public class wRedChins extends Script implements PaintListener,
 
 	/**
 	 * Finds the nearest trap of ours.
-	 * 
+	 *
 	 * @param ids
 	 *            Which ids to look for.
 	 * @return The RSObject.
@@ -615,7 +612,7 @@ public class wRedChins extends Script implements PaintListener,
 
 	/**
 	 * Move mouse to a tile.
-	 * 
+	 *
 	 * @param tile
 	 *            Which tile we want to move to.
 	 */
@@ -626,7 +623,7 @@ public class wRedChins extends Script implements PaintListener,
 
 	/**
 	 * How many traps are down total?
-	 * 
+	 *
 	 * @return The amount of traps currently setup.
 	 */
 	public int numTrapsTotal() {
@@ -644,13 +641,6 @@ public class wRedChins extends Script implements PaintListener,
 		}
 		return count;
 	}
-
-	/*
-	 * public int numTrapsSetup() { int count = 0; int num; if (setTraps.size()
-	 * < numTraps) { num = setTraps.size(); } else { num = numTraps; } for (int
-	 * i = 0; i < num; i++) { if (hasTrapSetup(setTraps.get(i))) { count++; } }
-	 * return count; }
-	 */
 
 	/**
 	 * Setup preferred spots and number of traps based on level.

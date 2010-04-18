@@ -30,7 +30,7 @@ import org.rsbot.script.Constants;
 import org.rsbot.script.GrandExchange;
 import org.rsbot.script.Script;
 import org.rsbot.script.ScriptManifest;
-import org.rsbot.script.randoms.WelcomeScreen;
+import org.rsbot.script.randoms.antiban.LoginBot;
 import org.rsbot.script.wrappers.RSInterface;
 import org.rsbot.script.wrappers.RSInterfaceComponent;
 import org.rsbot.script.wrappers.RSObject;
@@ -762,8 +762,8 @@ public class SS7AddyMiner extends Script implements PaintListener,
 	while (!isLoggedIn()) {
 	    if (isLoggedIn()) {
 		while (RSInterface.getChildInterface(
-			WelcomeScreen.WELCOME_SCREEN_ID,
-			WelcomeScreen.WELCOME_SCREEN_BUTTON_PLAY)
+			LoginBot.WELCOME_SCREEN_ID,
+			LoginBot.WELCOME_SCREEN_BUTTON_PLAY)
 			.getAbsoluteY() < 2) {
 		    wait(random(1500, 2500));
 		}
