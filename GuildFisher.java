@@ -3,14 +3,12 @@ import org.rsbot.event.listeners.PaintListener;
 import org.rsbot.script.*;
 import org.rsbot.script.wrappers.*;
 
-import java.awt.Color;
-import java.awt.Graphics;
-import java.awt.Point;
-import java.awt.event.KeyEvent;
+import java.awt.*;
+import java.awt.event.*;
 import java.util.Map;
 
-@ScriptManifest(authors = {"Jacmob"}, name = "Guild Fisher", category = "Fishing", version = 1.0,
-	description = "<html><body style='font-family: Arial;'>Fishes and banks lobsters at the Fishing Guild.<br /><small>Jacmob</small></body></html>")
+@ScriptManifest(authors = {"Jacmob"}, name = "Guild Fisher", category = "Fishing", version = 1.1,
+	description = "<html><body style='font-family: Arial; padding: 5px;'>Fishes and banks lobsters at the Fishing Guild.<br /><small>Jacmob</small></body></html>")
 public class GuildFisher extends Script implements PaintListener {
 
 	public static final int LOBSTER_POT = 301;
@@ -18,7 +16,7 @@ public class GuildFisher extends Script implements PaintListener {
 	public static final int NPC_CAGE = 312;
 	public static final RSTile TILE_BANK = new RSTile(2586, 3422);
 	public static final RSTile TILE_BANK_ENTRANCE = new RSTile(2589, 3422);
-	public static final RSTile TILE_BANK_BOOTH = new RSTile(2584, 3422);
+	public static final RSTile TILE_BANK_BOOTH_FRONT = new RSTile(2585, 3422);
 	public static final RSTile TILE_PORT = new RSTile(2599, 3422);
 
 	private int counter;
@@ -37,16 +35,16 @@ public class GuildFisher extends Script implements PaintListener {
 					} else {
 						bank.close();
 					}
-				} else {
-					if (!atTile(TILE_BANK_BOOTH, "Use-quickly")
-							&& !getMyPlayer().isMoving()) {
-						if (distanceTo(TILE_BANK) > 2) {
-							walkTileMM(TILE_BANK);
-						} else {
-							turnToTile(TILE_BANK_BOOTH);
+				} else if (!getMyPlayer().isMoving()) {
+					if (!bank.open()) {
+						if (distanceTo(TILE_BANK_BOOTH_FRONT) > 1) {
+							walkTileMM(TILE_BANK_BOOTH_FRONT);
 						}
+					} else {
+						wait(500);
 					}
 				}
+				wait(1000);
 				break;
 			case FISH:
 				RSNPC spot = getNearestNPCByID(NPC_CAGE);
@@ -86,12 +84,12 @@ public class GuildFisher extends Script implements PaintListener {
 				}
 				break;
 			case WALK_TO_BANK:
-				if (distanceTo(TILE_BANK) > 10) {
+				if (distanceTo(TILE_BANK) > 8) {
 					walkTowards(TILE_BANK_ENTRANCE);
 				} else if (tileOnScreen(TILE_BANK)) {
 					atTile(TILE_BANK, "alk");
-				} else if (!getMyPlayer().isMoving()) {
-					walkTileMM(TILE_BANK);
+				} else {
+					walkTileMM(TILE_BANK_BOOTH_FRONT);
 				}
 				break;
 			case WALK_TO_FISH:
@@ -194,7 +192,7 @@ public class GuildFisher extends Script implements PaintListener {
 	}
 
     private RSTile checkTile(final RSTile tile) {
-        if (distanceTo(tile) < 15) {
+        if (distanceTo(tile) < 14) {
             return tile;
         }
         final RSTile loc = getMyPlayer().getLocation();
@@ -229,6 +227,7 @@ public class GuildFisher extends Script implements PaintListener {
 		if (last != null) {
 			highlightTile(g, last, new Color(200, 200, 255), new Color(150, 150, 255, 70));
 		}
+
     }
 
 	private void waveMouse() {

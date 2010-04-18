@@ -22,7 +22,6 @@ import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Map;
 import java.util.logging.Level;
-import java.util.logging.Logger;
 
 import javax.imageio.ImageIO;
 import javax.swing.ButtonGroup;
@@ -48,10 +47,8 @@ import org.rsbot.bot.input.Mouse;
 import org.rsbot.event.events.ServerMessageEvent;
 import org.rsbot.event.listeners.PaintListener;
 import org.rsbot.event.listeners.ServerMessageListener;
-import org.rsbot.script.Calculations;
 import org.rsbot.script.Constants;
 import org.rsbot.script.GEItemInfo;
-import org.rsbot.script.GrandExchange;
 import org.rsbot.script.Script;
 import org.rsbot.script.ScriptManifest;
 import org.rsbot.script.wrappers.RSInterface;
@@ -66,7 +63,7 @@ import org.rsbot.script.wrappers.RSTile;
 @ScriptManifest(authors = { "BinaryX"},
 		category = "Combat",
 		name = "MossGiantsKiller",
-		version = 9.0,
+		version = 9.4,
 		description = "  <html>"
 		+ "<body>"
 		+ "Click OK to start the GUI."
@@ -822,20 +819,20 @@ public class MossGiantsKiller extends Script implements PaintListener,
 	private BufferedImage image;
 
 	// ---------------------------------------------------//
-	public int ItemArray[] = { 5100, 563, 562, 561, 564, 5303, 5299, 5302,
+	public int ItemArray[] = { 5100, 563, 561, 5303, 5299, 5302,
 			5295, 5300, 5304, 5316, 5321, 985, 987, 12158, 12159, 12160, 12163,
 			5323 };
 
 	// ---------------------------------------------------//
 	public String ItemNames[] = { "Limpwurt seed", "Law rune",
-			"Chaos rune", "Nature rune", "Cosmic rune", "Dwarf weed seed",
+		   "Nature rune", "Dwarf weed seed",
 			"Kwuarm seed", "Lantadyme seed", "Ranarr seed", "Snapdragon seed",
 			"Torstol seed", "Magic seed", "Watermelon seed",
 			"Tooth half of a key", "Loop half of a key", "Gold charm",
 			"Green charm", "Crimson charm", "Blue charm", "Strawberry seed" };
 	// ---------------------------------------------------//
 	int[] ItemPrices;
-	public int[] Junk = {995,7869,15173,2353,1141,1285,1179};
+	public int[] Junk = {995,7869,15173,2353,1141,1285,1179,562,564};
 
 	long lastUsed;
 	public ArrayList list;
@@ -1357,6 +1354,38 @@ public class MossGiantsKiller extends Script implements PaintListener,
 		moveMouse(x, y);
 	}
 
+	public Boolean needToUpdate() {
+		URLConnection url = null;
+		BufferedReader in = null;
+		BufferedWriter out = null;
+
+		try {
+			url = new URL(
+			"http://binaryx.nl/BinaryX/Development/mossgiantskiller/version.txt")
+			.openConnection();
+
+			in = new BufferedReader(new InputStreamReader(url.getInputStream()));
+			if (Double.parseDouble(in.readLine()) == properties.version()) {
+				log("You have the latest version.");
+				return false; // we are up to date.
+			} else {
+				JOptionPane.showMessageDialog(null,
+				"A new update has been found, please check the thread for more information.");
+				return true;
+			}
+		} catch (MalformedURLException e) {
+			log("MailformedURLException.");
+			return true;
+		} catch (UnknownHostException e) {
+			log("UnknownHostException.");
+			return true;
+		} catch (IOException e) {
+			log("IOException.");
+			return true;
+		}
+	}
+
+
 	public void onFinish() {
 
 		Bot.getEventManager().removeListener(PaintListener.class, this);
@@ -1675,7 +1704,13 @@ public class MossGiantsKiller extends Script implements PaintListener,
 
 	public boolean onStart(Map<String, String> args) {
 		MossXGui gui = new MossXGui();
-		gui.setVisible(true);
+		if (needToUpdate()) {
+			versionFailed = true;
+			gui.setVisible(false);
+			stopScript(true);
+		} else{
+			gui.setVisible(true);
+		}
 		while (guiWait) {
 			wait(100);
 		}
