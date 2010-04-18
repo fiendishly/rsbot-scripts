@@ -13,6 +13,7 @@ import org.rsbot.bot.Bot;
 import org.rsbot.event.events.ServerMessageEvent;
 import org.rsbot.event.listeners.PaintListener;
 import org.rsbot.event.listeners.ServerMessageListener;
+import org.rsbot.script.Bank;
 import org.rsbot.script.Constants;
 import org.rsbot.script.Script;
 import org.rsbot.script.ScriptManifest;
@@ -27,8 +28,9 @@ import org.rsbot.util.ScreenshotUtil;
 @ScriptManifest(authors = { "Master T", "Taha" }, category = "Other", name = "Smart Bury", version = 4.3, description = "<html><head><style type=text/css>.style1 {color: #FFFFFF;}.style2 {color: #FFFFFF;font-weight: bold;}</style></head><body bgcolor=black text=white><center><font face=Comic Sans MS color=#ffffff size=18pt>By: Master T &amp; Taha</font><br><br><font color=#ffffff>Click <a href=http://www.rsbot.org/vb/showthread.php?t=39222>here</a> to go to the thread.</font><table border=0><tr><td width=350></p><tr><td class=style2>Bone Bury Method: </td><td width=156 align=left class=style1><select name=order style=width: 205px><option>Bury Bones Randomly</option><option>Bury Bones In Order</option></tr></td><tr><td class=style2>Bone to bury: </td><td width=156 align=left class=style1><select name=bone><option>Normal Bones</option><option>Wolf Bones</option><option>Burnt Bones</option><option>Monkey Bones</option><option>Bat Bones</option><option>Big Bones</option><option>Jogre Bones</option><option>Zogre Bones</option><option>Shaikahan Bones</option><option>Babydragon Bones</option><option>Wyvern Bones</option><option>Dragon Bones</option><option>Fayrg Bones</option><option>Raurg Bones</option><option>Dagannoth Bones</option><option>Ourg Bones</option></select></td></tr><tr><td class=style2>Amount to Bury: </td><td align=right class=style1><input type=text name=amount id=amount VALUE=1000 style=width: 95px></td></tr><tr><td class=style2>Custom Bank ID: </td><td align=right class=style1><input type=text name=bankID id=bankID style=width: 95px></td></tr><tr><td class=style2>Use Custom Bank:</td><td class=style1><INPUT TYPE=checkbox NAME=customBank VALUE=false></td></tr><tr><td class=style2>Turn the computer off when script finishes:</td><td class=style1><INPUT TYPE=checkbox NAME=shutdown VALUE=false></td></tr><tr><td class=style2>Teleport to Lumbridge if bank is not found:</td><td class=style1><INPUT TYPE=checkbox NAME=Tele VALUE=true CHECKED=true></td></tr><tr><td class=style2>Check for Updates:</td><td class=style1><INPUT TYPE=checkbox NAME=update VALUE=true CHECKED=true></td></tr></select></td></tr></table></center></body></html>")
 public class SmartBury extends Script implements PaintListener,
 		ServerMessageListener {
+
 	private enum Process {
-		bury, bank, stop, teleport, walk, noReturn;
+		bury, bank, stop, teleport, walk, noReturn
 	}
 
 	private String State = "Not Yet Started";
@@ -95,9 +97,9 @@ public class SmartBury extends Script implements PaintListener,
 			break;
 
 		case bank:
-			bankBooth = getNearestObjectByID(bank.BankBooths);
-			banker = getNearestNPCByID(bank.Bankers);
-			bankChest = getNearestObjectByID(bank.BankChests);
+			bankBooth = getNearestObjectByID(Bank.BankBooths);
+			banker = getNearestNPCByID(Bank.Bankers);
+			bankChest = getNearestObjectByID(Bank.BankChests);
 			if (useCustomBank) {
 				customBank = getNearestObjectByID(customBankID);
 			}
@@ -223,9 +225,9 @@ public class SmartBury extends Script implements PaintListener,
 
 	@SuppressWarnings("static-access")
 	private boolean nearBank() {
-		bankBooth = getNearestObjectByID(bank.BankBooths);
-		banker = getNearestNPCByID(bank.Bankers);
-		bankChest = getNearestObjectByID(bank.BankChests);
+		bankBooth = getNearestObjectByID(Bank.BankBooths);
+		banker = getNearestNPCByID(Bank.Bankers);
+		bankChest = getNearestObjectByID(Bank.BankChests);
 		customBank = getNearestObjectByID(customBankID);
 		return bankBooth != null && tileOnMap(bankBooth.getLocation())
 				|| banker != null && tileOnMap(banker.getLocation())
@@ -314,9 +316,9 @@ public class SmartBury extends Script implements PaintListener,
 
 			String longestString = "";
 
-			for (int i = 0; i < strings.length; i++) {
-				if (strings[i].length() > longestString.length()) {
-					longestString = strings[i];
+			for (String string : strings) {
+				if (string.length() > longestString.length()) {
+					longestString = string;
 				}
 			}
 			final int textWidth = (int) gr.getFontMetrics(gr.getFont())
@@ -443,12 +445,9 @@ public class SmartBury extends Script implements PaintListener,
 				possible.add(item);
 			}
 		}
-		if (possible.size() == 0) {
-			return false;
-		}
-		return randomBury ? atInterface(possible
+		return possible.size() != 0 && (randomBury ? atInterface(possible
 				.get(random(0, possible.size())), "Bury") : atInterface(
-				possible.get(0), "Bury");
+				possible.get(0), "Bury"));
 	}
 
 	public void serverMessageRecieved(final ServerMessageEvent m) {
