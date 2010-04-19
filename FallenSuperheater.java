@@ -1,32 +1,19 @@
-import java.awt.Color;
-import java.awt.Font;
-import java.awt.Graphics;
-import java.awt.Image;
-import java.awt.Point;
+import org.rsbot.bot.Bot;
+import org.rsbot.event.events.ServerMessageEvent;
+import org.rsbot.event.listeners.PaintListener;
+import org.rsbot.event.listeners.ServerMessageListener;
+import org.rsbot.script.*;
+import org.rsbot.script.wrappers.*;
+
+import javax.imageio.ImageIO;
+import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Map;
 
-import javax.imageio.ImageIO;
 
-import org.rsbot.bot.Bot;
-import org.rsbot.event.events.ServerMessageEvent;
-import org.rsbot.event.listeners.PaintListener;
-import org.rsbot.event.listeners.ServerMessageListener;
-import org.rsbot.script.wrappers.RSInterface;
-import org.rsbot.script.wrappers.RSInterfaceChild;
-import org.rsbot.script.wrappers.RSInterfaceComponent;
-import org.rsbot.script.wrappers.RSPlayer;
-import org.rsbot.script.wrappers.RSTile;
-import org.rsbot.script.Calculations;
-import org.rsbot.script.Constants;
-import org.rsbot.script.GEItemInfo;
-import org.rsbot.script.Script;
-import org.rsbot.script.ScriptManifest;
-
-
-@ScriptManifest(authors = {"Fallen"}, category = "Magic", name = "Fallen's Superheater", version = 3.02,
+@ScriptManifest(authors = {"Fallen"}, category = "Magic", name = "Fallen's Superheater", version = 3.03,
 		description = "<html><head>"
 				+ "</head><body style='font-family: Eurostile; margin: 10px;'>"
 				+ "<center><img src=\"http://img245.imageshack.us/img245/4683/scriptlogo.png\" /></center>"
@@ -38,13 +25,14 @@ import org.rsbot.script.ScriptManifest;
 				+ "Log out after: <input type=\"text\" name=\"CastsUntilLogout\" value=\"0\"> casts."
 				+ "<br> (0 = Until runs out of ores/runes.) "
 				+ "<br> "
-				+ "<br><strong>Version 3.02</strong></b>"
+				+ "<br><strong>Version 3.03</strong></b>"
 				+ "<br>This script uses the spell 'Superheat', to turn ores into bars."
 				+ "<br><strong>Instructions: </strong></b>"
 				+ "Start the script next to a bank, have required runes in your inventory (natures). Scroll your bank so that the ores can be seen."
 				+ "</body></html>")
 
 public class FallenSuperheater extends Script implements PaintListener, ServerMessageListener {
+
 	final ScriptManifest properties = getClass().getAnnotation(
 			ScriptManifest.class);
 
@@ -52,14 +40,11 @@ public class FallenSuperheater extends Script implements PaintListener, ServerMe
 		OPENBANK, OUTOFORES, BANK, SUPERHEAT
 	}
 
-	//Mostly paint ints
+	//Mostly paint int's
 	public int status;
 	public long startTime = System.currentTimeMillis();
 	private long scriptStartTime = 0;
-	private long runTime = 0;
-	private long seconds = 0;
 	private long minutes = 0;
-	private long hours = 0;
 	public int BarCounter = 0;
 	private int startXPM;
 	private int startXPS;
@@ -130,16 +115,16 @@ public class FallenSuperheater extends Script implements PaintListener, ServerMe
 		RenderingHints.KEY_TEXT_ANTIALIASING,
 		RenderingHints.VALUE_TEXT_ANTIALIAS_ON); */
 	public void onRepaint(Graphics g) {
-		runTime = System.currentTimeMillis() - scriptStartTime;
-		seconds = runTime / 1000;
+		long runTime = System.currentTimeMillis() - scriptStartTime;
+		long seconds1 = runTime / 1000;
 		int XPGainedSmithing;
 		int XPGainedMagic;
-		if (seconds >= 60) {
-			minutes = seconds / 60;
-			seconds -= minutes * 60;
+		if (seconds1 >= 60) {
+			minutes = seconds1 / 60;
+			seconds1 -= minutes * 60;
 		}
 		if (minutes >= 60) {
-			hours = minutes / 60;
+			long hours = minutes / 60;
 			minutes -= hours * 60;
 		}
 		if (startXPM == 0) {
@@ -174,7 +159,7 @@ public class FallenSuperheater extends Script implements PaintListener, ServerMe
 			g.drawImage(title, 9, 185, null);
 			g.setFont(new Font("Arial", 0, 11));
 			g.setColor(Color.GREEN);
-			g.drawString("Version 3.02", 248, 202);
+			g.drawString("Version 3.03", 248, 202);
 			//Time
 			g.setFont(new Font("Verdana", 0, 12));
 			g.setColor(Color.WHITE);
@@ -366,6 +351,7 @@ public class FallenSuperheater extends Script implements PaintListener, ServerMe
  * ------------------------------------------------------------------------------------------------------------------------------
  ------------------------------------------------------------------------------------------------------------------------------*/
 
+
 	public boolean waitForMageTab(int timeout) {
 		long start = System.currentTimeMillis();
 
@@ -521,7 +507,6 @@ public class FallenSuperheater extends Script implements PaintListener, ServerMe
 			}
 			if (getInventoryCount(Ore1) >= 1 && getInventoryCount(Ore2) >= Ore2PerSpell) {
 				bank.close();
-				//openTab(TAB_MAGIC);
 			}
 		}
 		if (!bankTwice) {
@@ -537,7 +522,6 @@ public class FallenSuperheater extends Script implements PaintListener, ServerMe
 			}
 			if (inventoryContains(Ore1)) {
 				bank.close();
-				//openTab(TAB_MAGIC);
 			}
 		}
 
@@ -738,6 +722,7 @@ public class FallenSuperheater extends Script implements PaintListener, ServerMe
 		return player != null;
 	}
 
+
 	public void serverMessageRecieved(ServerMessageEvent msg) {
 		String message = msg.getMessage().toLowerCase();
 		if (message.contains("have enough nat")) {
@@ -790,7 +775,11 @@ public class FallenSuperheater extends Script implements PaintListener, ServerMe
 				return State.OPENBANK;
 			}
 		} else {
-			return State.SUPERHEAT;
+			if (!bank.isOpen()) {
+				return State.SUPERHEAT;
+			} else {
+				return State.BANK;
+			}
 		}
 	}
 
@@ -802,9 +791,9 @@ public class FallenSuperheater extends Script implements PaintListener, ServerMe
 	   -------------------------------------------------------------------------------------*/
 	@Override
 	public int loop() {
-		final State state = getState();
+		final State state = getState(); //Gets the state
 		try {
-			switch (state) {
+			switch (state) { //Switches between these states based on getState
 				case SUPERHEAT:
 					superHeat();
 					break;
