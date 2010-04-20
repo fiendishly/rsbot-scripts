@@ -38,6 +38,7 @@ import javax.swing.JSeparator;
 import javax.swing.JSlider;
 import javax.swing.JTabbedPane;
 import javax.swing.JTextField;
+import javax.swing.SwingConstants;
 import javax.swing.WindowConstants;
 
 import org.rsbot.bot.Bot;
@@ -49,26 +50,30 @@ import org.rsbot.script.Constants;
 import org.rsbot.script.Script;
 import org.rsbot.script.ScriptManifest;
 import org.rsbot.script.Skills;
-import org.rsbot.script.randoms.antiban.LoginBot;
-import org.rsbot.script.wrappers.RSInterface;
 import org.rsbot.script.wrappers.RSItemTile;
 import org.rsbot.script.wrappers.RSNPC;
 import org.rsbot.script.wrappers.RSObject;
 import org.rsbot.script.wrappers.RSTile;
 import org.rsbot.util.ScreenshotUtil;
 
-//		BeanMan's xChickenSlaughter
-//		Version 4.44
-//		Member of Xscripting team
-//		http://www.Xscripting.com
+/**
+ * @author BeanXMan (XScripting Inc.)
+ * @version 5.0 (c)2009-2010 BeanXMan, No one except BeanXMan has the right to
+ *          modify and/or spread this script without the permission of BeanXMan.
+ *          I'm not held responsible for any damage that may occur to your
+ *          property.
+ */
 
-@ScriptManifest(authors = { "BeanMan Xscripting Inc." }, category = "Combat", name = "XChickenSlaughter", version = 4.44, description = "<html><head>"
+@ScriptManifest(authors = { "BeanXMan Xscripting Inc." }, category = "Combat", name = "XChickenSlaughter", version = 5.00, description = "<html><head>"
 		+ "</head><body>"
-		+ "<center><img src=\"http://binaryx.nl/xscripting/beanman/XChickenSlaughter/scriptdescription.png\" /></center>"
+		+ "<center><img src=\"http://binaryx.nl/beanman/scriptdescription.png\" /></center>"
 		+ "</body></html>")
 public class XChickenSlaughter extends Script implements PaintListener,
 		ServerMessageListener, Constants {
 	// Credits to Garrett because of the nice paint he made!
+	// If there is anyone willing to make me a custom paint, pls don't hesitate
+	// to tell me !
+
 	public class GarrettsPaint {
 
 		public class MouseWatcher implements Runnable {
@@ -137,8 +142,8 @@ public class XChickenSlaughter extends Script implements PaintListener,
 		int[] start_exp = null;
 		int[] start_lvl = null;
 		int[] gained_exp = null;
-
 		int[] gained_lvl = null;
+
 		Thread mouseWatcher = new Thread();
 
 		final NumberFormat nf = NumberFormat.getInstance();
@@ -166,6 +171,7 @@ public class XChickenSlaughter extends Script implements PaintListener,
 			g.fillRect(rect.x, rect.y, rect.width, rect.height);
 			g.fillRect(r.x, r.y, r.width, r.height);
 			g.setColor(Color.WHITE);
+			g.setFont(new Font("sansserif", Font.PLAIN, 12));
 			drawString(g, "Hide Paint", r1, 5);
 			drawString(g, "MAIN", r2, 5);
 			drawString(g, "INFO", r3, 5);
@@ -340,7 +346,8 @@ public class XChickenSlaughter extends Script implements PaintListener,
 			}
 		}
 
-		public void overlayTile(final Graphics g, final RSTile t, final Color c) {
+		public void overlayTile(final Graphics g, final RSTile t,
+				final Color c, final int typeOfObject) {
 			final Point p = Calculations.tileToScreen(t);
 			final Point pn = Calculations.tileToScreen(t.getX(), t.getY(), 0,
 					0, 0);
@@ -357,10 +364,19 @@ public class XChickenSlaughter extends Script implements PaintListener,
 				}
 			}
 			g.setColor(c);
-			g.fillPolygon(new int[] { py.x, pxy.x, px.x, pn.x }, new int[] {
-					py.y, pxy.y, px.y, pn.y }, 4);
+
 			g.drawPolygon(new int[] { py.x, pxy.x, px.x, pn.x }, new int[] {
 					py.y, pxy.y, px.y, pn.y }, 4);
+			g.setFont(new Font("sansserif", Font.BOLD, 12));
+			if (typeOfObject == 1) {
+				g.drawString("Next Chicken", p.x - 30, p.y - 40);
+			} else if (typeOfObject == 2) {
+				g.drawString("Next Bones", p.x - 30, p.y - 40);
+			} else if (typeOfObject == 3) {
+				g.drawString("Next Feathers", p.x - 30, p.y - 40);
+			} else if (typeOfObject == 4) {
+				g.drawString("Next Arrow", p.x - 30, p.y - 40);
+			}
 		}
 
 		public void paint(final Graphics g) {
@@ -384,12 +400,136 @@ public class XChickenSlaughter extends Script implements PaintListener,
 			if (advancedPaint) {
 				drawPlayer(g);
 				drawMouse(g);
-				if (chickenPresent()) {
+				if (itemPresent(feathersID) && takeFeathers) {
+					RSItemTile feathertile = getNearestGroundItemByID(feathersID);
+					int feathertilex = feathertile.getX();
+					int feathertiley = feathertile.getY();
+					RSTile feathertilexy = new RSTile(feathertilex,
+							feathertiley);
+					if (tileOnScreen(feathertilexy)) {
+						overlayTile(g, feathertilexy, new Color(0, 255, 255,
+								100), 3);
+
+					}
+					if (tileOnMap(feathertilexy)) {
+						g.setColor(new Color(0, 255, 255, 75));
+						g.fillOval(tileToMinimap(feathertilexy).x - 3,
+								tileToMinimap(feathertilexy).y - 1, 2, 2);
+					}
+				} else if (takeArrow
+						&& (itemPresent(bronzeArrowID)
+								|| itemPresent(ironArrowID)
+								|| itemPresent(steelArrowID)
+								|| itemPresent(mithrilArrowID)
+								|| itemPresent(addyArrowID) || itemPresent(runeArrowID))) {
+					if (itemPresent(bronzeArrowID)) {
+						RSItemTile arrowtile = getNearestGroundItemByID(bronzeArrowID);
+						int arrowx = arrowtile.getX();
+						int arrowy = arrowtile.getY();
+						RSTile arrowxy = new RSTile(arrowx, arrowy);
+						if (tileOnScreen(arrowxy)) {
+							overlayTile(g, arrowxy,
+									new Color(255, 255, 0, 100), 4);
+						}
+						if (tileOnMap(arrowxy)) {
+							g.setColor(new Color(255, 255, 0, 100));
+							g.fillOval(tileToMinimap(arrowxy).x - 3,
+									tileToMinimap(arrowxy).y - 1, 2, 2);
+						}
+					} else if (itemPresent(ironArrowID)) {
+						RSItemTile arrowtile = getNearestGroundItemByID(ironArrowID);
+						int arrowx = arrowtile.getX();
+						int arrowy = arrowtile.getY();
+						RSTile arrowxy = new RSTile(arrowx, arrowy);
+						if (tileOnScreen(arrowxy)) {
+							overlayTile(g, arrowxy,
+									new Color(255, 255, 0, 100), 4);
+						}
+						if (tileOnMap(arrowxy)) {
+							g.setColor(new Color(255, 255, 0, 100));
+							g.fillOval(tileToMinimap(arrowxy).x - 3,
+									tileToMinimap(arrowxy).y - 1, 2, 2);
+						}
+					} else if (itemPresent(steelArrowID)) {
+						RSItemTile arrowtile = getNearestGroundItemByID(steelArrowID);
+						int arrowx = arrowtile.getX();
+						int arrowy = arrowtile.getY();
+						RSTile arrowxy = new RSTile(arrowx, arrowy);
+						if (tileOnScreen(arrowxy)) {
+							overlayTile(g, arrowxy,
+									new Color(255, 255, 0, 100), 4);
+						}
+						if (tileOnMap(arrowxy)) {
+							g.setColor(new Color(255, 255, 0, 100));
+							g.fillOval(tileToMinimap(arrowxy).x - 3,
+									tileToMinimap(arrowxy).y - 1, 2, 2);
+						}
+					} else if (itemPresent(mithrilArrowID)) {
+						RSItemTile arrowtile = getNearestGroundItemByID(mithrilArrowID);
+						int arrowx = arrowtile.getX();
+						int arrowy = arrowtile.getY();
+						RSTile arrowxy = new RSTile(arrowx, arrowy);
+						if (tileOnScreen(arrowxy)) {
+							overlayTile(g, arrowxy,
+									new Color(255, 255, 0, 100), 4);
+						}
+						if (tileOnMap(arrowxy)) {
+							g.setColor(new Color(255, 255, 0, 100));
+							g.fillOval(tileToMinimap(arrowxy).x - 3,
+									tileToMinimap(arrowxy).y - 1, 2, 2);
+						}
+					} else if (itemPresent(addyArrowID)) {
+						RSItemTile arrowtile = getNearestGroundItemByID(addyArrowID);
+						int arrowx = arrowtile.getX();
+						int arrowy = arrowtile.getY();
+						RSTile arrowxy = new RSTile(arrowx, arrowy);
+						if (tileOnScreen(arrowxy)) {
+							overlayTile(g, arrowxy,
+									new Color(255, 255, 0, 100), 4);
+						}
+						if (tileOnMap(arrowxy)) {
+							g.setColor(new Color(255, 255, 0, 100));
+							g.fillOval(tileToMinimap(arrowxy).x - 3,
+									tileToMinimap(arrowxy).y - 1, 2, 2);
+						}
+					} else if (itemPresent(runeArrowID)) {
+						RSItemTile arrowtile = getNearestGroundItemByID(runeArrowID);
+						int arrowx = arrowtile.getX();
+						int arrowy = arrowtile.getY();
+						RSTile arrowxy = new RSTile(arrowx, arrowy);
+						if (tileOnScreen(arrowxy)) {
+							overlayTile(g, arrowxy,
+									new Color(255, 255, 0, 100), 4);
+						}
+						if (tileOnMap(arrowxy)) {
+							g.setColor(new Color(255, 255, 0, 100));
+							g.fillOval(tileToMinimap(arrowxy).x - 3,
+									tileToMinimap(arrowxy).y - 1, 2, 2);
+						}
+					}
+
+				} else if (itemPresent(bonesID) && takeBones1) {
+					RSItemTile bonestile = getNearestGroundItemByID(bonesID);
+					int bonestilex = bonestile.getX();
+					int bonestiley = bonestile.getY();
+					RSTile bonestilexy = new RSTile(bonestilex, bonestiley);
+					if (tileOnScreen(bonestilexy)) {
+						overlayTile(g, bonestilexy,
+								new Color(255, 220, 0, 100), 2);
+
+					}
+					if (tileOnMap(bonestilexy)) {
+						g.setColor(new Color(255, 0, 0, 75));
+						g.fillOval(tileToMinimap(bonestilexy).x - 3,
+								tileToMinimap(bonestilexy).y - 1, 2, 2);
+					}
+
+				} else if (chickenPresent()) {
 					if (tileOnScreen(getNearestFreeNPCToAttackByName("Chicken")
 							.getLocation())) {
 						overlayTile(g, getNearestFreeNPCToAttackByName(
 								"Chicken").getLocation(), new Color(255, 0,
-								255, 75));
+								255, 100), 1);
 
 					}
 					if (tileOnMap(getNearestFreeNPCToAttackByName("Chicken")
@@ -402,15 +542,14 @@ public class XChickenSlaughter extends Script implements PaintListener,
 										"Chicken").getLocation()).y - 1, 2, 2);
 					}
 
-				}
-				if (itemPresent(bonesID)
-						&& ((takeBones2 && getNearestFreeNPCToAttackByName("Chicken") == null) || takeBones1)) {
+				} else if (itemPresent(bonesID) && takeBones2) {
 					RSItemTile bonestile = getNearestGroundItemByID(bonesID);
 					int bonestilex = bonestile.getX();
 					int bonestiley = bonestile.getY();
 					RSTile bonestilexy = new RSTile(bonestilex, bonestiley);
 					if (tileOnScreen(bonestilexy)) {
-						overlayTile(g, bonestilexy, new Color(255, 220, 0, 75));
+						overlayTile(g, bonestilexy,
+								new Color(255, 220, 0, 100), 2);
 
 					}
 					if (tileOnMap(bonestilexy)) {
@@ -419,23 +558,6 @@ public class XChickenSlaughter extends Script implements PaintListener,
 								tileToMinimap(bonestilexy).y - 1, 2, 2);
 					}
 
-				}
-				if (itemPresent(feathersID) && takeFeathers) {
-					RSItemTile feathertile = getNearestGroundItemByID(feathersID);
-					int feathertilex = feathertile.getX();
-					int feathertiley = feathertile.getY();
-					RSTile feathertilexy = new RSTile(feathertilex,
-							feathertiley);
-					if (tileOnScreen(feathertilexy)) {
-						overlayTile(g, feathertilexy, new Color(86, 243, 220,
-								75));
-
-					}
-					if (tileOnMap(feathertilexy)) {
-						g.setColor(new Color(86, 243, 220, 75));
-						g.fillOval(tileToMinimap(feathertilexy).x - 3,
-								tileToMinimap(feathertilexy).y - 1, 2, 2);
-					}
 				}
 
 			}
@@ -447,6 +569,7 @@ public class XChickenSlaughter extends Script implements PaintListener,
 				g.setColor(new Color(0, 0, 0, 150));
 				g.fillRect(r1.x, r1.y, r1.width, r1.height);
 				g.setColor(Color.WHITE);
+				g.setFont(new Font("sansserif", Font.PLAIN, 12));
 				drawString(g, "Show Paint", r1, 5);
 				break;
 			case 0: // DEFAULT TAB - MAIN
@@ -504,7 +627,7 @@ public class XChickenSlaughter extends Script implements PaintListener,
 				drawStringMain(g, "Version: ", Double.toString(properties
 						.version()), r, 20, 35, 0, true);
 				g.setFont(new Font("sansserif", Font.ITALIC, 12));
-				drawStringMain(g, "Script made by BeanMan ", "", r, 20, 35, 1,
+				drawStringMain(g, "Script made by BeanXMan ", "", r, 20, 35, 1,
 						true);
 				drawStringMain(g, "XScripting Inc. ", "", r, 20, 35, 1, false);
 				drawStringMain(g, "Credits to Garrett for his nice paint ", "",
@@ -576,6 +699,89 @@ public class XChickenSlaughter extends Script implements PaintListener,
 
 		private static final long serialVersionUID = 1L;
 
+		// GEN-BEGIN:variables
+		private JButton button1;
+		private JButton button2;
+		private JTabbedPane tabbedPane1;
+		private JPanel panel1;
+		private JLabel label3;
+		private JRadioButton radioButton2;
+		private JRadioButton radioButton1;
+		private JLabel label4;
+		private JRadioButton radioButton3;
+		private JRadioButton radioButton4;
+		private JRadioButton radioButton5;
+		private JLabel label12;
+		private JRadioButton radioButton6;
+		private JRadioButton radioButton7;
+		private JLabel label29;
+		private JComboBox comboBox1;
+		private JSeparator separator1;
+		private JSeparator separator3;
+		private JSeparator separator4;
+		private JSeparator separator5;
+		private JButton button3;
+		private JPanel panel4;
+		private JLabel label1;
+		private JCheckBox checkBox7;
+		private JCheckBox checkBox8;
+		private JCheckBox checkBox9;
+		private JLabel label19;
+		private JLabel label20;
+		private JLabel label22;
+		private JSeparator separator2;
+		private JSeparator separator7;
+		private JSeparator separator12;
+		private JTextField textField2;
+		private JTextField textField3;
+		private JTextField textField4;
+		private JLabel label23;
+		private JLabel label25;
+		private JSeparator separator8;
+		private JLabel label27;
+		private JPanel panel5;
+		private JLabel label24;
+		private JCheckBox checkBox1;
+		private JCheckBox checkBox2;
+		private JCheckBox checkBox3;
+		private JCheckBox checkBox4;
+		private JCheckBox checkBox5;
+		private JCheckBox checkBox6;
+		private JPanel panel2;
+		private JLabel label6;
+		private JSlider slider1;
+		private JLabel label7;
+		private JLabel label21;
+		private JRadioButton radioButton8;
+		private JRadioButton radioButton9;
+		private JRadioButton radioButton10;
+		private JLabel label26;
+		private JSeparator separator9;
+		private JSeparator separator10;
+		private JSeparator separator11;
+		private JLabel label30;
+		private JLabel label31;
+		private JRadioButton radioButton13;
+		private JRadioButton radioButton14;
+		private JLabel label13;
+		private JLabel label14;
+		private JComboBox comboBox2;
+		private JTextField textField1;
+		private JLabel label15;
+		private JLabel label18;
+		private JLabel label16;
+		private JPanel panel3;
+		private JLabel label2;
+		private JLabel label8;
+		private JLabel label9;
+		private JLabel label10;
+		private JLabel label11;
+		private JLabel label32;
+		private JSeparator separator6;
+		private JButton button4;
+		private JLabel label17;
+
+		// GEN-END:variables
 		public KillDaChicksGUI() {
 			initComponents();
 		}
@@ -589,24 +795,15 @@ public class XChickenSlaughter extends Script implements PaintListener,
 			if (comboBox2.getSelectedIndex() == 0) {
 				stopScriptAtLevel = false;
 			} else if (comboBox2.getSelectedIndex() == 1) {
-				SELECTED_STAT = STAT_ATTACK;
-				stopAtLevel = Integer.parseInt(textField1.getText());
-			} else if (comboBox2.getSelectedIndex() == 2) {
-				SELECTED_STAT = STAT_STRENGTH;
-				stopAtLevel = Integer.parseInt(textField1.getText());
-			} else if (comboBox2.getSelectedIndex() == 3) {
-				SELECTED_STAT = STAT_DEFENSE;
-				stopAtLevel = Integer.parseInt(textField1.getText());
-			} else if (comboBox2.getSelectedIndex() == 4) {
 				SELECTED_STAT = STAT_MAGIC;
 				stopAtLevel = Integer.parseInt(textField1.getText());
-			} else if (comboBox2.getSelectedIndex() == 5) {
+			} else if (comboBox2.getSelectedIndex() == 2) {
 				SELECTED_STAT = STAT_RANGE;
 				stopAtLevel = Integer.parseInt(textField1.getText());
-			} else if (comboBox2.getSelectedIndex() == 6) {
+			} else if (comboBox2.getSelectedIndex() == 3) {
 				SELECTED_STAT = STAT_HITPOINTS;
 				stopAtLevel = Integer.parseInt(textField1.getText());
-			} else if (comboBox2.getSelectedIndex() == 7) {
+			} else if (comboBox2.getSelectedIndex() == 4) {
 				SELECTED_STAT = STAT_PRAYER;
 				stopAtLevel = Integer.parseInt(textField1.getText());
 			}
@@ -646,9 +843,25 @@ public class XChickenSlaughter extends Script implements PaintListener,
 				log("We will take selected arrows");
 				takeArrow = true;
 			}
-			guiWait = false;
+			attackSwap = checkBox7.isSelected();
+			strengthSwap = checkBox8.isSelected();
+			defenseSwap = checkBox9.isSelected();
+			if (attackSwap || strengthSwap || defenseSwap) {
+				swapMode = true;
+				if (attackSwap) {
+					attackSwapLvl = Integer.parseInt(textField2.getText());
+				}
+				if (strengthSwap) {
+					strengthSwapLvl = Integer.parseInt(textField3.getText());
+				}
+				if (defenseSwap) {
+					defenseSwapLvl = Integer.parseInt(textField4.getText());
+				}
+			}
 
+			guiWait = false;
 			dispose();
+
 		}
 
 		private void button2ActionPerformed(ActionEvent e) {
@@ -658,18 +871,8 @@ public class XChickenSlaughter extends Script implements PaintListener,
 			dispose();
 		}
 
-		private void visitthreadActionPerformed(ActionEvent e) {
-			final int redirect = JOptionPane.showConfirmDialog(null,
-					"Are you sure you want to visit the thread?",
-					"Redirecting", JOptionPane.YES_NO_OPTION);
-			if (redirect == 0) {
-				openURL("http://www.rsbot.org/vb/showthread.php?t=212893");
-			}
-		}
-
 		private void initComponents() {
 			// GEN-BEGIN:initComponents
-			// Generated using JFormDesigner Evaluation license - Bert De Geyter
 			button1 = new JButton();
 			button2 = new JButton();
 			tabbedPane1 = new JTabbedPane();
@@ -681,35 +884,46 @@ public class XChickenSlaughter extends Script implements PaintListener,
 			radioButton3 = new JRadioButton();
 			radioButton4 = new JRadioButton();
 			radioButton5 = new JRadioButton();
-			label5 = new JLabel();
 			label12 = new JLabel();
 			radioButton6 = new JRadioButton();
 			radioButton7 = new JRadioButton();
-			label24 = new JLabel();
 			label29 = new JLabel();
 			comboBox1 = new JComboBox();
-			label30 = new JLabel();
-			radioButton13 = new JRadioButton();
-			radioButton14 = new JRadioButton();
-			label31 = new JLabel();
-			button3 = new JButton();
 			separator1 = new JSeparator();
-			separator2 = new JSeparator();
 			separator3 = new JSeparator();
 			separator4 = new JSeparator();
 			separator5 = new JSeparator();
+			button3 = new JButton();
+			panel4 = new JPanel();
+			label1 = new JLabel();
+			checkBox7 = new JCheckBox();
+			checkBox8 = new JCheckBox();
+			checkBox9 = new JCheckBox();
+			label19 = new JLabel();
+			label20 = new JLabel();
+			label22 = new JLabel();
+			separator2 = new JSeparator();
+			separator7 = new JSeparator();
+			separator12 = new JSeparator();
+			textField2 = new JTextField();
+			textField3 = new JTextField();
+			textField4 = new JTextField();
+			label23 = new JLabel();
+			label25 = new JLabel();
+			separator8 = new JSeparator();
+			label27 = new JLabel();
+			panel5 = new JPanel();
+			label24 = new JLabel();
 			checkBox1 = new JCheckBox();
 			checkBox2 = new JCheckBox();
 			checkBox3 = new JCheckBox();
 			checkBox4 = new JCheckBox();
 			checkBox5 = new JCheckBox();
 			checkBox6 = new JCheckBox();
-			separator7 = new JSeparator();
 			panel2 = new JPanel();
 			label6 = new JLabel();
 			slider1 = new JSlider();
 			label7 = new JLabel();
-			label13 = new JLabel();
 			label21 = new JLabel();
 			radioButton8 = new JRadioButton();
 			radioButton9 = new JRadioButton();
@@ -717,13 +931,18 @@ public class XChickenSlaughter extends Script implements PaintListener,
 			label26 = new JLabel();
 			separator9 = new JSeparator();
 			separator10 = new JSeparator();
-			comboBox2 = new JComboBox();
-			label14 = new JLabel();
-			label15 = new JLabel();
-			textField1 = new JTextField();
-			label16 = new JLabel();
 			separator11 = new JSeparator();
-			button4 = new JButton();
+			label30 = new JLabel();
+			label31 = new JLabel();
+			radioButton13 = new JRadioButton();
+			radioButton14 = new JRadioButton();
+			label13 = new JLabel();
+			label14 = new JLabel();
+			comboBox2 = new JComboBox();
+			textField1 = new JTextField();
+			label15 = new JLabel();
+			label18 = new JLabel();
+			label16 = new JLabel();
 			panel3 = new JPanel();
 			label2 = new JLabel();
 			label8 = new JLabel();
@@ -731,11 +950,13 @@ public class XChickenSlaughter extends Script implements PaintListener,
 			label10 = new JLabel();
 			label11 = new JLabel();
 			label32 = new JLabel();
+			separator6 = new JSeparator();
+			button4 = new JButton();
 			label17 = new JLabel();
 
 			// ======== this ========
-			setTitle("XChicken Slaugher GUI - BeanMan Xscripting Inc.");
-			setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
+			setTitle("XChickenSlaughter GUI - BeanXMan Xscripting Inc.");
+			setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
 			setCursor(Cursor.getPredefinedCursor(Cursor.CROSSHAIR_CURSOR));
 			setBackground(Color.white);
 			setResizable(false);
@@ -750,7 +971,7 @@ public class XChickenSlaughter extends Script implements PaintListener,
 				}
 			});
 			contentPane.add(button1);
-			button1.setBounds(100, 525, 75, 28);
+			button1.setBounds(85, 485, 100, 28);
 
 			// ---- button2 ----
 			button2.setText("Exit");
@@ -760,46 +981,45 @@ public class XChickenSlaughter extends Script implements PaintListener,
 				}
 			});
 			contentPane.add(button2);
-			button2.setBounds(230, 525, 70, 28);
+			button2.setBounds(215, 485, 100, 28);
 
 			// ======== tabbedPane1 ========
 			{
 
 				// ======== panel1 ========
 				{
-
 					panel1.setLayout(null);
 
 					// ---- label3 ----
-					label3.setText("Take feathers:");
+					label3.setText("Take Feathers:");
 					panel1.add(label3);
-					label3.setBounds(new Rectangle(new Point(5, 130), label3
+					label3.setBounds(new Rectangle(new Point(5, 85), label3
 							.getPreferredSize()));
 
 					// ---- radioButton2 ----
 					radioButton2.setText("Yes");
 					panel1.add(radioButton2);
-					radioButton2.setBounds(new Rectangle(new Point(125, 125),
+					radioButton2.setBounds(new Rectangle(new Point(125, 80),
 							radioButton2.getPreferredSize()));
 
 					// ---- radioButton1 ----
 					radioButton1.setText("No");
 					radioButton1.setSelected(true);
 					panel1.add(radioButton1);
-					radioButton1.setBounds(new Rectangle(new Point(210, 125),
+					radioButton1.setBounds(new Rectangle(new Point(210, 80),
 							radioButton1.getPreferredSize()));
 
 					// ---- label4 ----
-					label4.setText("Take & bury bones:");
+					label4.setText("Take & Bury Bones:");
 					panel1.add(label4);
-					label4.setBounds(new Rectangle(new Point(5, 160), label4
+					label4.setBounds(new Rectangle(new Point(5, 115), label4
 							.getPreferredSize()));
 
 					// ---- radioButton3 ----
 					radioButton3
 							.setText("Yes, take them as soon as they appear");
 					panel1.add(radioButton3);
-					radioButton3.setBounds(new Rectangle(new Point(125, 160),
+					radioButton3.setBounds(new Rectangle(new Point(125, 115),
 							radioButton3.getPreferredSize()));
 
 					// ---- radioButton4 ----
@@ -807,49 +1027,33 @@ public class XChickenSlaughter extends Script implements PaintListener,
 							.setText("Yes, take them when no chickens are around");
 					radioButton4.setSelected(true);
 					panel1.add(radioButton4);
-					radioButton4.setBounds(new Rectangle(new Point(125, 185),
+					radioButton4.setBounds(new Rectangle(new Point(125, 140),
 							radioButton4.getPreferredSize()));
 
 					// ---- radioButton5 ----
 					radioButton5.setText("No, I don't want any bones");
 					panel1.add(radioButton5);
-					radioButton5.setBounds(new Rectangle(new Point(125, 210),
+					radioButton5.setBounds(new Rectangle(new Point(125, 165),
 							radioButton5.getPreferredSize()));
-
-					// ---- label5 ----
-					label5
-							.setText("Note: taking & burying bones slows exp down!");
-					label5.setFont(label5.getFont().deriveFont(
-							label5.getFont().getSize() - 1f));
-					panel1.add(label5);
-					label5.setBounds(new Rectangle(new Point(135, 240), label5
-							.getPreferredSize()));
 
 					// ---- label12 ----
 					label12.setText("AntiBan:");
 					panel1.add(label12);
-					label12.setBounds(new Rectangle(new Point(5, 100), label12
+					label12.setBounds(new Rectangle(new Point(5, 55), label12
 							.getPreferredSize()));
 
 					// ---- radioButton6 ----
 					radioButton6.setText("Yes");
 					radioButton6.setSelected(true);
 					panel1.add(radioButton6);
-					radioButton6.setBounds(new Rectangle(new Point(125, 95),
+					radioButton6.setBounds(new Rectangle(new Point(125, 50),
 							radioButton6.getPreferredSize()));
 
 					// ---- radioButton7 ----
 					radioButton7.setText("No");
 					panel1.add(radioButton7);
-					radioButton7.setBounds(new Rectangle(new Point(210, 95),
+					radioButton7.setBounds(new Rectangle(new Point(210, 50),
 							radioButton7.getPreferredSize()));
-
-					// ---- label24 ----
-					label24
-							.setText("Select the arrows you would like to pick up:");
-					panel1.add(label24);
-					label24.setBounds(new Rectangle(new Point(5, 270), label24
-							.getPreferredSize()));
 
 					// ---- label29 ----
 					label29.setText("Location:");
@@ -862,96 +1066,29 @@ public class XChickenSlaughter extends Script implements PaintListener,
 							"Lumbridge East(near cowfield)",
 							"South of Falador", "Champions Guild" }));
 					panel1.add(comboBox1);
-					comboBox1.setBounds(new Rectangle(new Point(130, 15),
+					comboBox1.setBounds(new Rectangle(new Point(125, 15),
 							comboBox1.getPreferredSize()));
-
-					// ---- label30 ----
-					label30.setText("Would you like a ");
-					panel1.add(label30);
-					label30.setBounds(new Rectangle(new Point(5, 55), label30
-							.getPreferredSize()));
-
-					// ---- radioButton13 ----
-					radioButton13.setText("Yes");
-					radioButton13.setSelected(true);
-					panel1.add(radioButton13);
-					radioButton13.setBounds(new Rectangle(new Point(125, 55),
-							radioButton13.getPreferredSize()));
-
-					// ---- radioButton14 ----
-					radioButton14.setText("No");
-					panel1.add(radioButton14);
-					radioButton14.setBounds(new Rectangle(new Point(210, 55),
-							radioButton14.getPreferredSize()));
-
-					// ---- label31 ----
-					label31.setText(" more advanced paint:");
-					panel1.add(label31);
-					label31.setBounds(new Rectangle(new Point(5, 70), label31
-							.getPreferredSize()));
-
-					// ---- button3 ----
-					button3
-							.setText("Visit thread on forum to say thanks if you like my script!");
-					button3.addActionListener(new ActionListener() {
-						public void actionPerformed(ActionEvent e) {
-							visitthreadActionPerformed(e);
-						}
-					});
-					panel1.add(button3);
-					button3.setBounds(new Rectangle(new Point(40, 330), button3
-							.getPreferredSize()));
 					panel1.add(separator1);
 					separator1.setBounds(0, 45, 370, separator1
 							.getPreferredSize().height);
-					panel1.add(separator2);
-					separator2.setBounds(0, 90, 370, separator2
-							.getPreferredSize().height);
 					panel1.add(separator3);
-					separator3.setBounds(0, 120, 370, 2);
+					separator3.setBounds(0, 75, 370, 2);
 					panel1.add(separator4);
-					separator4.setBounds(0, 150, 370, 2);
+					separator4.setBounds(0, 105, 370, 2);
 					panel1.add(separator5);
-					separator5.setBounds(0, 260, 370, 2);
+					separator5.setBounds(0, 190, 370, 2);
 
-					// ---- checkBox1 ----
-					checkBox1.setText("Bronze");
-					panel1.add(checkBox1);
-					checkBox1.setBounds(new Rectangle(new Point(5, 290),
-							checkBox1.getPreferredSize()));
-
-					// ---- checkBox2 ----
-					checkBox2.setText("Iron");
-					panel1.add(checkBox2);
-					checkBox2.setBounds(new Rectangle(new Point(65, 290),
-							checkBox2.getPreferredSize()));
-
-					// ---- checkBox3 ----
-					checkBox3.setText("Steel");
-					panel1.add(checkBox3);
-					checkBox3.setBounds(new Rectangle(new Point(120, 290),
-							checkBox3.getPreferredSize()));
-
-					// ---- checkBox4 ----
-					checkBox4.setText("Mithril");
-					panel1.add(checkBox4);
-					checkBox4.setBounds(new Rectangle(new Point(180, 290),
-							checkBox4.getPreferredSize()));
-
-					// ---- checkBox5 ----
-					checkBox5.setText("Adamant");
-					panel1.add(checkBox5);
-					checkBox5.setBounds(new Rectangle(new Point(240, 290),
-							checkBox5.getPreferredSize()));
-
-					// ---- checkBox6 ----
-					checkBox6.setText("Rune");
-					panel1.add(checkBox6);
-					checkBox6.setBounds(new Rectangle(new Point(315, 290),
-							checkBox6.getPreferredSize()));
-					panel1.add(separator7);
-					separator7.setBounds(0, 320, 370, separator7
-							.getPreferredSize().height);
+					// ---- button3 ----
+					button3
+							.setText("Visit thread on RSBot.org to say \"Thanks\" if you like my script!");
+					button3.setFont(new Font("Comic Sans MS", Font.PLAIN, 11));
+					button3.addActionListener(new ActionListener() {
+						public void actionPerformed(ActionEvent e) {
+							visitthreadActionPerformed();
+						}
+					});
+					panel1.add(button3);
+					button3.setBounds(0, 230, 370, 45);
 
 					{ // compute preferred size
 						Dimension preferredSize = new Dimension();
@@ -972,6 +1109,193 @@ public class XChickenSlaughter extends Script implements PaintListener,
 				}
 				tabbedPane1.addTab("Basic Settings", panel1);
 
+				// ======== panel4 ========
+				{
+					panel4.setLayout(null);
+
+					// ---- label1 ----
+					label1.setText("Advanced FightMode swap:");
+					panel4.add(label1);
+					label1.setBounds(new Rectangle(new Point(5, 5), label1
+							.getPreferredSize()));
+
+					// ---- checkBox7 ----
+					checkBox7.setText("Attack:");
+					panel4.add(checkBox7);
+					checkBox7.setBounds(new Rectangle(new Point(25, 140),
+							checkBox7.getPreferredSize()));
+
+					// ---- checkBox8 ----
+					checkBox8.setText("Strength:");
+					panel4.add(checkBox8);
+					checkBox8.setBounds(new Rectangle(new Point(25, 175),
+							checkBox8.getPreferredSize()));
+
+					// ---- checkBox9 ----
+					checkBox9.setText("Defense:");
+					panel4.add(checkBox9);
+					checkBox9.setBounds(new Rectangle(new Point(25, 210),
+							checkBox9.getPreferredSize()));
+
+					// ---- label19 ----
+					label19
+							.setText("Choose your Melee-skills and their desired StopLevels to stop the script.");
+					panel4.add(label19);
+					label19.setBounds(new Rectangle(new Point(10, 40), label19
+							.getPreferredSize()));
+
+					// ---- label20 ----
+					label20
+							.setText("The script will change FightModes untill all desired levels have been");
+					panel4.add(label20);
+					label20.setBounds(new Rectangle(new Point(10, 60), label20
+							.getPreferredSize()));
+
+					// ---- label22 ----
+					label22.setText("reached.");
+					panel4.add(label22);
+					label22.setBounds(new Rectangle(new Point(10, 80), label22
+							.getPreferredSize()));
+					panel4.add(separator2);
+					separator2.setBounds(5, 35, 355, 2);
+
+					// ---- separator7 ----
+					separator7.setOrientation(SwingConstants.VERTICAL);
+					panel4.add(separator7);
+					separator7.setBounds(360, 35,
+							separator7.getPreferredSize().width, 75);
+
+					// ---- separator12 ----
+					separator12.setOrientation(SwingConstants.VERTICAL);
+					panel4.add(separator12);
+					separator12.setBounds(5, 35, 2, 75);
+
+					// ---- textField2 ----
+					textField2.setText("0");
+					panel4.add(textField2);
+					textField2.setBounds(125, 140, 20, textField2
+							.getPreferredSize().height);
+
+					// ---- textField3 ----
+					textField3.setText("0");
+					panel4.add(textField3);
+					textField3.setBounds(125, 175, 20, 21);
+
+					// ---- textField4 ----
+					textField4.setText("0");
+					panel4.add(textField4);
+					textField4.setBounds(125, 210, 20, 21);
+
+					// ---- label23 ----
+					label23.setText("Desired lvl:");
+					panel4.add(label23);
+					label23.setBounds(new Rectangle(new Point(110, 115),
+							label23.getPreferredSize()));
+
+					// ---- label25 ----
+					label25.setText("(only numbers)");
+					label25.setFont(label25.getFont().deriveFont(
+							label25.getFont().getSize() - 1f));
+					label25.setForeground(Color.red);
+					panel4.add(label25);
+					label25.setBounds(new Rectangle(new Point(105, 240),
+							label25.getPreferredSize()));
+					panel4.add(separator8);
+					separator8.setBounds(5, 110, 355, separator8
+							.getPreferredSize().height);
+
+					// ---- label27 ----
+					label27
+							.setText("Once the desired lvl(s) are reached, the script will stop and logout.");
+					panel4.add(label27);
+					label27.setBounds(new Rectangle(new Point(10, 95), label27
+							.getPreferredSize()));
+
+					{ // compute preferred size
+						Dimension preferredSize = new Dimension();
+						for (int i = 0; i < panel4.getComponentCount(); i++) {
+							Rectangle bounds = panel4.getComponent(i)
+									.getBounds();
+							preferredSize.width = Math.max(bounds.x
+									+ bounds.width, preferredSize.width);
+							preferredSize.height = Math.max(bounds.y
+									+ bounds.height, preferredSize.height);
+						}
+						Insets insets = panel4.getInsets();
+						preferredSize.width += insets.right;
+						preferredSize.height += insets.bottom;
+						panel4.setMinimumSize(preferredSize);
+						panel4.setPreferredSize(preferredSize);
+					}
+				}
+				tabbedPane1.addTab("Melee", panel4);
+
+				// ======== panel5 ========
+				{
+					panel5.setLayout(null);
+
+					// ---- label24 ----
+					label24
+							.setText("Select the arrows you would like to pick up:");
+					panel5.add(label24);
+					label24.setBounds(new Rectangle(new Point(15, 30), label24
+							.getPreferredSize()));
+
+					// ---- checkBox1 ----
+					checkBox1.setText("Bronze");
+					panel5.add(checkBox1);
+					checkBox1.setBounds(new Rectangle(new Point(15, 60),
+							checkBox1.getPreferredSize()));
+
+					// ---- checkBox2 ----
+					checkBox2.setText("Iron");
+					panel5.add(checkBox2);
+					checkBox2.setBounds(new Rectangle(new Point(75, 60),
+							checkBox2.getPreferredSize()));
+
+					// ---- checkBox3 ----
+					checkBox3.setText("Steel");
+					panel5.add(checkBox3);
+					checkBox3.setBounds(new Rectangle(new Point(130, 60),
+							checkBox3.getPreferredSize()));
+
+					// ---- checkBox4 ----
+					checkBox4.setText("Mithril");
+					panel5.add(checkBox4);
+					checkBox4.setBounds(new Rectangle(new Point(190, 60),
+							checkBox4.getPreferredSize()));
+
+					// ---- checkBox5 ----
+					checkBox5.setText("Adamant");
+					panel5.add(checkBox5);
+					checkBox5.setBounds(new Rectangle(new Point(250, 60),
+							checkBox5.getPreferredSize()));
+
+					// ---- checkBox6 ----
+					checkBox6.setText("Rune");
+					panel5.add(checkBox6);
+					checkBox6.setBounds(new Rectangle(new Point(315, 60),
+							checkBox6.getPreferredSize()));
+
+					{ // compute preferred size
+						Dimension preferredSize = new Dimension();
+						for (int i = 0; i < panel5.getComponentCount(); i++) {
+							Rectangle bounds = panel5.getComponent(i)
+									.getBounds();
+							preferredSize.width = Math.max(bounds.x
+									+ bounds.width, preferredSize.width);
+							preferredSize.height = Math.max(bounds.y
+									+ bounds.height, preferredSize.height);
+						}
+						Insets insets = panel5.getInsets();
+						preferredSize.width += insets.right;
+						preferredSize.height += insets.bottom;
+						panel5.setMinimumSize(preferredSize);
+						panel5.setPreferredSize(preferredSize);
+					}
+				}
+				tabbedPane1.addTab("Range", panel5);
+
 				// ======== panel2 ========
 				{
 					panel2.setLayout(null);
@@ -979,7 +1303,7 @@ public class XChickenSlaughter extends Script implements PaintListener,
 					// ---- label6 ----
 					label6.setText("MouseSpeed:");
 					panel2.add(label6);
-					label6.setBounds(new Rectangle(new Point(5, 10), label6
+					label6.setBounds(new Rectangle(new Point(5, 60), label6
 							.getPreferredSize()));
 
 					// ---- slider1 ----
@@ -991,111 +1315,136 @@ public class XChickenSlaughter extends Script implements PaintListener,
 					slider1.setToolTipText("MousSpeed");
 					slider1.setValue(5);
 					panel2.add(slider1);
-					slider1.setBounds(new Rectangle(new Point(130, 0), slider1
+					slider1.setBounds(new Rectangle(new Point(130, 50), slider1
 							.getPreferredSize()));
 
 					// ---- label7 ----
-					label7.setText("Note: Lower = Faster, 5 = default");
+					label7.setText("Note: Lower = Faster ; 5 = default");
 					label7.setFont(label7.getFont().deriveFont(
+							label7.getFont().getStyle() | Font.ITALIC,
 							label7.getFont().getSize() - 1f));
 					panel2.add(label7);
-					label7.setBounds(new Rectangle(new Point(140, 45), label7
-							.getPreferredSize()));
-
-					// ---- label13 ----
-					label13
-							.setText("Choose the skill and the desired lvl you want the script to stop at:");
-					panel2.add(label13);
-					label13.setBounds(new Rectangle(new Point(5, 65), label13
+					label7.setBounds(new Rectangle(new Point(5, 95), label7
 							.getPreferredSize()));
 
 					// ---- label21 ----
 					label21.setText("Use HoverMouse :");
 					panel2.add(label21);
-					label21.setBounds(new Rectangle(new Point(5, 165), label21
+					label21.setBounds(new Rectangle(new Point(5, 125), label21
 							.getPreferredSize()));
 
 					// ---- radioButton8 ----
 					radioButton8.setText("Yes, always");
 					panel2.add(radioButton8);
-					radioButton8.setBounds(new Rectangle(new Point(115, 160),
+					radioButton8.setBounds(new Rectangle(new Point(125, 120),
 							radioButton8.getPreferredSize()));
 
 					// ---- radioButton9 ----
 					radioButton9.setText("Yes, sometimes");
 					radioButton9.setSelected(true);
 					panel2.add(radioButton9);
-					radioButton9.setBounds(new Rectangle(new Point(115, 185),
+					radioButton9.setBounds(new Rectangle(new Point(125, 145),
 							radioButton9.getPreferredSize()));
 
 					// ---- radioButton10 ----
 					radioButton10.setText("No");
 					panel2.add(radioButton10);
-					radioButton10.setBounds(new Rectangle(new Point(115, 210),
+					radioButton10.setBounds(new Rectangle(new Point(125, 170),
 							radioButton10.getPreferredSize()));
 
 					// ---- label26 ----
 					label26
 							.setText("Note: option 2 requires AntiBan enabled, look at basic settings");
 					label26.setFont(label26.getFont().deriveFont(
+							label26.getFont().getStyle() | Font.ITALIC,
 							label26.getFont().getSize() - 1f));
 					panel2.add(label26);
-					label26.setBounds(new Rectangle(new Point(5, 230), label26
+					label26.setBounds(new Rectangle(new Point(5, 190), label26
 							.getPreferredSize()));
 					panel2.add(separator9);
-					separator9.setBounds(0, 60, 370, 5);
+					separator9.setBounds(0, 45, 370, 5);
 					panel2.add(separator10);
-					separator10.setBounds(0, 150, 370, 5);
+					separator10.setBounds(0, 115, 370, 5);
+					panel2.add(separator11);
+					separator11.setBounds(0, 210, 370, separator11
+							.getPreferredSize().height);
 
-					// ---- comboBox2 ----
-					comboBox2.setModel(new DefaultComboBoxModel(new String[] {
-							"I don't want to stop the script!", "Attack",
-							"Strength", "Defense", "Magic", "Ranged",
-							"Hitpoints", "Prayer" }));
-					panel2.add(comboBox2);
-					comboBox2.setBounds(new Rectangle(new Point(95, 90),
-							comboBox2.getPreferredSize()));
+					// ---- label30 ----
+					label30.setText("Would you like a ");
+					panel2.add(label30);
+					label30.setBounds(new Rectangle(new Point(8, 10), label30
+							.getPreferredSize()));
+
+					// ---- label31 ----
+					label31.setText(" more advanced paint:");
+					panel2.add(label31);
+					label31.setBounds(new Rectangle(new Point(5, 25), label31
+							.getPreferredSize()));
+
+					// ---- radioButton13 ----
+					radioButton13.setText("Yes");
+					radioButton13.setSelected(true);
+					panel2.add(radioButton13);
+					radioButton13.setBounds(new Rectangle(new Point(125, 10),
+							radioButton13.getPreferredSize()));
+
+					// ---- radioButton14 ----
+					radioButton14.setText("No");
+					panel2.add(radioButton14);
+					radioButton14.setBounds(new Rectangle(new Point(210, 10),
+							radioButton14.getPreferredSize()));
+
+					// ---- label13 ----
+					label13
+							.setText("Choose the skill & the desired lvl you want the script to stop at:");
+					panel2.add(label13);
+					label13.setBounds(new Rectangle(new Point(5, 215), label13
+							.getPreferredSize()));
 
 					// ---- label14 ----
 					label14.setText("Skill:");
 					panel2.add(label14);
-					label14.setBounds(new Rectangle(new Point(25, 95), label14
+					label14.setBounds(new Rectangle(new Point(25, 245), label14
 							.getPreferredSize()));
 
-					// ---- label15 ----
-					label15.setText("Level:");
-					panel2.add(label15);
-					label15.setBounds(new Rectangle(new Point(25, 125), label15
-							.getPreferredSize()));
+					// ---- comboBox2 ----
+					comboBox2.setModel(new DefaultComboBoxModel(new String[] {
+							"I don't want to stop the script!", "Magic",
+							"Ranged", "Hitpoints", "Prayer" }));
+					panel2.add(comboBox2);
+					comboBox2.setBounds(new Rectangle(new Point(95, 240),
+							comboBox2.getPreferredSize()));
 
 					// ---- textField1 ----
 					textField1.setText("0");
 					panel2.add(textField1);
-					textField1.setBounds(95, 120, 50, textField1
+					textField1.setBounds(95, 270, 50, textField1
 							.getPreferredSize().height);
+
+					// ---- label15 ----
+					label15.setText("Level:");
+					panel2.add(label15);
+					label15.setBounds(new Rectangle(new Point(25, 275), label15
+							.getPreferredSize()));
+
+					// ---- label18 ----
+					label18
+							.setText("Note: for more Melee-specific options on this, go to tab \"Melee\"");
+					label18.setFont(label18.getFont().deriveFont(
+							label18.getFont().getStyle() | Font.ITALIC,
+							label18.getFont().getSize() - 1f));
+					panel2.add(label18);
+					label18.setBounds(new Rectangle(new Point(5, 300), label18
+							.getPreferredSize()));
 
 					// ---- label16 ----
 					label16.setText("(only numbers)");
 					label16.setFont(label16.getFont().deriveFont(
 							label16.getFont().getSize() - 1f));
+					label16.setForeground(Color.red);
 					panel2.add(label16);
-					label16.setBounds(new Rectangle(new Point(160, 125),
+					label16.setBounds(new Rectangle(new Point(155, 275),
 							label16.getPreferredSize()));
-					panel2.add(separator11);
-					separator11.setBounds(0, 250, 370, separator11
-							.getPreferredSize().height);
-
-					// ---- button4 ----
-					button4
-							.setText("Visit thread on forum to say thanks if you like my script!");
-					button4.addActionListener(new ActionListener() {
-						public void actionPerformed(ActionEvent e) {
-							visitthreadActionPerformed(e);
-						}
-					});
-					panel2.add(button4);
-					button4.setBounds(new Rectangle(new Point(30, 290), button4
-							.getPreferredSize()));
 
 					{ // compute preferred size
 						Dimension preferredSize = new Dimension();
@@ -1121,40 +1470,75 @@ public class XChickenSlaughter extends Script implements PaintListener,
 					panel3.setLayout(null);
 
 					// ---- label2 ----
-					label2.setText("Made By BeanMan");
+					label2.setText("Made By BeanXMan");
+					label2.setFont(label2.getFont().deriveFont(
+							label2.getFont().getStyle() | Font.BOLD,
+							label2.getFont().getSize() + 5f));
+					label2.setForeground(Color.blue);
 					panel3.add(label2);
-					label2.setBounds(new Rectangle(new Point(10, 5), label2
+					label2.setBounds(new Rectangle(new Point(105, 5), label2
 							.getPreferredSize()));
 
 					// ---- label8 ----
-					label8.setText("Xscripting Inc.");
+					label8.setText("XScripting Inc.");
+					label8.setFont(label8.getFont().deriveFont(
+							label8.getFont().getStyle() | Font.BOLD,
+							label8.getFont().getSize() + 5f));
+					label8.setForeground(Color.blue);
 					panel3.add(label8);
-					label8.setBounds(new Rectangle(new Point(10, 20), label8
+					label8.setBounds(new Rectangle(new Point(125, 50), label8
 							.getPreferredSize()));
 
 					// ---- label9 ----
 					label9.setText("Credits to Taha, Epic_ for their antiban,");
+					label9.setForeground(new Color(88, 223, 0));
+					label9.setFont(label9.getFont().deriveFont(
+							label9.getFont().getStyle() | Font.BOLD));
 					panel3.add(label9);
-					label9.setBounds(80, 205, 195, 30);
+					label9.setBounds(65, 205, 235, 20);
 
 					// ---- label10 ----
 					label10
 							.setText("and Durka Durka Mahn for his auto-updating feature,");
+					label10.setForeground(new Color(88, 223, 0));
+					label10.setFont(label10.getFont().deriveFont(
+							label10.getFont().getStyle() | Font.BOLD));
 					panel3.add(label10);
-					label10.setBounds(new Rectangle(new Point(55, 235), label10
+					label10.setBounds(new Rectangle(new Point(30, 225), label10
 							.getPreferredSize()));
 
 					// ---- label11 ----
-					label11
-							.setText("Thank you to anyone at Xscripting team !!!");
+					label11.setText("Thanks a lot to BinaryX");
+					label11.setForeground(new Color(88, 223, 0));
+					label11.setFont(label11.getFont().deriveFont(
+							label11.getFont().getStyle() | Font.BOLD));
 					panel3.add(label11);
-					label11.setBounds(new Rectangle(new Point(75, 190), label11
-							.getPreferredSize()));
+					label11.setBounds(new Rectangle(new Point(110, 190),
+							label11.getPreferredSize()));
 
 					// ---- label32 ----
 					label32.setText("and Garret for his nice paint.");
+					label32.setForeground(new Color(88, 223, 0));
+					label32.setFont(label32.getFont().deriveFont(
+							label32.getFont().getStyle() | Font.BOLD));
 					panel3.add(label32);
-					label32.setBounds(new Rectangle(new Point(95, 255), label32
+					label32.setBounds(new Rectangle(new Point(100, 240),
+							label32.getPreferredSize()));
+					panel3.add(separator6);
+					separator6.setBounds(0, 125, 370, 2);
+
+					// ---- button4 ----
+					button4
+							.setText("Visit thread to say \"Thanks\" if you like my script!");
+					button4.setFont(button4.getFont().deriveFont(
+							button4.getFont().getStyle() & ~Font.BOLD));
+					button4.addActionListener(new ActionListener() {
+						public void actionPerformed(ActionEvent e) {
+							visitthreadActionPerformed();
+						}
+					});
+					panel3.add(button4);
+					button4.setBounds(new Rectangle(new Point(50, 85), button4
 							.getPreferredSize()));
 
 					{ // compute preferred size
@@ -1178,11 +1562,11 @@ public class XChickenSlaughter extends Script implements PaintListener,
 
 			}
 			contentPane.add(tabbedPane1);
-			tabbedPane1.setBounds(15, 130, 375, 390);
+			tabbedPane1.setBounds(15, 130, 375, 345);
 
 			// ---- label17 ----
 			label17
-					.setText("<html><img src=http://binaryx.nl/xscripting/beanman/XChickenSlaughter/xchickenslaughter.png /></html>");
+					.setText("<html><img src=http://binaryx.nl/beanman/xchickenslaughter.png /></html>");
 			contentPane.add(label17);
 			label17.setBounds(new Rectangle(new Point(30, 10), label17
 					.getPreferredSize()));
@@ -1202,7 +1586,7 @@ public class XChickenSlaughter extends Script implements PaintListener,
 				contentPane.setMinimumSize(preferredSize);
 				contentPane.setPreferredSize(preferredSize);
 			}
-			setSize(415, 595);
+			setSize(415, 555);
 			setLocationRelativeTo(getOwner());
 
 			// ---- buttonGroup1 ----
@@ -1221,89 +1605,31 @@ public class XChickenSlaughter extends Script implements PaintListener,
 			buttonGroup3.add(radioButton6);
 			buttonGroup3.add(radioButton7);
 
-			// ---- buttonGroup6 ----
-			ButtonGroup buttonGroup6 = new ButtonGroup();
-			buttonGroup6.add(radioButton13);
-			buttonGroup6.add(radioButton14);
-
 			// ---- buttonGroup4 ----
 			ButtonGroup buttonGroup4 = new ButtonGroup();
 			buttonGroup4.add(radioButton8);
 			buttonGroup4.add(radioButton9);
 			buttonGroup4.add(radioButton10);
+
+			// ---- buttonGroup6 ----
+			ButtonGroup buttonGroup6 = new ButtonGroup();
+			buttonGroup6.add(radioButton13);
+			buttonGroup6.add(radioButton14);
 			// GEN-END:initComponents
 		}
 
-		// GEN-BEGIN:variables
-		// Generated using JFormDesigner Evaluation license - Bert De Geyter
-		private JButton button1;
-		private JButton button2;
-		private JTabbedPane tabbedPane1;
-		private JPanel panel1;
-		private JLabel label3;
-		private JRadioButton radioButton2;
-		private JRadioButton radioButton1;
-		private JLabel label4;
-		private JRadioButton radioButton3;
-		private JRadioButton radioButton4;
-		private JRadioButton radioButton5;
-		private JLabel label5;
-		private JLabel label12;
-		private JRadioButton radioButton6;
-		private JRadioButton radioButton7;
-		private JLabel label24;
-		private JLabel label29;
-		private JComboBox comboBox1;
-		private JLabel label30;
-		private JRadioButton radioButton13;
-		private JRadioButton radioButton14;
-		private JLabel label31;
-		private JButton button3;
-		private JSeparator separator1;
-		private JSeparator separator2;
-		private JSeparator separator3;
-		private JSeparator separator4;
-		private JSeparator separator5;
-		private JCheckBox checkBox1;
-		private JCheckBox checkBox2;
-		private JCheckBox checkBox3;
-		private JCheckBox checkBox4;
-		private JCheckBox checkBox5;
-		private JCheckBox checkBox6;
-		private JSeparator separator7;
-		private JPanel panel2;
-		private JLabel label6;
-		private JSlider slider1;
-		private JLabel label7;
-		private JLabel label13;
-		private JLabel label21;
-		private JRadioButton radioButton8;
-		private JRadioButton radioButton9;
-		private JRadioButton radioButton10;
-		private JLabel label26;
-		private JSeparator separator9;
-		private JSeparator separator10;
-		private JComboBox comboBox2;
-		private JLabel label14;
-		private JLabel label15;
-		private JTextField textField1;
-		private JLabel label16;
-		private JSeparator separator11;
-		private JButton button4;
-		private JPanel panel3;
-		private JLabel label2;
-		private JLabel label8;
-		private JLabel label9;
-		private JLabel label10;
-		private JLabel label11;
-		private JLabel label32;
-		private JLabel label17;
-
-		// GEN-END:variables
+		private void visitthreadActionPerformed() {
+			final int redirect = JOptionPane.showConfirmDialog(null,
+					"Are you sure you want to visit the thread?",
+					"Redirecting", JOptionPane.YES_NO_OPTION);
+			if (redirect == 0) {
+				openURL("http://www.rsbot.org/vb/showthread.php?t=212893");
+			}
+		}
 	}
 
 	private enum State {
-		FIGHTING, ATTACK, PICKUPFEATHERS, PICKUPBONES, PICKBRONZEARROW, PICKIRONARROW, PICKSTEELARROW, PICKMITHRILARROW, PICKADDYARROW, PICKRUNEARROW, BURY, DROP, WAIT, SETRUN, WELCOMESCREEN, TOLOCATION, EQUIPBRONZE, EQUIPIRON, EQUIPSTEEL, EQUIPMITHRIL, EQUIPADDY, EQUIPRUNE, STOPSCRIPT, TOLUMBRIDGE, TOFALADOR
+		FIGHTING, ATTACK, PICKUPFEATHERS, PICKUPBONES, PICKBRONZEARROW, PICKIRONARROW, PICKSTEELARROW, PICKMITHRILARROW, PICKADDYARROW, PICKRUNEARROW, BURY, DROP, WAIT, SETRUN, WELCOMESCREEN, TOLOCATION, EQUIPBRONZE, EQUIPIRON, EQUIPSTEEL, EQUIPMITHRIL, EQUIPADDY, EQUIPRUNE, STOPSCRIPT, TOLUMBRIDGE, TOFALADOR, SWAPTOATTACK, SWAPTOSTRENGTH, SWAPTODEFENSE
 	}
 
 	private class XChickenSlaughterAntiBan implements Runnable {
@@ -1313,7 +1639,7 @@ public class XChickenSlaughter extends Script implements PaintListener,
 		public void run() {
 			while (!stopThread) {
 				try {
-					if (random(0, 12) == 0) {
+					if (random(0, 20) == 0) {
 						final char[] LR = new char[] { KeyEvent.VK_LEFT,
 								KeyEvent.VK_RIGHT };
 						final char[] UD = new char[] { KeyEvent.VK_DOWN,
@@ -1358,7 +1684,8 @@ public class XChickenSlaughter extends Script implements PaintListener,
 			startFeathers, mouseSpeed, actualMouseSpeed, SELECTED_STAT,
 			stopAtLevel, Xmin, Xmax, Ymin, Ymax, bronzeArrowID = 882,
 			ironArrowID = 884, steelArrowID = 886, mithrilArrowID = 888,
-			addyArrowID = 890, runeArrowID = 892;
+			addyArrowID = 890, runeArrowID = 892, attackSwapLvl,
+			strengthSwapLvl, defenseSwapLvl;
 	public int arrowID[] = { bronzeArrowID, ironArrowID, steelArrowID,
 			mithrilArrowID, addyArrowID, runeArrowID };
 	public int thingsToDrop[];
@@ -1367,15 +1694,18 @@ public class XChickenSlaughter extends Script implements PaintListener,
 	public boolean takeFeathers, takeBones1, takeBones2, guiWait = true,
 			guiExit, antibanGui, hoverMouse1, hoverMouse2, advancedPaint,
 			bronzeArrow, ironArrow, steelArrow, mithrilArrow, addyArrow,
-			runeArrow, takeArrow, noAmmo, stopScriptAtLevel = true;
+			runeArrow, takeArrow, noAmmo, stopScriptAtLevel = true, swapMode,
+			attackSwap, strengthSwap, defenseSwap, attackBusy, strengthBusy,
+			defenseBusy, reachedAllLevels, reachedAllLevels2,
+			notAtChampionsGuild;
 	public String location;
+	public String settings;
+	public String status = "Starting up...";
 	public RSTile lumbridge = new RSTile(3238, 3295);
 	public RSTile guild = new RSTile(3197, 3355);
 	public RSTile lumbridgeCenter = new RSTile(3234, 3296);
 	public RSTile falador = new RSTile(3027, 3286);
 	public long startTime = System.currentTimeMillis();
-
-	private String status = "Starting up...";
 
 	XChickenSlaughterAntiBan antiban;
 
@@ -1389,7 +1719,7 @@ public class XChickenSlaughter extends Script implements PaintListener,
 
 		// CREDITS TO EPIC_ FOR ANTIBAN
 
-		final int ranNo = random(0, 25);
+		final int ranNo = random(0, 40);
 
 		if (ranNo == 2) {
 
@@ -1412,58 +1742,109 @@ public class XChickenSlaughter extends Script implements PaintListener,
 
 			setCameraRotation(random(-360, 360));
 			return random(200, 400);
+
+		} else if (ranNo == 8) {
+			setCameraAltitude(true);
+			return random(200, 400);
+		} else if (ranNo == 9) {
+			setCameraAltitude(true);
+			return random(200, 400);
+		} else if (ranNo == 10) {
+			setCameraAltitude(true);
+			return random(200, 400);
+		} else if (ranNo == 11) {
+			setCameraAltitude(true);
+			return random(200, 400);
+		} else if (ranNo == 12) {
+			setCameraAltitude(true);
+			return random(200, 400);
 		} else if (ranNo == 7 && hoverMouse2) {
 
 			RSNPC chicken = getNearestFreeNPCToAttackByName("Chicken");
-			RSItemTile feathers = getNearestGroundItemByID(feathersID);
-			RSItemTile bones = getNearestGroundItemByID(bonesID);
-			if (feathers != null && takeFeathers) {
-				Point featherspoint = feathers.getScreenLocation();
-				if (!pointOnScreen(featherspoint)) {
-					turnToCharacter(chicken, 5);
-					wait(random(500, 1000));
+			if (chicken != null) {
+				if (itemPresent(feathersID) && takeFeathers) {
+					RSItemTile feathers = getNearestGroundItemByID(feathersID);
+					int feathersx = feathers.getX();
+					int feathersy = feathers.getY();
+					RSTile featherstile = new RSTile(feathersx, feathersy);
+					Point featherspoint = feathers.getScreenLocation();
+					if (!pointOnScreen(featherspoint)) {
+						turnToTile(featherstile, 5);
+						wait(random(500, 1000));
 
-				} else {
+					} else {
 
-					while (getMyPlayer().getInteracting() != null) {
-						RSItemTile feathers1 = getNearestGroundItemByID(feathersID);
-						Point featherspoint1 = feathers1.getScreenLocation();
-						moveMouse(featherspoint1);
+						while (getMyPlayer().getInteracting() != null) {
+							RSItemTile feathers1 = getNearestGroundItemByID(feathersID);
+							Point featherspoint1 = feathers1
+									.getScreenLocation();
+							moveMouse(featherspoint1);
+						}
+
+					}
+
+				} else if (itemPresent(bonesID) && takeBones1) {
+					RSItemTile bones = getNearestGroundItemByID(bonesID);
+					int bonesx = bones.getX();
+					int bonesy = bones.getY();
+					RSTile bonestile = new RSTile(bonesx, bonesy);
+					Point bonespoint = bones.getScreenLocation();
+					if (!pointOnScreen(bonespoint)) {
+						turnToTile(bonestile, 5);
+						wait(random(500, 1000));
+
+					} else {
+
+						while (getMyPlayer().getInteracting() != null) {
+							RSItemTile bones1 = getNearestGroundItemByID(bonesID);
+							Point bonespoint1 = bones1.getScreenLocation();
+							moveMouse(bonespoint1);
+						}
+
+					}
+
+				} else if (chickenPresent()) {
+					Point chickenpoint = chicken.getScreenLocation();
+					if (!pointOnScreen(chickenpoint)) {
+						turnToCharacter(chicken, 5);
+						wait(random(500, 1000));
+
+					} else {
+
+						while (getMyPlayer().getInteracting() != null) {
+							RSNPC chicken1 = getNearestFreeNPCToAttackByName("Chicken");
+							Point chickenpoint1 = chicken1.getScreenLocation();
+							moveMouse(chickenpoint1);
+						}
+
+					}
+
+				} else if (itemPresent(bonesID) && takeBones2) {
+					RSItemTile bones = getNearestGroundItemByID(bonesID);
+					int bonesx = bones.getX();
+					int bonesy = bones.getY();
+					RSTile bonestile = new RSTile(bonesx, bonesy);
+					Point bonespoint = bones.getScreenLocation();
+					if (!pointOnScreen(bonespoint)) {
+						turnToTile(bonestile, 5);
+						wait(random(500, 1000));
+
+					} else {
+
+						while (getMyPlayer().getInteracting() != null) {
+							RSItemTile bones1 = getNearestGroundItemByID(bonesID);
+							Point bonespoint1 = bones1.getScreenLocation();
+							moveMouse(bonespoint1);
+						}
+
 					}
 
 				}
-			} else if (chickenPresent()) {
-				Point chickenpoint = chicken.getScreenLocation();
-				if (!pointOnScreen(chickenpoint)) {
-					turnToCharacter(chicken, 5);
-					wait(random(500, 1000));
+				return random(200, 400);
 
-				} else {
-
-					while (getMyPlayer().getInteracting() != null) {
-						RSNPC chicken1 = getNearestFreeNPCToAttackByName("Chicken");
-						Point chickenpoint1 = chicken1.getScreenLocation();
-						moveMouse(chickenpoint1);
-					}
-
-				}
-			} else if (bones != null && (takeBones1 || takeBones2)) {
-				Point bonespoint = bones.getScreenLocation();
-				if (!pointOnScreen(bonespoint)) {
-					turnToCharacter(chicken, 5);
-					wait(random(500, 1000));
-
-				} else {
-					while (getMyPlayer().getInteracting() != null) {
-						moveMouse(bonespoint);
-						RSItemTile feathers1 = getNearestGroundItemByID(feathersID);
-						Point featherspoint1 = feathers1.getScreenLocation();
-						moveMouse(featherspoint1);
-					}
-
-				}
 			}
 			return random(200, 400);
+
 		}
 		return random(200, 450);
 	}
@@ -1502,173 +1883,216 @@ public class XChickenSlaughter extends Script implements PaintListener,
 	}
 
 	private State getState() {
-		if (RSInterface.getInterface(LoginBot.WELCOME_SCREEN_ID).getChild(
-				LoginBot.WELCOME_SCREEN_BUTTON_PLAY).getAbsoluteY() > 2) {
-			status = "WelcomeScreen";
-			return State.WELCOMESCREEN;
+
+		if (stopScriptAtLevel) {
+			if (skills.getCurrentSkillLevel(SELECTED_STAT) >= stopAtLevel) {
+				reachedAllLevels2 = true;
+				log("Desired level reached, stopping script!");
+				status = "Stopping Script";
+				return State.STOPSCRIPT;
+			}
 		}
 		if (!isRunning() && getEnergy() >= 20) {
 			status = "Activating run";
 			return State.SETRUN;
 		}
-		if (!playerInLocation()) {
+
+		if (playerInLocation()) {
+			if (noAmmo && takeArrow) {
+				if (bronzeArrow) {
+					if (inventoryContains(bronzeArrowID)) {
+						return State.EQUIPBRONZE;
+					} else {
+						return State.STOPSCRIPT;
+					}
+				}
+				if (ironArrow) {
+					if (inventoryContains(ironArrowID)) {
+						return State.EQUIPIRON;
+					} else {
+						return State.STOPSCRIPT;
+					}
+
+				}
+				if (steelArrow) {
+					if (inventoryContains(steelArrowID)) {
+						return State.EQUIPSTEEL;
+					} else {
+						return State.STOPSCRIPT;
+					}
+
+				}
+				if (mithrilArrow) {
+					if (inventoryContains(mithrilArrowID)) {
+						return State.EQUIPMITHRIL;
+					} else {
+						return State.STOPSCRIPT;
+					}
+				}
+				if (addyArrow) {
+					if (inventoryContains(addyArrowID)) {
+						return State.EQUIPADDY;
+					} else {
+						return State.STOPSCRIPT;
+					}
+				}
+				if (runeArrow) {
+					if (inventoryContains(runeArrowID)) {
+						return State.EQUIPRUNE;
+					} else {
+						return State.STOPSCRIPT;
+					}
+				}
+			}
+			if (swapMode) {
+				if (needToSwapToAttack()) {
+					attackBusy = true;
+					status = "Swapping to Attack";
+					return State.SWAPTOATTACK;
+				}
+				if (swapAttackFinished()) {
+					attackBusy = false;
+				}
+				if (needToSwapToStrength()) {
+					strengthBusy = true;
+					status = "Swapping to Strength";
+					return State.SWAPTOSTRENGTH;
+				}
+				if (swapStrengthFinished()) {
+					strengthBusy = false;
+				}
+				if (needToSwapToDefense()) {
+					defenseBusy = true;
+					status = "Swapping to Defense";
+					return State.SWAPTODEFENSE;
+				}
+				if (swapDefenseFinished()) {
+					defenseBusy = false;
+				}
+				if (!attackBusy && !strengthBusy && !defenseBusy) {
+					reachedAllLevels = true;
+					status = "Levels reached,stopping";
+					return State.STOPSCRIPT;
+				}
+			}
+			if (getMyPlayer().getInteracting() == null) {
+				if (getInventoryCount() == 28
+						&& getInventoryCount(bonesID) != 0) {
+					status = "Burying";
+					return State.BURY;
+				}
+				if (takeFeathers
+						&& itemPresent(feathersID)
+						&& (getInventoryCount() <= 27 || inventoryContainsOneOf(feathersID))) {
+					status = "Picking up feathers";
+					return State.PICKUPFEATHERS;
+				}
+				if (takeArrow) {
+					if (bronzeArrow) {
+						if (itemPresent(bronzeArrowID)
+								&& (getInventoryCount() <= 27 || inventoryContainsOneOf(bronzeArrowID))) {
+							status = "Picking up arrows";
+							return State.PICKBRONZEARROW;
+
+						}
+					}
+					if (ironArrow) {
+						if (itemPresent(ironArrowID)
+								&& (getInventoryCount() <= 27 || inventoryContainsOneOf(ironArrowID))) {
+							status = "Picking up arrows";
+							return State.PICKIRONARROW;
+
+						}
+
+					}
+					if (steelArrow) {
+						if (itemPresent(steelArrowID)
+								&& (getInventoryCount() <= 27 || inventoryContainsOneOf(steelArrowID))) {
+							status = "Picking up arrows";
+							return State.PICKSTEELARROW;
+
+						}
+
+					}
+					if (mithrilArrow) {
+						if (itemPresent(mithrilArrowID)
+								&& (getInventoryCount() <= 27 || inventoryContainsOneOf(mithrilArrowID))) {
+							status = "Picking up arrows";
+							return State.PICKMITHRILARROW;
+
+						}
+
+					}
+					if (addyArrow) {
+						if (itemPresent(addyArrowID)
+								&& (getInventoryCount() <= 27 || inventoryContainsOneOf(addyArrowID))) {
+							status = "Picking up arrows";
+							return State.PICKADDYARROW;
+
+						}
+
+					}
+					if (runeArrow) {
+						if (itemPresent(runeArrowID)
+								&& (getInventoryCount() <= 27 || inventoryContainsOneOf(runeArrowID))) {
+							status = "Picking up arrows";
+							return State.PICKRUNEARROW;
+
+						}
+
+					}
+
+				}
+
+				if ((takeBones1 || takeBones2) && itemPresent(bonesID)
+						&& getInventoryCount() <= 27) {
+					if (takeBones1) {
+						status = "Picking up bones";
+						return State.PICKUPBONES;
+					}
+					if (takeBones2 && chickenPresent()) {
+						status = "Attacking";
+						return State.ATTACK;
+					} else {
+						status = "Picking up bones";
+						return State.PICKUPBONES;
+					}
+
+				}
+
+				if (chickenPresent()) {
+					status = "Attacking";
+					return State.ATTACK;
+				}
+				if (inventoryContainsOneOf(thingsToDrop)) {
+					status = "Dropping junk";
+					return State.DROP;
+				}
+
+			} else {
+				status = "Fighting";
+				return State.FIGHTING;
+			}
+
+		} else {
+
 			if (location.equals("Lumbridge East(near cowfield)")) {
 				status = "Walking to lumbridge";
 				return State.TOLUMBRIDGE;
 			} else if (location.equals("Champions Guild")) {
 				status = "Stopping script";
-				log("------>READ: ");
-				log("Pls start the script when you already are inside the champion guild !");
+				log.severe("------>READ: ");
+				log
+						.severe("Pls start the script when you already are inside the champion guild !");
+				log("stopping script");
+				notAtChampionsGuild = true;
 				return State.STOPSCRIPT;
 			} else if (location.equals("South of Falador")) {
 				status = "Walking to Falador!";
 				return State.TOFALADOR;
-
 			}
 
 		}
-
-		if (noAmmo && takeArrow) {
-			if (bronzeArrow) {
-				if (inventoryContains(bronzeArrowID)) {
-					return State.EQUIPBRONZE;
-				} else {
-					return State.STOPSCRIPT;
-				}
-			}
-			if (ironArrow) {
-				if (inventoryContains(ironArrowID)) {
-					return State.EQUIPIRON;
-				} else {
-					return State.STOPSCRIPT;
-				}
-
-			}
-			if (steelArrow) {
-				if (inventoryContains(steelArrowID)) {
-					return State.EQUIPSTEEL;
-				} else {
-					return State.STOPSCRIPT;
-				}
-
-			}
-			if (mithrilArrow) {
-				if (inventoryContains(mithrilArrowID)) {
-					return State.EQUIPMITHRIL;
-				} else {
-					return State.STOPSCRIPT;
-				}
-
-			}
-			if (addyArrow) {
-				if (inventoryContains(addyArrowID)) {
-					return State.EQUIPADDY;
-				} else {
-					return State.STOPSCRIPT;
-				}
-
-			}
-			if (runeArrow) {
-				if (inventoryContains(runeArrowID)) {
-					return State.EQUIPRUNE;
-				} else {
-					return State.STOPSCRIPT;
-				}
-
-			}
-
-		}
-
-		if (getMyPlayer().getInteracting() != null) {
-			status = "Fighting";
-			return State.FIGHTING;
-		}
-
-		if (getInventoryCount() == 28 && getInventoryCount(bonesID) != 0) {
-			status = "Burying";
-			return State.BURY;
-		}
-		if (takeFeathers
-				&& itemPresent(feathersID)
-				&& (getInventoryCount() <= 27 || inventoryContainsOneOf(feathersID))) {
-			status = "Picking up feathers";
-			return State.PICKUPFEATHERS;
-		}
-		if (takeArrow) {
-			if (bronzeArrow) {
-				if (itemPresent(bronzeArrowID)
-						&& (getInventoryCount() <= 27 || inventoryContainsOneOf(bronzeArrowID))) {
-					status = "Picking up arrows";
-					return State.PICKBRONZEARROW;
-
-				}
-			}
-			if (ironArrow) {
-				if (itemPresent(ironArrowID)
-						&& (getInventoryCount() <= 27 || inventoryContainsOneOf(ironArrowID))) {
-					status = "Picking up arrows";
-					return State.PICKIRONARROW;
-
-				}
-
-			}
-			if (steelArrow) {
-				if (itemPresent(steelArrowID)
-						&& (getInventoryCount() <= 27 || inventoryContainsOneOf(steelArrowID))) {
-					status = "Picking up arrows";
-					return State.PICKSTEELARROW;
-
-				}
-
-			}
-			if (mithrilArrow) {
-				if (itemPresent(mithrilArrowID)
-						&& (getInventoryCount() <= 27 || inventoryContainsOneOf(mithrilArrowID))) {
-					status = "Picking up arrows";
-					return State.PICKMITHRILARROW;
-
-				}
-
-			}
-			if (addyArrow) {
-				if (itemPresent(addyArrowID)
-						&& (getInventoryCount() <= 27 || inventoryContainsOneOf(addyArrowID))) {
-					status = "Picking up arrows";
-					return State.PICKADDYARROW;
-
-				}
-
-			}
-			if (runeArrow) {
-				if (itemPresent(runeArrowID)
-						&& (getInventoryCount() <= 27 || inventoryContainsOneOf(runeArrowID))) {
-					status = "Picking up arrows";
-					return State.PICKRUNEARROW;
-
-				}
-
-			}
-
-		}
-
-		if (takeBones1 && itemPresent(bonesID) && getInventoryCount() <= 27) {
-			status = "Picking up bones";
-			return State.PICKUPBONES;
-		}
-
-		if (chickenPresent()) {
-			status = "Attacking";
-			return State.ATTACK;
-		}
-		if (inventoryContainsOneOf(thingsToDrop)) {
-			status = "Dropping junk";
-			return State.DROP;
-		}
-		if (takeBones2 && itemPresent(bonesID) && getInventoryCount() <= 27) {
-			status = "Picking up bones";
-			return State.PICKUPBONES;
-		}
-
 		status = "Waiting...";
 		return State.WAIT;
 
@@ -1712,14 +2136,6 @@ public class XChickenSlaughter extends Script implements PaintListener,
 				}
 			}
 
-			if (stopScriptAtLevel) {
-				if (skills.getCurrentSkillLevel(SELECTED_STAT) >= stopAtLevel) {
-					log("Desired level reached, stopping script!");
-					logout();
-					stopScript(true);
-				}
-			}
-
 			thePainter.scriptRunning = true;
 
 			if (!thePainter.savedStats) {
@@ -1739,11 +2155,12 @@ public class XChickenSlaughter extends Script implements PaintListener,
 					if (door4 != null) {
 						if (!tileOnScreen(door4.getLocation())) {
 							walkTileOnScreen(new RSTile(3021, 3293));
+							moveMouseSlightly();
 							wait(random(1000, 1500));
 							break;
 						} else {
-
 							atDoor(8695, 'e');
+							moveMouseSlightly();
 							wait(random(1000, 1500));
 							break;
 						}
@@ -1751,6 +2168,7 @@ public class XChickenSlaughter extends Script implements PaintListener,
 					} else {
 						walkTileOnScreen(randomizeTile(new RSTile(3018, 3292),
 								1, 1));
+						moveMouseSlightly();
 						wait(random(1000, 1500));
 					}
 
@@ -1763,16 +2181,19 @@ public class XChickenSlaughter extends Script implements PaintListener,
 					if (door3 != null) {
 						if (!tileOnScreen(door3.getLocation())) {
 							walkTileOnScreen(new RSTile(3024, 3290));
+							moveMouseSlightly();
 							wait(random(1000, 1500));
 							break;
 						} else {
 							atDoor(8695, 's');
+							moveMouseSlightly();
 							wait(random(1000, 1500));
 							break;
 						}
 
 					} else {
 						walkTileOnScreen(new RSTile(3021, 3293));
+						moveMouseSlightly();
 						wait(random(1000, 1500));
 					}
 
@@ -1785,17 +2206,20 @@ public class XChickenSlaughter extends Script implements PaintListener,
 					if (door2 != null) {
 						if (!tileOnScreen(door2.getLocation())) {
 							walkTileOnScreen(new RSTile(3026, 3287));
+							moveMouseSlightly();
 							wait(random(1000, 1500));
 							break;
 						} else {
 
 							atDoor(8695, 'w');
+							moveMouseSlightly();
 							wait(random(1000, 1500));
 							break;
 						}
 
 					} else {
 						walkTileOnScreen(new RSTile(3024, 3290));
+						moveMouseSlightly();
 						wait(random(1000, 1500));
 					}
 
@@ -1803,11 +2227,14 @@ public class XChickenSlaughter extends Script implements PaintListener,
 
 				} else {
 					walkTo(new RSTile(3026, 3287));
+					moveMouseSlightly();
 					if (waitToMove(random(1000, 1500))) {
 						while (getMyPlayer().isMoving()) {
 							wait(random(20, 30));
 						}
+
 					}
+
 				}
 				break;
 
@@ -1821,26 +2248,31 @@ public class XChickenSlaughter extends Script implements PaintListener,
 					if (door5 != null) {
 						if (!tileOnScreen(door5.getLocation())) {
 							walkTileOnScreen(new RSTile(3238, 3295));
+							moveMouseSlightly();
 							wait(random(1000, 1500));
 							break;
 						} else {
 							atDoor(45206, 'w');
+							moveMouseSlightly();
 							wait(random(1000, 1500));
 							break;
 						}
 
 					} else {
 						walkTileOnScreen(new RSTile(3233, 3297));
+						moveMouseSlightly();
 						wait(random(1000, 1500));
 						break;
 
 					}
 				} else {
 					walkTo(new RSTile(3238, 3295));
+					moveMouseSlightly();
 					if (waitToMove(random(1000, 1500))) {
 						while (getMyPlayer().isMoving()) {
 							wait(random(20, 30));
 						}
+
 					}
 					break;
 				}
@@ -1850,58 +2282,97 @@ public class XChickenSlaughter extends Script implements PaintListener,
 				if (hoverMouse1) {
 					status = "Hovering mouse";
 					RSNPC chicken = getNearestFreeNPCToAttackByName("Chicken");
-					RSItemTile feathers = getNearestGroundItemByID(feathersID);
-					RSItemTile bones = getNearestGroundItemByID(bonesID);
-					if (feathers != null && takeFeathers) {
-						Point featherspoint = feathers.getScreenLocation();
-						if (!pointOnScreen(featherspoint)) {
-							turnToCharacter(chicken, 5);
-							wait(random(500, 1000));
+					if (chicken != null) {
+						if (itemPresent(feathersID) && takeFeathers) {
+							RSItemTile feathers = getNearestGroundItemByID(feathersID);
+							int feathersx = feathers.getX();
+							int feathersy = feathers.getY();
+							RSTile featherstile = new RSTile(feathersx,
+									feathersy);
+							Point featherspoint = feathers.getScreenLocation();
+							if (!pointOnScreen(featherspoint)) {
+								turnToTile(featherstile, 5);
+								wait(random(500, 1000));
+								break;
 
-						} else {
+							} else {
 
-							while (getMyPlayer().getInteracting() != null) {
-								RSItemTile feathers1 = getNearestGroundItemByID(feathersID);
-								Point featherspoint1 = feathers1
-										.getScreenLocation();
-								moveMouse(featherspoint1);
+								while (getMyPlayer().getInteracting() != null) {
+									RSItemTile feathers1 = getNearestGroundItemByID(feathersID);
+									Point featherspoint1 = feathers1
+											.getScreenLocation();
+									moveMouse(featherspoint1);
+								}
+
 							}
+							break;
+						} else if (itemPresent(bonesID) && takeBones1) {
+							RSItemTile bones = getNearestGroundItemByID(bonesID);
+							int bonesx = bones.getX();
+							int bonesy = bones.getY();
+							RSTile bonestile = new RSTile(bonesx, bonesy);
+							Point bonespoint = bones.getScreenLocation();
+							if (!pointOnScreen(bonespoint)) {
+								turnToTile(bonestile, 5);
+								wait(random(500, 1000));
+								break;
 
-						}
-					} else if (chickenPresent()) {
-						Point chickenpoint = chicken.getScreenLocation();
-						if (!pointOnScreen(chickenpoint)) {
-							turnToCharacter(chicken, 5);
-							wait(random(500, 1000));
+							} else {
 
-						} else {
+								while (getMyPlayer().getInteracting() != null) {
+									RSItemTile bones1 = getNearestGroundItemByID(bonesID);
+									Point bonespoint1 = bones1
+											.getScreenLocation();
+									moveMouse(bonespoint1);
+								}
 
-							while (getMyPlayer().getInteracting() != null) {
-								RSNPC chicken1 = getNearestFreeNPCToAttackByName("Chicken");
-								Point chickenpoint1 = chicken1
-										.getScreenLocation();
-								moveMouse(chickenpoint1);
 							}
+							break;
+						} else if (chickenPresent()) {
+							Point chickenpoint = chicken.getScreenLocation();
+							if (!pointOnScreen(chickenpoint)) {
+								turnToCharacter(chicken, 5);
+								wait(random(500, 1000));
+								break;
 
-						}
-					} else if (bones != null && (takeBones1 || takeBones2)) {
-						Point bonespoint = bones.getScreenLocation();
-						if (!pointOnScreen(bonespoint)) {
-							turnToCharacter(chicken, 5);
-							wait(random(500, 1000));
+							} else {
 
-						} else {
-							while (getMyPlayer().getInteracting() != null) {
-								moveMouse(bonespoint);
-								RSItemTile feathers1 = getNearestGroundItemByID(feathersID);
-								Point featherspoint1 = feathers1
-										.getScreenLocation();
-								moveMouse(featherspoint1);
+								while (getMyPlayer().getInteracting() != null) {
+									RSNPC chicken1 = getNearestFreeNPCToAttackByName("Chicken");
+									Point chickenpoint1 = chicken1
+											.getScreenLocation();
+									moveMouse(chickenpoint1);
+								}
+
 							}
+							break;
+						} else if (itemPresent(bonesID) && takeBones2) {
+							RSItemTile bones = getNearestGroundItemByID(bonesID);
+							int bonesx = bones.getX();
+							int bonesy = bones.getY();
+							RSTile bonestile = new RSTile(bonesx, bonesy);
+							Point bonespoint = bones.getScreenLocation();
+							if (!pointOnScreen(bonespoint)) {
+								turnToTile(bonestile, 5);
+								wait(random(500, 1000));
+								break;
 
+							} else {
+
+								while (getMyPlayer().getInteracting() != null) {
+									RSItemTile bones1 = getNearestGroundItemByID(bonesID);
+									Point bonespoint1 = bones1
+											.getScreenLocation();
+									moveMouse(bonespoint1);
+								}
+
+							}
+							break;
 						}
+						break;
 					}
 					break;
+
 				}
 				if (hoverMouse2 && antibanGui) {
 					status = "AntiBan";
@@ -1917,18 +2388,28 @@ public class XChickenSlaughter extends Script implements PaintListener,
 				RSNPC chicken = getNearestFreeNPCToAttackByName("Chicken");
 				RSTile chickentile = chicken.getLocation();
 				if (!pointOnScreen(chicken.getScreenLocation())) {
-					walkTileOnScreen(chickentile);
-					wait(random(1000, 1500));
-
-				} else {
-					if (getMyPlayer().getInteracting() == null) {
-						atNPC(chicken, "Attack");
-						moveMouseSlightly();
+					if (distanceTo(chicken) <= 7) {
+						walkTileOnScreen(chickentile);
+						wait(random(1000, 1500));
+					} else {
+						walkTo(chickentile);
 						if (waitToMove(random(1000, 1500))) {
 							while (getMyPlayer().isMoving()) {
 								wait(random(20, 30));
 							}
+
 						}
+					}
+
+				} else {
+
+					atNPC(chicken, "Attack");
+					moveMouseSlightly();
+					if (waitToMove(random(1000, 1500))) {
+						while (getMyPlayer().isMoving()) {
+							wait(random(20, 30));
+						}
+
 					}
 
 				}
@@ -1967,52 +2448,73 @@ public class XChickenSlaughter extends Script implements PaintListener,
 				break;
 
 			case STOPSCRIPT:
-				stopScript();
+				if (noAmmo) {
+					log("Stopping script: we ran out of arrows !");
+					stopScript(true);
+					break;
+				} else if (reachedAllLevels) {
+					log("Stopping script: all requested melee types were done !");
+					stopScript(true);
+					break;
+				} else if (reachedAllLevels2) {
+					stopScript(true);
+					break;
+				} else if (notAtChampionsGuild) {
+					stopScript(false);
+					break;
+				}
+
 				break;
 
 			case EQUIPBRONZE:
 				atInventoryItem(bronzeArrowID, "Wield");
+				moveMouseSlightly();
 				wait(500);
 				noAmmo = false;
 				break;
 
 			case EQUIPIRON:
 				atInventoryItem(ironArrowID, "Wield");
+				moveMouseSlightly();
 				wait(500);
 				noAmmo = false;
 				break;
 
 			case EQUIPSTEEL:
 				atInventoryItem(steelArrowID, "Wield");
+				moveMouseSlightly();
 				wait(500);
 				noAmmo = false;
 				break;
 
 			case EQUIPMITHRIL:
 				atInventoryItem(mithrilArrowID, "Wield");
+				moveMouseSlightly();
 				wait(500);
 				noAmmo = false;
 				break;
 
 			case EQUIPADDY:
 				atInventoryItem(addyArrowID, "Wield");
+				moveMouseSlightly();
 				wait(500);
 				noAmmo = false;
 				break;
 
 			case EQUIPRUNE:
 				atInventoryItem(runeArrowID, "Wield");
+				moveMouseSlightly();
 				wait(500);
 				noAmmo = false;
 				break;
 
 			case BURY:
-				while (getInventoryCount(bonesID) != 0) {
+				while (inventoryContains(bonesID)) {
 					if (atInventoryItem(bonesID, "Bury")) {
-						wait(random(200, 400));
-						if (waitForAnim(random(750, 900)) != -1) {
+						moveMouseRandomly(random(0, 20));
+						if (waitForAnim(random(800, 1200)) != -1) {
 							while (getMyPlayer().getAnimation() != -1) {
-								wait(random(100, 300));
+								wait(random(50, 100));
 							}
 						}
 					}
@@ -2024,15 +2526,33 @@ public class XChickenSlaughter extends Script implements PaintListener,
 				for (int i = 0; i < thingsToDrop.length; i++) {
 					if (inventoryContains(thingsToDrop[i])) {
 						atInventoryItem(thingsToDrop[i], "Drop");
-
+						moveMouseSlightly();
 						wait(random(800, 1200));
 					}
 				}
+				break;
 
+			case SWAPTOATTACK:
+				setFightMode(0);
+				moveMouseSlightly();
+				wait(random(500, 1000));
+				break;
+
+			case SWAPTOSTRENGTH:
+				setFightMode(1);
+				moveMouseSlightly();
+				wait(random(500, 1000));
+				break;
+
+			case SWAPTODEFENSE:
+				setFightMode(2);
+				moveMouseSlightly();
+				wait(random(500, 1000));
 				break;
 
 			case SETRUN:
 				setRun(true);
+				moveMouseSlightly();
 				wait(random(800, 1000));
 				break;
 
@@ -2060,6 +2580,39 @@ public class XChickenSlaughter extends Script implements PaintListener,
 		setCameraRotation(angle);
 	}
 
+	public boolean needToSwapToAttack() {
+		if (attackSwap
+				&& skills.getCurrentSkillLevel(STAT_ATTACK) < attackSwapLvl
+				&& !attackBusy && !strengthBusy && !defenseBusy) {
+			return true;
+		} else {
+
+			return false;
+		}
+	}
+
+	public boolean needToSwapToDefense() {
+		if (defenseSwap
+				&& skills.getCurrentSkillLevel(STAT_DEFENSE) < defenseSwapLvl
+				&& !attackBusy && !strengthBusy && !defenseBusy) {
+			return true;
+		} else {
+
+			return false;
+		}
+	}
+
+	public boolean needToSwapToStrength() {
+		if (strengthSwap
+				&& skills.getCurrentSkillLevel(STAT_STRENGTH) < strengthSwapLvl
+				&& !attackBusy && !strengthBusy && !defenseBusy) {
+			return true;
+		} else {
+
+			return false;
+		}
+	}
+
 	public void onFinish() {
 		ScreenshotUtil.takeScreenshot(true);
 		antiban.stopThread = true;
@@ -2067,12 +2620,11 @@ public class XChickenSlaughter extends Script implements PaintListener,
 	}
 
 	public void onRepaint(final Graphics g) {
-
-		thePainter.paint(g);
-
+				thePainter.paint(g);
 	}
 
 	public boolean onStart(Map<String, String> args) {
+		log("/////////////////////////////////////////////////////////////////////////////////////////////////");
 		URLConnection url = null;
 		BufferedReader in = null;
 		BufferedWriter out = null;
@@ -2080,25 +2632,28 @@ public class XChickenSlaughter extends Script implements PaintListener,
 		try {
 
 			url = new URL(
-					"http://www.binaryx.nl/xscripting/beanman/XChickenSlaughter/XChickenSlaughterVERSION.txt")
+					"http://binaryx.nl/beanman/XChickenSlaughterVERSION.txt")
 					.openConnection();
 
 			in = new BufferedReader(new InputStreamReader(url.getInputStream()));
 
 			if (Double.parseDouble(in.readLine()) > getVersion()) {
 
-				if (JOptionPane.showConfirmDialog(null,
-						"Update found. Do you want to update?") == 0) {
+				if (JOptionPane
+						.showConfirmDialog(
+								null,
+								"Update found. Do you want to update? \nYou must be using RSBot with SVN in order to do this!\n\n If not, then press Cancel.") == 0) {
 
 					JOptionPane
-							.showMessageDialog(null,
-									"Please choose 'XChickenSlaughter.java' in your scripts folder and hit 'Open'");
+							.showMessageDialog(
+									null,
+									"Please choose 'XChickenSlaughter.java' in your RSBot scripts folder and hit 'Open'");
 					JFileChooser fc = new JFileChooser();
 
 					if (fc.showOpenDialog(null) == JFileChooser.APPROVE_OPTION) {
 
 						url = new URL(
-								"http://www.binaryx.nl/xscripting/beanman/XChickenSlaughter/XChickenSlaughter.java")
+								"http://binaryx.nl/beanman/XChickenSlaughter.java")
 								.openConnection();
 						in = new BufferedReader(new InputStreamReader(url
 								.getInputStream()));
@@ -2112,7 +2667,8 @@ public class XChickenSlaughter extends Script implements PaintListener,
 							out.flush();
 						}
 
-						log("Script successfully downloaded. Please recompile and reload your scripts!");
+						log("Script successfully downloaded.");
+						log.severe("Please RECOMPILE and reload your scripts!");
 						return false;
 					} else
 						log("Update canceled");
@@ -2139,26 +2695,24 @@ public class XChickenSlaughter extends Script implements PaintListener,
 		t = new Thread(antiban);
 		startTime = System.currentTimeMillis();
 		featherMarketPrice = grandExchange.loadItemInfo(314).getMarketPrice();
+		log("Loaded marketprice of feathers !");
 		if (!takeBones1 && !takeBones2) {
 			thingsToDrop = thingsWithBonesToDrop;
 		} else {
 			thingsToDrop = thingsWithoutBonesToDrop;
 		}
 		if (location.equals("Champions Guild")) {
-			log("-----------------------------------------------------------------------");
-			log("The bot is not able to walk to Champions Guild itself ");
-			log("You must start the bot when your player is already in the guild!!! ");
-			log("-----------------------------------------------------------------------");
-		} else if (location.equals("South of Falador")) {
-			log("--------------------------------");
-			log("Location: South of Falador");
-			log("--------------------------------");
-		} else {
-			log("--------------------------------");
-			log("Location: East of Lumbridge");
-			log("--------------------------------");
-		}
+			log
+					.warning("The bot is not able to walk to Champions Guild itself ");
+			log
+					.warning("You must start the bot when your player is already in the guild!!! ");
 
+		} else if (location.equals("South of Falador")) {
+			log("Location: South of Falador");
+		} else {
+			log("Location: East of Lumbridge");
+		}
+		log("/////////////////////////////////////////////////////////////////////////////////////////////////");
 		return !guiExit;
 	}
 
@@ -2225,16 +2779,20 @@ public class XChickenSlaughter extends Script implements PaintListener,
 				turnToTile(itemtile, 5);
 				if (!tileOnScreen(itemtile)) {
 					walkTileOnScreen(randomizeTile(itemtile, 1, 1));
+					moveMouseSlightly();
 					wait(random(800, 1200));
 
 				}
 			} else {
 				atTile(itemtile, action);
 				moveMouseSlightly();
-				if (waitToMove(random(1000, 1500))) {
-					while (getMyPlayer().isMoving()) {
-						wait(random(20, 30));
+				if (waitToMove(random(500, 1000))) {
+					if (item != null) {
+						while (getMyPlayer().isMoving()) {
+							wait(random(20, 30));
+						}
 					}
+
 				}
 			}
 		}
@@ -2258,4 +2816,38 @@ public class XChickenSlaughter extends Script implements PaintListener,
 			noAmmo = true;
 		}
 	}
+
+	public boolean swapAttackFinished() {
+		if (skills.getCurrentSkillLevel(STAT_ATTACK) >= attackSwapLvl
+				&& attackBusy) {
+
+			return true;
+		} else {
+
+			return false;
+		}
+	}
+
+	public boolean swapDefenseFinished() {
+		if (skills.getCurrentSkillLevel(STAT_DEFENSE) >= defenseSwapLvl
+				&& defenseBusy) {
+
+			return true;
+		} else {
+
+			return false;
+		}
+	}
+
+	public boolean swapStrengthFinished() {
+		if (skills.getCurrentSkillLevel(STAT_STRENGTH) >= strengthSwapLvl
+				&& strengthBusy) {
+
+			return true;
+		} else {
+
+			return false;
+		}
+	}
+
 }

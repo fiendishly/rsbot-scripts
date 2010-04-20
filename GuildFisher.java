@@ -7,7 +7,7 @@ import java.awt.*;
 import java.awt.event.*;
 import java.util.Map;
 
-@ScriptManifest(authors = {"Jacmob"}, name = "Guild Fisher", category = "Fishing", version = 1.1,
+@ScriptManifest(authors = {"Jacmob"}, name = "Guild Fisher", category = "Fishing", version = 1.2,
 	description = "<html><body style='font-family: Arial; padding: 5px;'>Fishes and banks lobsters at the Fishing Guild.<br /><small>Jacmob</small></body></html>")
 public class GuildFisher extends Script implements PaintListener {
 
@@ -15,11 +15,14 @@ public class GuildFisher extends Script implements PaintListener {
 	public static final int RAW_LOBSTER = 377;
 	public static final int NPC_CAGE = 312;
 	public static final RSTile TILE_BANK = new RSTile(2586, 3422);
-	public static final RSTile TILE_BANK_ENTRANCE = new RSTile(2589, 3422);
-	public static final RSTile TILE_BANK_BOOTH_FRONT = new RSTile(2585, 3422);
 	public static final RSTile TILE_PORT = new RSTile(2599, 3422);
 
+	private static final Color BG = new Color(0, 0, 100, 150);
+	private static final Color DROP = new Color(0, 0, 20, 255);
+	private static final Color TEXT = new Color(200, 200, 255, 255);
+
 	private int counter;
+	private long startTime = 0;
 	private volatile RSTile last;
 
     private enum State {
@@ -35,14 +38,8 @@ public class GuildFisher extends Script implements PaintListener {
 					} else {
 						bank.close();
 					}
-				} else if (!getMyPlayer().isMoving()) {
-					if (!bank.open()) {
-						if (distanceTo(TILE_BANK_BOOTH_FRONT) > 1) {
-							walkTileMM(TILE_BANK_BOOTH_FRONT);
-						}
-					} else {
-						wait(500);
-					}
+				} else {
+					bank.open();
 				}
 				wait(1000);
 				break;
@@ -84,13 +81,7 @@ public class GuildFisher extends Script implements PaintListener {
 				}
 				break;
 			case WALK_TO_BANK:
-				if (distanceTo(TILE_BANK) > 8) {
-					walkTowards(TILE_BANK_ENTRANCE);
-				} else if (tileOnScreen(TILE_BANK)) {
-					atTile(TILE_BANK, "alk");
-				} else {
-					walkTileMM(TILE_BANK_BOOTH_FRONT);
-				}
+				walkTowards(TILE_BANK);
 				break;
 			case WALK_TO_FISH:
 				walkTowards(TILE_PORT);
@@ -227,7 +218,22 @@ public class GuildFisher extends Script implements PaintListener {
 		if (last != null) {
 			highlightTile(g, last, new Color(200, 200, 255), new Color(150, 150, 255, 70));
 		}
+		if (startTime == 0) {
+			if (isLoggedIn() && skills.getCurrentSkillLevel(STAT_FISHING) > 1) {
+				startTime = System.currentTimeMillis();
+			}
+		} else {
+			int x = 13;
+			int y = 26;
 
+			g.setColor(BG);
+			g.fill3DRect(x - 6, y, 211, 25, true);
+
+			g.setColor(DROP);
+			g.drawString("Guild Fisher", x + 1, y += 18);
+			g.setColor(TEXT);
+			g.drawString("Guild Fisher", x, y -= 1);
+		}
     }
 
 	private void waveMouse() {
