@@ -1,5 +1,6 @@
+
 /*
-* ZombieFisherRELOADED V7.32
+* ZombieFisherEXTREME V7.4
 *
 * Credits:
 * BamBino/cronshaw1234/Zorlix - Updaters
@@ -34,7 +35,7 @@ import org.rsbot.script.wrappers.RSTile;
 import org.rsbot.script.*;
 
 
-@ScriptManifest(authors = {"ZombieKnight"}, category = "Fishing", name = "ZombieFisherRELOADED", version = 7.32, description = "<html><head><style type='text/css'> hr {color: white} p {margin-left: 20px}</style></head><body><center><b><font size='4' color='Blue'>ZombieFisherRELOADED v7.32</font></b><br></center><center><table border='0'><tr><td colspan='2'><center><font size='4'><b>:: Script Settings ::</b></font></center></td></tr><tr><td colspan='2'><hr></td></tr><tr><td><center><table border='0'><tr><td colspan='2'><center><font size='4'><b>Contact me at ZombieKnight_RSBot@hotmail.com</b></font></center></td></tr><tr><td colspan='2'><hr></td></tr><tr><td><tr><td><b>Location: </b></td><td><center><select name='locationName'><option>Al-Kharid<option>Barb Village(EV)<option>Catherby<option>Draynor<option>Fishing Guild<option>Karamja<option>[Sell]Karamja<option>Shilo<option>Piscatoris</select></center></td></tr><tr><td><b>Catch: </b></td><td><center><select name='catchName'><option>Pike<option>Bass/Cod/Mackerel<option>Shrimp/Anchovies<option>Herring/Sardines<option>Trout/Salmon<option>Tuna/Swordfish<option>Tuna/Swordfish(CHARPOON)<option>Lobsters<option>Sharks<option>Sharks(CHARPOON)<option>Rainbow Fish<option>Monkfish</select></center></td></tr><tr><td><b>Paint Color: </b></td><td><center><select name='pColor'><option>PinkPanther<option>SunKist<option>ClearSky<option>Monochrome<option>Nightmare<option>BloodShed</select></center></td></tr><tr><td><b>AntiTunas:</b></td><td><center><input type=\"checkbox\" name=\"antiTunas\" value=\"true\"><B>Yes</b></center></td></tr><tr><td><b>Powerfishing Mode:</b></td><td><center><input type='checkbox' name='powerFishing' value='true'><B>Yes</b></center></td></tr><tr><td><b>Barbarian Fishing/Barb-Tail:</b></td><td><center><input type='checkbox' name='barbarianMode' value='true'><B>Yes</b></center></td></tr><tr><td><b>Paint Report:</b></td><td><center><input type='checkbox' name='usePaint' checked='true' value='true'><B>Yes</b></center></td></tr></table><center><p>For Support/Comments, Pls click <a href='http://www.rsbot.org/vb/showthread.php?t=52649'>HERE</a></p><center><center><p>For Suggestions/Requests/Bug reports, Pls click <a href='http://www.rsbot.org/vb/showthread.php?t=48599'>HERE</a></p><center></center></body></html>")
+@ScriptManifest(authors = {"ZombieKnight"}, category = "Fishing", name = "ZombieFisherEXTREME", version = 7.4, description = "<html><head><style type='text/css'> hr {color: white} p {margin-left: 20px}</style></head><body><center><b><font size='4' color='Blue'>ZombieFisherEXTREME v7.4</font></b><br></center><center><table border='0'><tr><td colspan='2'><center><font size='4'><b>:: Script Settings ::</b></font></center></td></tr><tr><td colspan='2'><hr></td></tr><tr><td><center><table border='0'><tr><td colspan='2'><center><font size='4'><b>Contact me at ZombieKnight_RSBot@hotmail.com</b></font></center></td></tr><tr><td colspan='2'><hr></td></tr><tr><td><tr><td><b>Location: </b></td><td><center><select name='locationName'><option>Al-Kharid<option>Barb Village(EV)<option>Catherby<option>Draynor<option>Fishing Guild<option>Karamja<option>[STILES]Karamja<option>Shilo<option>Piscatoris</select></center></td></tr><tr><td><b>Catch: </b></td><td><center><select name='catchName'><option>Pike<option>Bass/Cod/Mackerel<option>Shrimp/Anchovies<option>Herring/Sardines<option>Trout/Salmon<option>Tuna/Swordfish<option>Tuna/Swordfish(CHARPOON)<option>Lobsters<option>Sharks<option>Sharks(CHARPOON)<option>Rainbow Fish<option>Monkfish</select></center></td></tr><tr><td><b>Paint Color: </b></td><td><center><select name='pColor'><option>PinkPanther<option>SunKist<option>ClearSky<option>Monochrome<option>Nightmare<option>BloodShed</select></center></td></tr><tr><td><b>AntiTunas:</b></td><td><center><input type=\"checkbox\" name=\"antiTunas\" value=\"true\"><B>Yes</b></center></td></tr><tr><td><b>Powerfishing Mode:</b></td><td><center><input type='checkbox' name='powerFishing' value='true'><B>Yes</b></center></td></tr><tr><td><b>Barbarian Fishing/Barb-Tail:</b></td><td><center><input type='checkbox' name='barbarianMode' value='true'><B>Yes</b></center></td></tr><tr><td><b>Paint Report:</b></td><td><center><input type='checkbox' name='usePaint' checked='true' value='true'><B>Yes</b></center></td></tr></table><center><p>For Support/Comments, Pls click <a href='http://www.rsbot.org/vb/showthread.php?t=52649'>HERE</a></p><center><center><p>For Suggestions/Requests/Bug reports, Pls click <a href='http://www.rsbot.org/vb/showthread.php?t=48599'>HERE</a></p><center></center></body></html>")
 public class ZombieFisher extends Script implements ServerMessageListener, PaintListener {
 	int randomInt;
 	int GambleInt;
@@ -93,8 +94,6 @@ public class ZombieFisher extends Script implements ServerMessageListener, Paint
 	public boolean usePaint;
 	public boolean Sound;
 	public boolean isPvP;
-	public boolean hasEquipped;
-	public long oldCatches = 0;
 	public long catches = 0;
 
 	// Misc variables.
@@ -115,18 +114,12 @@ public class ZombieFisher extends Script implements ServerMessageListener, Paint
 	public int lastExp;
 	public int xpPerCatch = 0;
 	public int oldExp;
-	public int updateCheck = 0;
-	public RSPlayer PvPPlayer;
-	public int sCB;
 	public int startExp;
-	public boolean sRM;
 	public boolean StartedY;
 
 
 	public int[] whirlpools = new int[]{
 			403, 404, 406, 406};
-
-	int[] equipItems = {10129, 14109};
 
 	int[] itemIDs = {10129, 14109};
 
@@ -458,6 +451,56 @@ public class ZombieFisher extends Script implements ServerMessageListener, Paint
 			}
 		}
 
+                if (locationName.equals("[STILES]Karamja")) {
+			log("Setting Mummyfied paths for Karamja");
+			log("[Reminder]Pls start in the bank or at the fishing spots.");
+			toBank = new RSTile[]{new RSTile(2916, 3169), new RSTile(2906, 3172), new RSTile(2893, 3169),
+                                              new RSTile(2880, 3163), new RSTile(2872, 3154), new RSTile(2862, 3147),
+                                              new RSTile(2851, 3142)};
+
+
+			toArea = reversePath(toBank);
+			usesNPCBanking = true;
+
+			if (catchName.equals("Shrimp/Anchovies")) {
+				currentGear = GEAR_NET;
+				currentBait = BAIT_NONE;
+				fishingSpotID = 323;
+				currentCommand = "Net";
+				bankID = 11267;
+				return true;
+			}
+
+			if (catchName.equals("Herring/Sardines")) {
+				currentGear = GEAR_ROD;
+				currentBait = BAIT_BAIT;
+				fishingSpotID = 323;
+				currentCommand = "Bait";
+				bankID = 11267;
+				return true;
+			}
+
+			if (catchName.equals("Lobsters")) {
+				currentGear = GEAR_CAGE;
+				currentBait = BAIT_NONE;
+				fishingSpotID = 324;
+				currentCommand = "Cage";
+				bankID = 11267;
+				return true;
+			}
+
+			if (catchName.equals("Tuna/Swordfish")) {
+				currentGear = GEAR_HARPOON;
+				currentBait = BAIT_NONE;
+				fishingSpotID = 324;
+				currentCommand = "Harpoon";
+				bankID = 11267;
+				return true;
+			}
+
+		}
+
+
 		if (locationName.equals("Karamja")) {
 			log("Setting Mummyfied paths for Karamja");
 			log("[Reminder]Pls start in the bank or at the fishing spots.");
@@ -775,9 +818,9 @@ public class ZombieFisher extends Script implements ServerMessageListener, Paint
 
 			case S_USE_BANK:
 				if (usesNPCBanking)
-					if (locationName.equals("[Sell]Karamja"))
-						return useShopNPCKaramja();
-					else if (locationName.equals("Piscatoris"))
+                                  if (locationName.equals("[STILES]Karamja"))
+					return tradeAllKaramja();
+				else if (locationName.equals("Piscatoris"))
 						return useBankNPCPiscatoris();
 					else
 						return useBankNPC();
@@ -785,9 +828,8 @@ public class ZombieFisher extends Script implements ServerMessageListener, Paint
 					return useBank();
 
 			case S_DEPOSIT:
-				if (locationName.equals("[Sell]Karamja"))
-					return sellAllKaramja();
-				else if (locationName.equals("Karamja"))
+
+				 if (locationName.equals("Karamja"))
 					return depositAllKaramja();
 				else
 					return depositAllRest();
@@ -837,7 +879,7 @@ public class ZombieFisher extends Script implements ServerMessageListener, Paint
 					if (getCurrentTab() != Constants.TAB_STATS) {
 						openTab(Constants.TAB_STATS);
 					}
-					moveMouse(663, 292, 50, 28);
+					moveMouse(696, 274, 50, 28);
 					return random(5000, 8000);
 				}
 
@@ -1084,55 +1126,44 @@ public class ZombieFisher extends Script implements ServerMessageListener, Paint
 		return random(500, 750);
 	}
 
-	public int sellAllKaramja() {
+	public int tradeAllKaramja() {
+               RSNPC stiles = getNearestNPCByID(11267);
+               RSNPC fishingSpot = getNearestNPCByID(fishingSpotID);
 
-		// Make an array of items to keep.
-		@SuppressWarnings("unused")
-		int[] thingsToKeep = new int[]{currentGear, currentBait, 995};
+		if (getMyPlayer().isMoving())
+			return random(250, 500);
 
-		if (RSInterface.getInterface(620).isValid()) {
-			state = S_USE_BANK;
-			return 500;
-		}
-		// sell all.
-		if (catchName.equals("Shrimp/Anchovies")) {
-			wait(1000);
-			atInventoryItem(321, "Sell 50");
-			atInventoryItem(321, "Sell 50");
-			wait(1000);
-			atInventoryItem(317, "Sell 50");
-			atInventoryItem(317, "Sell 50");
-		}
-		if (catchName.equals("Herring/Sardines")) {
-			wait(1000);
-			atInventoryItem(345, "Sell 50");
-			atInventoryItem(345, "Sell 50");
-			wait(1000);
-			atInventoryItem(327, "Sell 50");
-			atInventoryItem(327, "Sell 50");
-		}
-		if (catchName.equals("Lobsters")) {
-			wait(1000);
-			atInventoryItem(377, "Sell 50");
-			atInventoryItem(377, "Sell 50");
-		}
-		if (catchName.equals("Tuna/Swordfish")) {
-			wait(1000);
-			atInventoryItem(359, "Sell 50");
-			atInventoryItem(359, "Sell 50");
-			wait(1000);
-			atInventoryItem(371, "Sell 50");
-			atInventoryItem(371, "Sell 50");
-		}
-
-
-		// Only switch states if the deposit was successfull.
-		if (!isInventoryFull())
-			state = S_DEPOSIT;
-		else
+		if (runningFromCombat) {
 			state = S_WALKTO_SPOT;
+			return random(500, 750);
+		}
 
-		return random(500, 750);
+
+		if (stiles != null) {
+			if (atNPC(stiles, "exchange")) {
+                                wait(random(500, 2500));
+				log("Clicked Stiles.");
+				state = S_WALKTO_SPOT;
+
+                              if (distanceTo(toArea[toArea.length - 1]) <= 3) {
+			log("Arriving at fishing spots, continuing to fish.");
+			state = S_FISH;
+			currentFails = 0;
+			return random(250, 750);
+		}
+				currentFails = 0;
+				return random(500, 1000);
+			} else {
+				log("Misclicked stiles, trying again.");
+				currentFails++;
+				return random(500, 750);
+			}
+		} else {
+			log("Unable to find stiles");
+			currentFails++;
+			return random(500, 750);
+		}
+
 	}
 
 
@@ -1725,7 +1756,6 @@ public class ZombieFisher extends Script implements ServerMessageListener, Paint
 			wait(250);
 		}
 		wait(random(100, 500));
-		return;
 	}
 
 
