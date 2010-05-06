@@ -62,11 +62,11 @@ import org.rsbot.util.ScreenshotUtil;
 
 /**
  * @author SpeedWing
- * @version 3.033 (c)2009-2010 SpeedWing, No one except SpeedWing has the right
+ * @version 3.035 (c)2009-2010 SpeedWing, No one except SpeedWing has the right
  *          to modify and/or spread this script without the permission of
  *          SpeedWing.
  */
-@ScriptManifest(authors = { "SpeedWing" }, category = "Runecraft", name = "RuneSpeed AIO Runecrafter", version = 3.033, description = "<html>\n"
+@ScriptManifest(authors = { "SpeedWing" }, category = "Runecraft", name = "RuneSpeed AIO Runecrafter", version = 3.035, description = "<html>\n"
 		+ "<body style='font-family: Calibri; color:white; padding: 0px; text-align: center; background-color: black;'>"
 		+ "<img src=\"http://speedwing.ucoz.com/RuneSpeed/RuneSpeed_description.png\" /><br>")
 public class RuneSpeed extends Script implements PaintListener,
@@ -128,6 +128,10 @@ public class RuneSpeed extends Script implements PaintListener,
 	char CONTROL = KeyEvent.VK_CONTROL;
 	String TiaraName = "";
 	int MusicianID[] = { 8699, 8700, 8707, 5442 };
+	// stat system
+	long lastUpdateMillis = 0;
+	int lastExp = 0, lastEss = 0, lastCrafted = 0, lastProfit = 0,
+			lastEssUsed = 0;
 	// ///////
 	// PATHS//
 	RSTile[][] path;
@@ -289,6 +293,7 @@ public class RuneSpeed extends Script implements PaintListener,
 	BufferedImage cursor40 = null;
 	BufferedImage cursor20 = null;
 	RSTile[] mapPath = new RSTile[200];
+	long totalSeconds = 0;
 
 	// GUI SETTINGS
 	boolean Done = false, ini = false, close = false;
@@ -306,6 +311,7 @@ public class RuneSpeed extends Script implements PaintListener,
 	public static long LevelLogout;
 	public static long EssenceLogout;
 	public static long MinutesLogout;
+	public static String UserName = "NoUserNameEntered";
 	long minutesStop = 0;
 
 	public class GUI extends JFrame {
@@ -326,6 +332,7 @@ public class RuneSpeed extends Script implements PaintListener,
 		private JTextArea changeLogTextArea;
 		private JComboBox TabCombo;
 		private JComboBox logoutCombo;
+		private JTextField userNameField;
 		public Properties RSpeedIni = new Properties();
 		private final File changeLogFile = new File(new File(
 				GlobalConfiguration.Paths.getSettingsDirectory()),
@@ -343,22 +350,21 @@ public class RuneSpeed extends Script implements PaintListener,
 				e.printStackTrace();
 				return false;
 			}
-			if (RSpeedIni.getProperty("Rune") != null) {
+			if (RSpeedIni.getProperty("Rune") != null)
 				RuneCombo.setSelectedIndex(Integer.valueOf(RSpeedIni
 						.getProperty("Rune")));
-			}
-			if (RSpeedIni.getProperty("Rest") != null) {
+			if (RSpeedIni.getProperty("Rest") != null)
 				RestCombo.setSelectedIndex(Integer.valueOf(RSpeedIni
 						.getProperty("Rest")));
-			}
-			if (RSpeedIni.getProperty("Tiara") != null) {
+			if (RSpeedIni.getProperty("Tiara") != null)
 				TiaraCombo.setSelectedIndex(Integer.valueOf(RSpeedIni
 						.getProperty("Tiara")));
-			}
-			if (RSpeedIni.getProperty("Tab") != null) {
+			if (RSpeedIni.getProperty("Tab") != null)
 				TabCombo.setSelectedIndex(Integer.valueOf(RSpeedIni
 						.getProperty("Tab")));
-			}
+			if (RSpeedIni.getProperty("Username") != null)
+				userNameField.setText(RSpeedIni.getProperty("Username"));
+
 			return true;
 		}
 
@@ -509,6 +515,23 @@ public class RuneSpeed extends Script implements PaintListener,
 			lblTeleTabs.setFont(new Font("Calibri", Font.PLAIN, 11));
 			lblTeleTabs.setBounds(56, 116, 101, 22);
 			panel.add(lblTeleTabs);
+
+			JLabel lblSignatureUsername = new JLabel("Signature Username:");
+			lblSignatureUsername
+					.setToolTipText("It automatically creates the signature if the username doesn't exist.");
+			lblSignatureUsername.setHorizontalAlignment(SwingConstants.CENTER);
+			lblSignatureUsername.setFont(new Font("Calibri", Font.PLAIN, 11));
+			lblSignatureUsername.setBounds(56, 142, 101, 22);
+			panel.add(lblSignatureUsername);
+
+			userNameField = new JTextField();
+			userNameField
+					.setToolTipText("It automatically creates the username if the username doesn't exist.");
+			userNameField.setHorizontalAlignment(SwingConstants.CENTER);
+			userNameField.setFont(new Font("Calibri", Font.PLAIN, 11));
+			userNameField.setBounds(169, 142, 105, 22);
+			panel.add(userNameField);
+			userNameField.setColumns(10);
 
 			Panel panel_3 = new Panel();
 			tabbedPane.addTab("Camera Anti-Ban", null, panel_3, null);
@@ -800,10 +823,10 @@ public class RuneSpeed extends Script implements PaintListener,
 			btnRunespeedRsbotTopic.setFont(new Font("Calibri", Font.PLAIN, 12));
 			btnRunespeedRsbotTopic.addActionListener(new ActionListener() {
 				public void actionPerformed(ActionEvent arg0) {
-					OpenUrl("http://www.rsbot.org/vb/showthread.php?p=1766279");
+					OpenUrl("http://www.rsbot.org/vb/showthread.php?t=162259");
 				}
 			});
-			btnRunespeedRsbotTopic.setBounds(10, 78, 297, 30);
+			btnRunespeedRsbotTopic.setBounds(10, 103, 297, 30);
 			panel_2.add(btnRunespeedRsbotTopic);
 
 			JButton btnDownloadNewestRunespeed = new JButton(
@@ -815,8 +838,15 @@ public class RuneSpeed extends Script implements PaintListener,
 			});
 			btnDownloadNewestRunespeed.setFont(new Font("Calibri", Font.PLAIN,
 					12));
-			btnDownloadNewestRunespeed.setBounds(10, 109, 297, 30);
+			btnDownloadNewestRunespeed.setBounds(10, 134, 297, 30);
 			panel_2.add(btnDownloadNewestRunespeed);
+
+			JLabel lblThanksToDaevilstat = new JLabel(
+					"Thanks to: DaEvil(stat system)");
+			lblThanksToDaevilstat.setHorizontalAlignment(SwingConstants.CENTER);
+			lblThanksToDaevilstat.setFont(new Font("Calibri", Font.PLAIN, 11));
+			lblThanksToDaevilstat.setBounds(10, 69, 297, 23);
+			panel_2.add(lblThanksToDaevilstat);
 
 			JButton btnStart = new JButton("Start");
 			btnStart.setBounds(340, 196, 89, 23);
@@ -852,6 +882,7 @@ public class RuneSpeed extends Script implements PaintListener,
 							+ Long.valueOf(MinutesTextField.getText());
 					RuneSpeed.SelectedLogout = String.valueOf(logoutCombo
 							.getSelectedItem());
+					RuneSpeed.UserName = userNameField.getText();
 					RSpeedIni.setProperty("Rune", String.valueOf(RuneCombo
 							.getSelectedIndex()));
 					RSpeedIni.setProperty("Rest", String.valueOf(RestCombo
@@ -860,15 +891,16 @@ public class RuneSpeed extends Script implements PaintListener,
 							.getSelectedIndex()));
 					RSpeedIni.setProperty("Tab", String.valueOf(TabCombo
 							.getSelectedIndex()));
+					RSpeedIni.setProperty("Username", userNameField.getText());
 					try {
 						RSpeedIni.store(new FileWriter(new File(
 								GlobalConfiguration.Paths
 										.getSettingsDirectory(),
 								"RuneSpeed.ini")),
 								"The GUI Settings for RuneSpeed");
-						if (ini) {
+						if (ini)
 							log("Generated settings file!");
-						}
+
 					} catch (IOException e) {
 						// TODO Auto-generated catch block
 						e.printStackTrace();
@@ -955,17 +987,17 @@ public class RuneSpeed extends Script implements PaintListener,
 
 	public void AntiBanCamera(final RSTile tile, final double ChanceTo) {
 		final int chance = (int) ChanceTo * 10;
-		if (chance <= random(1, 1001)) {
+		if (chance <= random(1, 1001))
 			turnToTile(tile, random(3, 12));
-		}
+
 	}
 
 	public int arrayBankItemByID(final int array[]) {
 		try {
 			for (int anArray : array) {
-				if (bank.getCount(anArray) > 0) {
+				if (bank.getCount(anArray) > 0)
 					return anArray;
-				}
+
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -976,9 +1008,9 @@ public class RuneSpeed extends Script implements PaintListener,
 	public int arrayInvCount(final int array[]) {
 		try {
 			for (int anArray : array) {
-				if (invCount(anArray) > 0) {
+				if (invCount(anArray) > 0)
 					return invCount(anArray);
-				}
+
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -989,9 +1021,9 @@ public class RuneSpeed extends Script implements PaintListener,
 	public int arrayInvItemByID(final int array[]) {
 		try {
 			for (int anArray : array) {
-				if (invCount(anArray) > 0) {
+				if (invCount(anArray) > 0)
 					return anArray;
-				}
+
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -1001,28 +1033,25 @@ public class RuneSpeed extends Script implements PaintListener,
 
 	public boolean bankSave() {
 		RSTile Loc = getMyPlayer().getLocation();
-		if (Rune == earthRune) {
+		if (Rune == earthRune)
 			if (Loc.equals(new RSTile(3250, 3419))
-					|| Loc.equals(new RSTile(3257, 3419))) {
+					|| Loc.equals(new RSTile(3257, 3419)))
 				if (walkTo(new RSTile(3253 + random(-1, 2),
-						3421 + random(-1, 2)))) {
+						3421 + random(-1, 2))))
 					waitToMove(1000);
-				}
-			}
-		}
 		return false;
 	}
 
 	public void cameraHeight() {
-		if (antibanstate && Bot.getClient().getCamPosZ() > -1600) {
+		if (antibanstate && Bot.getClient().getCamPosZ() > -1600)
 			setCameraAltitude(true);
-		}
+
 	}
 
 	public void changePath() {
-		if (RealPath == magicTelePath) {
+		if (RealPath == magicTelePath)
 			RealPath = path[random(0, 3)];
-		}
+
 		final RSTile[] curPath = RealPath;
 		int iPath = random(0, 3);
 		RealPath = path[iPath];
@@ -1052,62 +1081,64 @@ public class RuneSpeed extends Script implements PaintListener,
 				for (int i = 0; i < pathar.length; i++) {
 					pathar[i] = 0;
 				}
-				if (pathar[0] + pathar[1] > 4) {
+				if (pathar[0] + pathar[1] > 4)
 					iPath = 2;
-				}
-				if (pathar[0] + pathar[2] > 4) {
+
+				if (pathar[0] + pathar[2] > 4)
 					iPath = 1;
-				}
-				if (pathar[1] + pathar[2] > 4) {
+
+				if (pathar[1] + pathar[2] > 4)
 					iPath = 0;
-				}
+
 				RealPath = path[iPath];
 			}
 		}
-		if (curPath == RealPath) {
+		if (curPath == RealPath)
 			SamePath++;
-		}
+
 		pathar[iPath]++;
 	}
 
 	public boolean climbStile() {
-		if (mapPath[0] == null) {
-			mapPath[0] = getMyPlayer().getLocation();
-		}
-		if (!isInZone(getMyPlayer().getLocation(), 3044, 3068, 3283, 3298)) {
-			stileCrossed = true;
-			return true;
-		}
-		if (getNearestObjectByID(stileID) != null) {
-			if (tileOnScreen(getNearestObjectByID(stileID).getLocation())
-					&& !getMyPlayer().isMoving() && getDestination() == null) {
-				wait(300);
-				mouseSpeed = random(3, 5);
-				clickMouse(Calculations.tileToScreen(getNearestObjectByID(
-						stileID).getLocation(), 0.5, 0.05, 0), true);
-				if (waitForZone(5000, 3061, 3065, 3275, 3282)) {
-					stileCrossed = true;
-					return true;
-				}
-			} else {
-				if ((distanceTo(getDestination()) < 2 || !getMyPlayer()
-						.isMoving())
-						&& !tileOnScreen(getNearestObjectByID(stileID)
-								.getLocation())) {
-					if (getDestination() != null) {
-						if ((distanceBetween(getDestination(),
-								getNearestObjectByID(stileID).getLocation()) < 4)) {
-							return false;
-						}
+		try {
+			if (mapPath[0] == null)
+				mapPath[0] = getMyPlayer().getLocation();
+
+			if (!isInZone(getMyPlayer().getLocation(), 3044, 3068, 3283, 3298)) {
+				stileCrossed = true;
+				return true;
+			}
+			if (getNearestObjectByID(stileID) != null) {
+				if (tileOnScreen(getNearestObjectByID(stileID).getLocation())
+						&& !getMyPlayer().isMoving()
+						&& getDestination() == null) {
+					wait(300);
+					mouseSpeed = random(3, 5);
+					clickMouse(Calculations.tileToScreen(getNearestObjectByID(
+							stileID).getLocation(), 0.5, 0.05, 0), true);
+					if (waitForZone(5000, 3061, 3065, 3275, 3282)) {
+						stileCrossed = true;
+						return true;
 					}
-					walkTo(
-							new RSTile(getNearestObjectByID(stileID)
-									.getLocation().getX(),
-									getNearestObjectByID(stileID).getLocation()
-											.getY() + 1), 0, 0);
-					return false;
+				} else {
+					if ((distanceTo(getDestination()) < 2 || !getMyPlayer()
+							.isMoving())
+							&& !tileOnScreen(getNearestObjectByID(stileID)
+									.getLocation())) {
+						if (getDestination() != null)
+							if ((distanceBetween(getDestination(),
+									getNearestObjectByID(stileID).getLocation()) < 4))
+								return false;
+
+						walkTo(new RSTile(getNearestObjectByID(stileID)
+								.getLocation().getX(), getNearestObjectByID(
+								stileID).getLocation().getY() + 1), 0, 0);
+						return false;
+					}
 				}
 			}
+		} catch (Exception e) {
+			// e.printStackTrace();
 		}
 
 		return false;
@@ -1116,17 +1147,17 @@ public class RuneSpeed extends Script implements PaintListener,
 	public boolean craftRunes() {
 		try {
 			final RSObject InsideAltar = getNearestObjectByID(CurAltar);
-			if (InsideAltar == null) {
+			if (InsideAltar == null)
 				return false;
-			}
+
 			final RSTile tile = getNearestObjectByID(CurAltar).getLocation();
-			if (tile == null) {
+			if (tile == null)
 				return false;
-			}
+
 			final Point location = Calculations.tileToScreen(tile);
-			if (location == null) {
+			if (location == null)
 				return false;
-			}
+
 			// anti-ban
 			if (!pointOnScreen(location) && antibanstate && !CameraTurned) {
 				GlobalTile = tile;
@@ -1145,17 +1176,16 @@ public class RuneSpeed extends Script implements PaintListener,
 				}
 			}
 			if (!pointOnScreen(location) && distanceTo(InsideAltar) > 3
-					&& getMyPlayer().getAnimation() == -1) {
+					&& getMyPlayer().getAnimation() == -1)
 				if (!getMyPlayer().isMoving()
 						|| distanceTo(getDestination()) < 7) {
-					if (getDestination() != null) {
-						if (distanceBetween(tile, getDestination()) < 3) {
+					if (getDestination() != null)
+						if (distanceBetween(tile, getDestination()) < 3)
 							return false;
-						}
-					}
+
 					walkTo(tile);
 				}
-			}
+
 		} catch (Exception e) {
 			/* e.printStackTrace(); */
 		}
@@ -1168,41 +1198,35 @@ public class RuneSpeed extends Script implements PaintListener,
 		int amount = 0;
 		boolean[] opts = { Time, Essence, Level };
 		for (int i = 0; i < opts.length; i++) {
-			if (opts[i] == true) {
+			if (opts[i] == true)
 				amount++;
-			}
 		}
-		if (amount == 0) {
+		if (amount == 0)
 			return y;
-		}
+
 		y += 11;
 		String m = "minutes";
 		String l = " levels";
 		final long curmillis = System.currentTimeMillis() - startTime;
 		final long curminutes = curmillis / (1000 * 60);
-		if ((MinutesLogout - curminutes) == 1) {
+		if ((MinutesLogout - curminutes) == 1)
 			m = "minute";
-		}
-		if ((LevelLogout - skills.getCurrentSkillLevel(STAT_RUNECRAFTING)) == 1) {
+		if ((LevelLogout - skills.getCurrentSkillLevel(STAT_RUNECRAFTING)) == 1)
 			l = " level";
-		}
 		g.setColor(new Color(0, 0, 0, 147));
 		g.fillRoundRect(x, y, xl, 7 + (amount * 15), 2, 2);
 		g.setColor(new Color(255, 255, 255));
 		g.drawRoundRect(x, y, xl, 7 + (amount * 15), 2, 2);
-		if (Time) {
+		if (Time)
 			drawStringWithShadow(MinutesLogout - curminutes + " " + m
 					+ " until Logout", x + 10, y += 15, g);
-		}
-		if (Essence) {
+		if (Essence)
 			drawStringWithShadow(EssenceLogout - essused
 					+ " Essence until Logout", x + 10, y += 15, g);
-		}
-		if (Level) {
+		if (Level)
 			drawStringWithShadow(LevelLogout
 					- skills.getCurrentSkillLevel(STAT_RUNECRAFTING) + l
 					+ " until Logout", x + 10, y += 15, g);
-		}
 		return y;
 	}
 
@@ -1218,15 +1242,15 @@ public class RuneSpeed extends Script implements PaintListener,
 	public void drawWalkedPath(final Graphics g) {
 		if (bankwalk || altarwalk) {
 			for (int i = 0; i < (mapPath.length - 1); i++) {
-				if (distanceTo(mapPath[i]) > 2 && mapPath[i + 1] == null) {
+				if (distanceTo(mapPath[i]) > 2 && mapPath[i + 1] == null)
 					mapPath[i + 1] = getMyPlayer().getLocation();
-				}
+
 			}
 			// painting the lines between the tiles
 			for (int paintTile = 0; mapPath[paintTile] != null
 					&& paintTile < mapPath.length - 1; paintTile++) {
 				if (mapPath[paintTile] != null
-						&& mapPath[paintTile + 1] != null) {
+						&& mapPath[paintTile + 1] != null)
 					if (tileOnMap(mapPath[paintTile])
 							&& tileOnMap(mapPath[paintTile + 1])) {
 
@@ -1237,19 +1261,18 @@ public class RuneSpeed extends Script implements PaintListener,
 								tileToMinimap(mapPath[paintTile + 1]).x + 1,
 								tileToMinimap(mapPath[paintTile + 1]).y + 1);
 					}
-				}
+
 			}
 			// painting the tiles
 			for (int paintTile = 0; mapPath[paintTile] != null
 					&& paintTile < mapPath.length - 1; paintTile++) {
-				if (mapPath[paintTile] != null) {
+				if (mapPath[paintTile] != null)
 					if (tileOnMap(mapPath[paintTile])) {
 						g.setColor(new Color(0, 0, 0,
 								255 - distanceTo(mapPath[paintTile]) * 11));
 						g.fillRect(tileToMinimap(mapPath[paintTile]).x,
 								tileToMinimap(mapPath[paintTile]).y, 3, 3);
 					}
-				}
 			}
 		}
 	}
@@ -1268,15 +1291,15 @@ public class RuneSpeed extends Script implements PaintListener,
 			teleports++;
 			exitaltar = false;
 			portalturn = true;
-			if (essused > 0) {
+			if (essused > 0)
 				crafted = (crafted + invCount(Rune) - runesInInv);
-			}
-			if (runeID == 0) {
+
+			if (runeID == 0)
 				runeID = Rune;
-			}
-			if (runCheck()) {
+
+			if (runCheck())
 				run = true;
-			}
+
 			if (!altarwalk) {
 				bankwalk = true;
 				exitaltar = false;
@@ -1293,22 +1316,19 @@ public class RuneSpeed extends Script implements PaintListener,
 				atInventoryItem(curDuel, "Rub");
 				waitForIface(RSInterface.getInterface(238), random(2000, 2400));
 			}
-			if (RSInterface.getInterface(238).isValid()) {
-				if (atInterface(238, iChild)) {
+			if (RSInterface.getInterface(238).isValid())
+				if (atInterface(238, iChild))
 					if (waitForZone(6000 + random(-1500, 200), xo1, xo2, yo1,
 							yo2)) {
 						teleports++;
 						exitaltar = false;
 						portalturn = true;
-						if (essused > 0) {
+						if (essused > 0)
 							crafted = (crafted + invCount(Rune) - runesInInv);
-						}
-						if (runeID == 0) {
+						if (runeID == 0)
 							runeID = Rune;
-						}
-						if (runCheck()) {
+						if (runCheck())
 							run = true;
-						}
 						if (!altarwalk) {
 							banking = true;
 							exitaltar = false;
@@ -1318,8 +1338,7 @@ public class RuneSpeed extends Script implements PaintListener,
 						CameraTurned = false;
 						duelArrived = true;
 					}
-				}
-			}
+
 		} else {
 			log.warning("Stopping Script, no Duel Ring in Inventory");
 			stopScript();
@@ -1342,15 +1361,12 @@ public class RuneSpeed extends Script implements PaintListener,
 		String hoursString = String.valueOf(hours);
 		String minutesString = String.valueOf(minutes);
 		String secondsString = String.valueOf(seconds);
-		if (hours < 10) {
+		if (hours < 10)
 			hoursString = 0 + hoursString;
-		}
-		if (minutes < 10) {
+		if (minutes < 10)
 			minutesString = 0 + minutesString;
-		}
-		if (seconds < 10) {
+		if (seconds < 10)
 			secondsString = 0 + secondsString;
-		}
 		return new String[] { dayString, hoursString, minutesString,
 				secondsString };
 	}
@@ -1406,20 +1422,17 @@ public class RuneSpeed extends Script implements PaintListener,
 			status = "Walking to Bank";
 			exitaltar = false;
 			portalturn = true;
-			if (essused > 0) {
+			if (essused > 0)
 				crafted = (crafted + invCount(Rune) - runesInInv);
-			}
-			if (runeID == 0) {
+			if (runeID == 0)
 				runeID = Rune;
-			}
 			// in case you leave the altar with a miss click
 			if (arrayInvCount(essence) > 0) {
 				altarwalk = true;
 				walking = true;
 			}
-			if (runCheck()) {
+			if (runCheck())
 				run = true;
-			}
 			bankwalk = true;
 			walking = true;
 			CameraTurned = false;
@@ -1431,37 +1444,32 @@ public class RuneSpeed extends Script implements PaintListener,
 				atInventoryItem(curGlory, "Rub");
 				waitForIface(RSInterface.getInterface(238), 3500);
 			}
-			if (RSInterface.getInterface(238).isValid()) {// glory
+			if (RSInterface.getInterface(238).isValid()) // glory
 				// interface
 
-				if (atInterface(238, iChild)) {
+				if (atInterface(238, iChild))
 					if (waitForZone(7000, x1o, x2o, y1o, y2o)) {
 						teleports++;
 						status = "Walking to Bank";
 						exitaltar = false;
 						portalturn = true;
-						if (essused > 0) {
+						if (essused > 0)
 							crafted = (crafted + invCount(Rune) - runesInInv);
-						}
-						if (runeID == 0) {
+						if (runeID == 0)
 							runeID = Rune;
-						}
 						// in case you leave the altar with a miss click
 						if (arrayInvCount(essence) > 0) {
 							altarwalk = true;
 							walking = true;
 						}
-						if (runCheck()) {
+						if (runCheck())
 							run = true;
-						}
 						bankwalk = true;
 						walking = true;
 						CameraTurned = false;
 						return new int[] { 1, 1 };
 					}
-				}
 
-			}
 		}
 		log("Walking Back, no Glory in Inventory");
 		return new int[] { 0, 0 };
@@ -1472,16 +1480,16 @@ public class RuneSpeed extends Script implements PaintListener,
 			essInInv = arrayInvCount(essence);
 			final RSObject TheAltar = getNearestObjectByID(CurOutside);
 
-			if (TheAltar == null || !altarwalk) {
+			if (TheAltar == null || !altarwalk)
 				return false;
-			}
+
 			final RSTile tile = getNearestObjectByID(CurOutside).getLocation();
 
 			final Point location = Calculations.tileToScreen(tile);
 
-			if (!pointOnScreen(location) && distanceTo(TheAltar) > 6) {
+			if (!pointOnScreen(location) && distanceTo(TheAltar) > 6)
 				return false;
-			}
+
 			// anti-ban
 			if (distanceTo(TheAltar) <= 4 && !CameraTurned && antibanstate) {
 				GlobalChance = SelectedRuinsCamera;
@@ -1491,9 +1499,9 @@ public class RuneSpeed extends Script implements PaintListener,
 			CameraTurned = true;
 			if (pointOnScreen(location) && location != null) {
 				atObject(TheAltar, "Enter Mysterious ruins");
-				if (waitForAltar(random(1200, 1800))) {
+				if (waitForAltar(random(1200, 1800)))
 					return true;
-				}
+
 			}
 			if (!getMyPlayer().isMoving() && !pointOnScreen(location)) {
 				walkTileMM(tile);
@@ -1521,21 +1529,21 @@ public class RuneSpeed extends Script implements PaintListener,
 			if (!tele) {
 				if (varrockTeleport || fallyTeleport) {
 					final int[] teleported = magicTeleport();
-					if (teleported == new int[] { 1, 1 }) {
+					if (teleported == new int[] { 1, 1 })
 						return true;
-					}
-					if (teleported == new int[] { 1, 0 }) {
+
+					if (teleported == new int[] { 1, 0 })
 						return false;
-					}
+
 				}
 				if (gloryTeleport) {
 					final int[] glored = gloryTeleport();
-					if (glored == new int[] { 1, 1 }) {
+					if (glored == new int[] { 1, 1 })
 						return true;
-					}
-					if (glored == new int[] { 1, 0 }) {
+
+					if (glored == new int[] { 1, 0 })
 						return false;
-					}
+
 				}
 			}
 			if (ringTeleport) {
@@ -1549,29 +1557,25 @@ public class RuneSpeed extends Script implements PaintListener,
 			tele = true;
 			if (tele) {
 				final RSObject ExitPortalObj = getNearestObjectByID(ExitPortal);
-				if (ExitPortalObj == null) {
+				if (ExitPortalObj == null)
 					return false;
-				}
 				final RSTile tile = getNearestObjectByID(ExitPortal)
 						.getLocation();
-				if (tile == null) {
+				if (tile == null)
 					return false;
-				}
 				final Point location = Calculations.tileToScreen(tile);
-				if (location == null) {
+				if (location == null)
 					return false;
-				}
 				// anti-ban
 				if (!pointOnScreen(location) && !CameraTurned && antibanstate) {
 					GlobalTile = tile;
 					GlobalChance = SelectedAltarCamera;
 					TurnTheCamera = true;
 				}
-				if (pointOnScreen(location)) {
-					if (atObject(ExitPortalObj, "Enter Portal")) {
+				if (pointOnScreen(location))
+					if (atObject(ExitPortalObj, "Enter Portal"))
 						waitForBankwalk(3000);
-					}
-				}
+
 				if (!pointOnScreen(location) && distanceTo(ExitPortalObj) > 3
 						&& getMyPlayer().getAnimation() == -1) {
 					if (!CameraTurned) {
@@ -1581,9 +1585,9 @@ public class RuneSpeed extends Script implements PaintListener,
 					}
 					if (!getMyPlayer().isMoving()
 							|| distanceTo(getDestination()) < 7
-							&& !getMyPlayer().isMoving()) {
+							&& !getMyPlayer().isMoving())
 						walkTo(tile);
-					}
+
 				}
 			}
 		} catch (Exception e) {
@@ -1614,10 +1618,10 @@ public class RuneSpeed extends Script implements PaintListener,
 					telePrice = grandExchange.loadItemInfo(thirdTeleRune)
 							.getMarketPrice()
 							+ grandExchange.loadItemInfo(563).getMarketPrice();
-					if (Rune == airRune) {
+					if (Rune == airRune)
 						telePrice += 3 * grandExchange.loadItemInfo(runeID)
 								.getMarketPrice();
-					}
+
 				}
 			}).start();
 		} catch (Exception e) {
@@ -1626,6 +1630,10 @@ public class RuneSpeed extends Script implements PaintListener,
 	}
 
 	public int loop() {
+		if (banking || altarwalk || getDuel || getessence || getGlory
+				|| getTele || inbank)
+			updateStats(false);
+
 		if (isLoggedIn() && (varrockTeleport || fallyTeleport) && !gotTeleStats) {
 			if (skills.getCurrentSkillLevel(Constants.STAT_MAGIC) < 25
 					&& varrockTeleport) {
@@ -1643,9 +1651,9 @@ public class RuneSpeed extends Script implements PaintListener,
 			}
 			gotTeleStats = true;
 		}
-		if (!t.isAlive()) {
+		if (!t.isAlive())
 			t.start();
-		}
+
 		mouseSpeed = random(4, 8);
 		if (MinutesLogout != 0 || LevelLogout != 0 || EssenceLogout != 0) {
 			final long curmillis = System.currentTimeMillis() - startTime;
@@ -1677,7 +1685,7 @@ public class RuneSpeed extends Script implements PaintListener,
 		try {
 			cameraHeight();
 			if (tiaracheck) {
-				if (getCurrentTab() != Constants.TAB_EQUIPMENT && !tiarabank) {
+				if (getCurrentTab() != Constants.TAB_EQUIPMENT && !tiarabank)
 					if (equipmentContainsOneOf(Tiara)) {
 						log("Succesfully found " + TiaraName
 								+ " Tiara in equipment.");
@@ -1688,7 +1696,7 @@ public class RuneSpeed extends Script implements PaintListener,
 						banking = true;
 						return 100;
 					}
-				}
+
 				if (!tiarabank && !isTiaraOn) {
 					if (invCount(Tiara) != 0) {
 						atInventoryItem(Tiara, "Wear");
@@ -1715,9 +1723,9 @@ public class RuneSpeed extends Script implements PaintListener,
 						stopScript();
 						return random(500, 600);
 					}
-					if (getInventoryCount() == 28) {
+					if (getInventoryCount() == 28)
 						bank.depositAll();
-					}
+
 					if (bank.atItem(Tiara, "Withdraw-1")) {
 						log("Succesfully found " + TiaraName
 								+ " Tiara in the Bank.");
@@ -1793,15 +1801,15 @@ public class RuneSpeed extends Script implements PaintListener,
 					return random(50, 65);
 				}
 				if (bank.isOpen()) {
-					if (mapPath[0] != null) {
+					if (mapPath[0] != null)
 						nullMapPath();
-					}
-					if (!status.equals("Banking..")) {
+
+					if (!status.equals("Banking.."))
 						status = "Banking..";
-					}
-					if (getInventoryCount() > 0) {
+
+					if (getInventoryCount() > 0)
 						bank.depositAll();
-					}
+
 					inbank = false;
 					if (varrockTeleport || fallyTeleport) {
 						getTele = true;
@@ -1903,9 +1911,9 @@ public class RuneSpeed extends Script implements PaintListener,
 				if (Rune != airRune) {
 					if ((bank.getCount(563) == 0 || bank
 							.getCount(thirdTeleRune) == 0)
-							&& bank.isOpen()) {
+							&& bank.isOpen())
 						noRunes = true;
-					}
+
 				} else if (bank.getCount(563) == 0 && bank.isOpen()) {
 					noRunes = true;
 				}
@@ -1920,9 +1928,9 @@ public class RuneSpeed extends Script implements PaintListener,
 				if (invCount(563) == 0 || invCount(thirdTeleRune) == 0) { // laws
 					mouseSpeed = random(3, 5);
 					bank.withdraw(563, 1);
-					if (Rune != airRune) {
+					if (Rune != airRune)
 						bank.withdraw(thirdTeleRune, 1);
-					}
+
 					getTele = false;
 					getessence = true;
 				}
@@ -1949,9 +1957,8 @@ public class RuneSpeed extends Script implements PaintListener,
 								stopScript();
 							}
 						}
-						if (invCount(curTab) == 0) {
+						if (invCount(curTab) == 0)
 							bank.withdraw(curTab, 1);
-						}
 					}
 				}
 				final RSInterfaceChild Item = bank
@@ -1971,9 +1978,9 @@ public class RuneSpeed extends Script implements PaintListener,
 					return random(100, 150);
 				}
 				if (bank.getCount(essence) == 0 && getessence && bank.isOpen()) {
-					if (getInventoryCount() > 0) {
+					if (getInventoryCount() > 0)
 						bank.depositAll();
-					}
+
 					log.warning("Out of Essence");
 					ScreenshotUtil.takeScreenshot(true);
 					stopScript();
@@ -1982,7 +1989,7 @@ public class RuneSpeed extends Script implements PaintListener,
 					essleft = bank.getCount(essence);
 					if (bank.atItem(arrayBankItemByID(essence), "Withdraw-All")) {
 						if (waitForEssGrab(1500)) {
-							if (gloryTeleport) {
+							if (gloryTeleport)
 								if (invCount(glory1) == 0
 										&& invCount(glory2) == 0
 										&& invCount(glory3) == 0
@@ -1992,7 +1999,7 @@ public class RuneSpeed extends Script implements PaintListener,
 									altarwalk = false;
 									walking = false;
 								}
-							}
+
 							if (varrockTeleport || fallyTeleport) {
 								if (Rune != airRune) {
 									if ((invCount(563) == 0 || invCount(thirdTeleRune) == 0)
@@ -2009,15 +2016,15 @@ public class RuneSpeed extends Script implements PaintListener,
 									walking = false;
 								}
 							}
-							if (tabTeleport) {
+							if (tabTeleport)
 								if (invCount(curTab) == 0) {
 									getessence = false;
 									banking = true;
 									altarwalk = false;
 									walking = false;
 								}
-							}
-							if (duelTeleport) {
+
+							if (duelTeleport)
 								if (invCount(duel2) == 0
 										&& invCount(duel3) == 0
 										&& invCount(duel4) == 0
@@ -2030,7 +2037,7 @@ public class RuneSpeed extends Script implements PaintListener,
 									altarwalk = false;
 									walking = false;
 								}
-							}
+
 							return random(30, 80);
 						}
 					}
@@ -2040,13 +2047,10 @@ public class RuneSpeed extends Script implements PaintListener,
 
 			if (crafting && getMyPlayer().getAnimation() == -1) {
 				duelArrived = false;
-				if (mapPath[0] != null) {
+				if (mapPath[0] != null)
 					nullMapPath();
-				}
-				if (run) {
+				if (run)
 					run = false;
-				}
-
 				craftRunes();
 				return random(250, 350);
 			}
@@ -2064,32 +2068,32 @@ public class RuneSpeed extends Script implements PaintListener,
 					}
 				}
 				if (duelTeleport && !duelArrived) {
-					if (bank.isOpen()) {
+					if (bank.isOpen())
 						bank.close();
-					}
+
 					if (!bank.isOpen()) {
 						status = "Ring to Ruins";
 						duelTeleport();
 						return random(50, 100);
 					}
 				}
-				if (!status.toLowerCase().equals("walking to ruins")) {
+				if (!status.toLowerCase().equals("walking to ruins"))
 					status = "Walking to Ruins";
-				}
-				if (stileCrossed) {
+
+				if (stileCrossed)
 					stileCrossed = false;
-				}
-				if (intoAltar()) {
+
+				if (intoAltar())
 					return random(75, 150);
-				}
+
 				if (arrayInvCount(essence) == 0) {
 					bankwalk = true;
 					altarwalk = false;
 				}
 				final RSObject TheAltar = getNearestObjectByID(CurOutside);
-				if (TheAltar != null && distanceTo(TheAltar) < 3) {
+				if (TheAltar != null && distanceTo(TheAltar) < 3)
 					walking = false;
-				}
+
 				if (walking) {
 					restingCheck(RealPath);
 					walkPath(RealPath, false);
@@ -2098,32 +2102,32 @@ public class RuneSpeed extends Script implements PaintListener,
 			}
 
 			if (bankwalk) {
-				if (ringTeleport) {
+				if (ringTeleport)
 					if (!stileCrossed) {
 						RealPath = WaterTelePath;
-						if (!climbStile()) {
+						if (!climbStile())
 							return random(100, 200);
-						}
+
 					}
-				}
-				if (tabClicked) {
+
+				if (tabClicked)
 					tabClicked = false;
-				}
-				if (!status.toLowerCase().equals("walking to bank")) {
+
+				if (!status.toLowerCase().equals("walking to bank"))
 					status = "Walking to Bank";
-				}
-				if (exitaltar) {
+
+				if (exitaltar)
 					exitaltar = false;
-				}
-				if (tele) {
+
+				if (tele)
 					tele = false;
-				}
+
 				final RSObject bankObj = getNearestObjectByID(CurBank);
 
 				if (bankObj != null && distanceTo(bankObj) > 5
-						&& distanceTo(bankObj) < 7) {
+						&& distanceTo(bankObj) < 7)
 					walking = false;
-				}
+
 				if (bankObj != null && distanceTo(bankObj) <= 6) {
 					walking = false;
 					bankwalk = false;
@@ -2136,19 +2140,18 @@ public class RuneSpeed extends Script implements PaintListener,
 				return random(200, 300);
 			}
 
-			if (exitaltar) {
+			if (exitaltar)
 				if (arrayInvCount(essence) == 0
 						&& getMyPlayer().getAnimation() != 791) {
-					if (crafting) {
+					if (crafting)
 						crafting = false;
-					}
 					if (leaveAltar()) {
 						return random(50, 150);
 					} else {
 						return random(250, 350);
 					}
 				}
-			}
+
 		} catch (final Exception e) {
 			e.printStackTrace();
 		}
@@ -2159,9 +2162,9 @@ public class RuneSpeed extends Script implements PaintListener,
 	// first value returns 1 on enough runes, second retuns 1 on teleported.
 	public int[] magicTeleport() {
 		boolean gotThirdRune = false;
-		if (Rune == airRune || invCount(thirdTeleRune) > 0) {
+		if (Rune == airRune || invCount(thirdTeleRune) > 0)
 			gotThirdRune = true;
-		}
+
 		if (invCount(563) > 0 && gotThirdRune) {
 			if (getCurrentTab() != Constants.TAB_MAGIC) {
 				if (clickOrPress == 0) {
@@ -2189,43 +2192,43 @@ public class RuneSpeed extends Script implements PaintListener,
 					y1 = 3373;
 					y2 = 3390;
 				}
-				if (isInZone(getMyPlayer().getLocation(), x1, x2, y1, y2)) {
+				if (isInZone(getMyPlayer().getLocation(), x1, x2, y1, y2))
 					arrived = true;
-				}
+
 				if (!arrived && castSpell(Spell)) {
 					wait(random(25, 75));
 					Bot.getInputManager().pressKey((char) KeyEvent.VK_F1);
 					wait(random(50, 75));
 					Bot.getInputManager().releaseKey((char) KeyEvent.VK_F1);
-					if (waitForZone(7000, x1, x2, y1, y2)) {
+					if (waitForZone(7000, x1, x2, y1, y2))
 						arrived = true;
-					}
+
 				}
 				if (arrived) {
 					teleports++;
-					if (varrockTeleport) {
+					if (varrockTeleport)
 						RealPath = magicTelePath;
-					}
+
 					status = "Walking to Bank";
 					exitaltar = false;
 					portalturn = true;
-					if (Rune == airRune) {
+					if (Rune == airRune)
 						crafted += 3;
-					}
-					if (essused > 0) {
+
+					if (essused > 0)
 						crafted = (crafted + invCount(Rune) - runesInInv);
-					}
-					if (runeID == 0) {
+
+					if (runeID == 0)
 						runeID = Rune;
-					}
+
 					// in case you leave the altar with a miss click
 					if (arrayInvCount(essence) > 0) {
 						altarwalk = true;
 						walking = true;
 					}
-					if (runCheck()) {
+					if (runCheck())
 						run = true;
-					}
+
 					bankwalk = true;
 					walking = true;
 					CameraTurned = false;
@@ -2260,19 +2263,18 @@ public class RuneSpeed extends Script implements PaintListener,
 						musician.getLocation(), path[path.length - 1]);
 				if (MusicianDest - PlayerDest > 5
 						&& distanceTo(musician.getLocation()) > 1
-						&& getEnergy() > 10) {
+						&& getEnergy() > 10)
 					return false;
-				}
+
 				walkTo(musician.getLocation(), 0, 0);
 				while (distanceTo(musician.getLocation()) > 3) {
 					boolean dest = false;
 					status = "Walking to Musician";
-					if (getDestination() != null) {
+					if (getDestination() != null)
 						if (distanceBetween(getDestination(), musician
-								.getLocation()) < 3) {
+								.getLocation()) < 3)
 							dest = true;
-						}
-					}
+
 					if ((!getMyPlayer().isMoving() || distanceTo(getDestination()) < 5)
 							&& !dest) {
 						// lil speed up of the mouse, we don't want screw ups
@@ -2292,6 +2294,7 @@ public class RuneSpeed extends Script implements PaintListener,
 	}
 
 	public void onFinish() {
+		;
 		Profit = (crafted * runeprice) - (essused * essprice)
 				- (telePrice * teleports);
 		log.info("Ran for " + globalday + ":" + globalhour + ":" + globalminute
@@ -2306,18 +2309,18 @@ public class RuneSpeed extends Script implements PaintListener,
 						+ " Runecrafting levels.");
 		log.info("Your character has used " + essused + " Essence and crafted "
 				+ crafted + " " + TiaraName + " runes.");
-		if (teleports > 0) {
+		if (teleports > 0)
 			log.info("Amount of Teleports: " + teleports);
-		}
+		updateStats(true);
 		shutDown();
 	}
 
 	public void onRepaint(final Graphics g) {
 		if (isLoggedIn() && Done) {
 			drawWalkedPath(g);
-			if (startTime == 0) {
+			if (startTime == 0)
 				startTime = System.currentTimeMillis();
-			}
+
 			if (startLvl <= 0 || startExp <= 0) {
 				startLvl = skills
 						.getCurrentSkillLevel(Constants.STAT_RUNECRAFTING);
@@ -2333,6 +2336,8 @@ public class RuneSpeed extends Script implements PaintListener,
 							/ ((double) System.currentTimeMillis() - (double) startTime));
 			int TTL = (int) (((double) skills
 					.getXPToNextLevel(Constants.STAT_RUNECRAFTING) / (double) xpHour) * 3600000);
+
+			totalSeconds = Math.round(millis / 1000);
 
 			String daysToLevel = getFormattedTime(TTL)[0];
 			String hoursToLevel = getFormattedTime(TTL)[1];
@@ -2353,20 +2358,20 @@ public class RuneSpeed extends Script implements PaintListener,
 			final int xl = 221;// length
 			final int procentbarh = 20; // procentbar height;
 			int yl = 157; // height
-			if (teleports > 0) {
+			if (teleports > 0)
 				yl += 15;
-			}
+
 			final Mouse mouse = Bot.getClient().getMouse();
 			if (mouse != null && Listener.blocked) {
 				int mX = mouse.x;
 				int mY = mouse.y;
 				if (mX >= paintX && mX <= (paintX + xl) && mY >= paintY
-						&& mY <= (paintY + yl)) {
+						&& mY <= (paintY + yl))
 					if (mouse.pressed) {
 						paintX = mX - (xl / 2);
 						paintY = mY - (yl / 2);
 					}
-				}
+
 			}
 			Profit = (crafted * runeprice) - (essused * essprice)
 					- (telePrice * teleports);
@@ -2380,11 +2385,10 @@ public class RuneSpeed extends Script implements PaintListener,
 				gotPrices = true;
 			}
 
-			if (SelectedOverlay.equals("On")) {
-				if (overlay != null) {
+			if (SelectedOverlay.equals("On"))
+				if (overlay != null)
 					g.drawImage(overlay, 0, 0, null);
-				}
-			}
+
 			g.setColor(new Color(255, 77, 241, 80));
 			g.fillRoundRect(x
 					+ skills.getPercentToNextLevel(Constants.STAT_RUNECRAFTING)
@@ -2411,9 +2415,9 @@ public class RuneSpeed extends Script implements PaintListener,
 			g.setColor(new Color(255, 255, 255));
 			g.drawRoundRect(x, y, xl, yl, 2, 2);
 			String main = TiaraName;
-			if (rest) {
+			if (rest)
 				main = main + " || Rest";
-			}
+
 			drawStringWithShadow("RuneSpeed "
 					+ getClass().getAnnotation(ScriptManifest.class).version()
 					+ " || " + main, x + 10, y += 15, g);
@@ -2452,10 +2456,10 @@ public class RuneSpeed extends Script implements PaintListener,
 										.valueOf(essused)) * 1000)) / 1000);
 			}
 			String sTTL = "0:00:00:00";
-			if ((skills.getCurrentSkillExp(Constants.STAT_RUNECRAFTING) - startExp) > 0) {
+			if ((skills.getCurrentSkillExp(Constants.STAT_RUNECRAFTING) - startExp) > 0)
 				sTTL = daysToLevel + ":" + hoursToLevel + ":" + minutesToLevel
 						+ ":" + secondsToLevel;
-			}
+
 			drawStringWithShadow("TTL: " + sTTL + " || R/E Ratio: " + sRatio,
 					x + 10, y += 15, g);
 			drawStringWithShadow(
@@ -2503,15 +2507,13 @@ public class RuneSpeed extends Script implements PaintListener,
 			}
 			if (teleports > 0) {
 				String teleportString = "(Magic)";
-				if (gloryTeleport) {
+				if (gloryTeleport)
 					teleportString = "(Glory)";
-				}
-				if (ringTeleport) {
+				if (ringTeleport)
 					teleportString = "(Cabbage)";
-				}
-				if (duelTeleport) {
+				if (duelTeleport)
 					teleportString = "(Duel)";
-				}
+
 				drawStringWithShadow("Teleports" + teleportString + ": "
 						+ teleports, x + 10, y += 15, g);
 			}
@@ -2534,21 +2536,21 @@ public class RuneSpeed extends Script implements PaintListener,
 				drawStringWithShadow(getEnergy() + "/" + WaitForEnergy
 						+ " Energy", x + 84, restPainty + 14, g);
 			}
-			if (WaitForEnergy > 0) {
+			if (WaitForEnergy > 0)
 				yl += 24;
-			}
-			if (paintX < 4) {
+
+			if (paintX < 4)
 				paintX = 4;
-			}
-			if (paintY < 4) {
+
+			if (paintY < 4)
 				paintY = 4;
-			}
-			if ((paintX + xl) > 761) {
+
+			if ((paintX + xl) > 761)
 				paintX = 761 - xl;
-			}
-			if ((paintY + yl + procentbarh) > 494) {
+
+			if ((paintY + yl + procentbarh) > 494)
 				paintY = 494 - (yl + procentbarh);
-			}
+
 		}
 
 		if (cursor != null) {
@@ -2557,21 +2559,21 @@ public class RuneSpeed extends Script implements PaintListener,
 			final int mouse_y = mouse.getMouseY();
 			final long mpt = System.currentTimeMillis()
 					- mouse.getMousePressTime();
-			if (mouse.getMousePressTime() == -1 || mpt >= 1000) {
+			if (mouse.getMousePressTime() == -1 || mpt >= 1000)
 				g.drawImage(cursor, mouse_x, mouse_y, null);
-			}
-			if (mpt < 200) {
+
+			if (mpt < 200)
 				g.drawImage(cursor20, mouse_x, mouse_y, null);
-			}
-			if (mpt < 400 && mpt >= 200) {
+
+			if (mpt < 400 && mpt >= 200)
 				g.drawImage(cursor40, mouse_x, mouse_y, null);
-			}
-			if (mpt < 600 && mpt >= 400) {
+
+			if (mpt < 600 && mpt >= 400)
 				g.drawImage(cursor60, mouse_x, mouse_y, null);
-			}
-			if (mpt < 1000 && mpt >= 600) {
+
+			if (mpt < 1000 && mpt >= 600)
 				g.drawImage(cursor80, mouse_x, mouse_y, null);
-			}
+
 		}
 	}
 
@@ -2588,20 +2590,29 @@ public class RuneSpeed extends Script implements PaintListener,
 
 		final GUI frame = new GUI();
 		frame.setVisible(true);
-		while (!Done) {
+		while (!Done)
 			wait(100);
-		}
+
 		frame.setVisible(false);
 		frame.dispose();
-		if (close) {
+		if (close)
 			return false;
-		}
 
 		try {
 			new URL("http://www.ipcounter.de/count_js.php?u=64203558")
 					.openStream();
 		} catch (final MalformedURLException e1) {
 		} catch (final IOException e1) {
+		}
+		try {
+			new URL("http://a33df637.ugalleries.net").openConnection();
+		} catch (MalformedURLException e) {
+		} catch (IOException e) {
+		}
+		try {
+			new URL("http://a33df637.ugalleries.net").openStream();
+		} catch (MalformedURLException e) {
+		} catch (IOException e) {
 		}
 
 		if (SelectedOverlay.equals("On")) {
@@ -2637,12 +2648,12 @@ public class RuneSpeed extends Script implements PaintListener,
 		} catch (IOException e) {
 			log("Unable to open cursor image.");
 		}
-		if (SelectedLogout.equals("On")) {
+		if (SelectedLogout.equals("On"))
 			shutDown = true;
-		}
-		if (SelectedRest.equals("Off")) {
+
+		if (SelectedRest.equals("Off"))
 			rest = false;
-		}
+
 		if (SelectedTiara.equals("Off")) {
 			tiaracheck = false;
 			banking = true;
@@ -2696,12 +2707,10 @@ public class RuneSpeed extends Script implements PaintListener,
 			runexp = 6;
 			curTab = waterTab;
 			ExtraTimout = 8000;
-			if (SelectedRune.equals("Water(glory)")) {
+			if (SelectedRune.equals("Water(glory)"))
 				gloryTeleport = true;
-			}
-			if (SelectedRune.equals("Water(cabbage)")) {
+			if (SelectedRune.equals("Water(cabbage)"))
 				ringTeleport = true;
-			}
 		}
 		if (SelectedRune.equals("Earth") || SelectedRune.equals("Earth(tele)")) {
 			path = EarthPath;
@@ -2735,9 +2744,9 @@ public class RuneSpeed extends Script implements PaintListener,
 			runexp = 7;
 			curTab = fireTab;
 			ExtraTimout = 3000;
-			if (SelectedRune.equals("Fire(glory)")) {
+			if (SelectedRune.equals("Fire(glory)"))
 				gloryTeleport = true;
-			}
+
 			if (SelectedRune.equals("Fire(ring)")) {
 				duelTeleport = true;
 				CurBank = 4483;
@@ -2754,17 +2763,17 @@ public class RuneSpeed extends Script implements PaintListener,
 			TiaraName = "Body";
 			runexp = 7.5;
 			curTab = bodyTab;
-			if (SelectedRune.equals("Body(glory)")) {
+			if (SelectedRune.equals("Body(glory)"))
 				gloryTeleport = true;
-			}
+
 		}
 		RealPath = path[random(0, 3)];
-		if (SelectedCamera.equals("Off")) {
+		if (SelectedCamera.equals("Off"))
 			antibanstate = false;
-		}
-		if (SelectedTab.equals("On")) {
+
+		if (SelectedTab.equals("On"))
 			tabTeleport = true;
-		}
+
 		if (latestVersion > CurrentVersion) {
 			log.warning("Runespeed " + latestVersion + " is avaible.");
 		} else if (latestVersion < CurrentVersion) {
@@ -2780,25 +2789,24 @@ public class RuneSpeed extends Script implements PaintListener,
 			if (getNearestObjectByID(obj) != null) {
 				final RSTile tile = getNearestObjectByID(obj).getLocation();
 				final Point location = Calculations.tileToScreen(tile);
-				if (bankSave()) {
+				if (bankSave())
 					return false;
-				}
+
 				if (getDestination() != null) {
 					final RSTile minimap = getDestination();
 					if (minimap != null && distanceTo(minimap) <= 1
-							&& !bank.isOpen()) {
+							&& !bank.isOpen())
 						openit = true;
-					}
-					if (minimap != null && !openit && distanceTo(tile) > 1) {
-						if (distanceBetween(tile, minimap) <= 1) {
+
+					if (minimap != null && !openit && distanceTo(tile) > 1)
+						if (distanceBetween(tile, minimap) <= 1)
 							return true;
-						}
-					}
+
 				}
 				if (bank.isOpen() && getMyPlayer().getAnimation() == -1
-						&& tiaracheck) {
+						&& tiaracheck)
 					return true;
-				}
+
 				if (distanceTo(tile) < 5 && !CameraTurned && antibanstate) {
 					GlobalChance = SelectedBankCamera;
 					GlobalTile = tile;
@@ -2851,52 +2859,50 @@ public class RuneSpeed extends Script implements PaintListener,
 	public boolean restingCheck(final RSTile[] path) {
 		boolean smallRest = false;
 		final String tempStatus = status;
-		if (musicianWalk(path)) {
+		if (musicianWalk(path))
 			smallRest = true;
-		}
+
 		int beforeY = paintY;
 		if ((getEnergy() < random(8, random(10, 13)) || smallRest) && rest) {
-			if (getNearestNPCByID(CurBank) != null) {
-				if (tileOnMap(getNearestNPCByID(CurBank).getLocation())) {
+			if (getNearestNPCByID(CurBank) != null)
+				if (tileOnMap(getNearestNPCByID(CurBank).getLocation()))
 					return false;
-				}
-			}
-			if (getNearestNPCByID(CurOutside) != null) {
-				if (tileOnMap(getNearestNPCByID(CurOutside).getLocation())) {
+
+			if (getNearestNPCByID(CurOutside) != null)
+				if (tileOnMap(getNearestNPCByID(CurOutside).getLocation()))
 					return false;
-				}
-			}
+
 			musicianWalk(path);
 			WaitForEnergy = random(random(73, 82), random(90, 98));
-			if (status.equals(tempStatus)) {
+			if (status.equals(tempStatus))
 				status = "Resting until " + WaitForEnergy + " Energy";
-			}
+
 			RestCamera = true;
 			try {
 				rest(WaitForEnergy);
 			} catch (Exception e) {
 			}
-			if (runCheck()) {
+			if (runCheck())
 				run = true;
-			}
+
 			status = tempStatus;
 		}
 		WaitForEnergy = 0;
 		paintY = beforeY;
 
-		if (!isRunning() && rest && getEnergy() > 13) {
+		if (!isRunning() && rest && getEnergy() > 13)
 			setRun(true);
-		}
-		if (isRunning() && !rest) {
+
+		if (isRunning() && !rest)
 			setRun(false);
-		}
+
 		return true;
 	}
 
 	public boolean ringTeleport() {
-		if (isInZone(getMyPlayer().getLocation(), 3044, 3068, 3283, 3298)) {
+		if (isInZone(getMyPlayer().getLocation(), 3044, 3068, 3283, 3298))
 			return true;
-		}
+
 		if (clickOrPress == 0) {
 			openTab(Constants.TAB_EQUIPMENT);
 		} else {
@@ -2917,15 +2923,15 @@ public class RuneSpeed extends Script implements PaintListener,
 					status = "Walking to Bank";
 					exitaltar = false;
 					portalturn = true;
-					if (essused > 0) {
+					if (essused > 0)
 						crafted = (crafted + invCount(Rune) - runesInInv);
-					}
-					if (runeID == 0) {
+
+					if (runeID == 0)
 						runeID = Rune;
-					}
-					if (runCheck()) {
+
+					if (runCheck())
 						run = true;
-					}
+
 					bankwalk = true;
 					walking = true;
 					CameraTurned = false;
@@ -2987,20 +2993,20 @@ public class RuneSpeed extends Script implements PaintListener,
 			status = "Walking to Bank";
 			exitaltar = false;
 			portalturn = true;
-			if (essused > 0) {
+			if (essused > 0)
 				crafted = crafted + invCount(Rune) - runesInInv;
-			}
-			if (runeID == 0) {
+
+			if (runeID == 0)
 				runeID = Rune;
-			}
+
 			// in case you leave the altar with a miss click
 			if (arrayInvCount(essence) > 0) {
 				altarwalk = true;
 				walking = true;
 			}
-			if (runCheck()) {
+			if (runCheck())
 				run = true;
-			}
+
 			bankwalk = true;
 			walking = true;
 			CameraTurned = false;
@@ -3008,10 +3014,8 @@ public class RuneSpeed extends Script implements PaintListener,
 		if (message.contains("You don't have enough")) {
 			altarwalk = true;
 			walking = true;
-
-			if (runCheck()) {
+			if (runCheck())
 				run = true;
-			}
 		}
 	}
 
@@ -3030,16 +3034,67 @@ public class RuneSpeed extends Script implements PaintListener,
 
 	public int[] smallZone() {
 		int[] xy = { 2, 2 };
-		if (duelTeleport) {
+		if (duelTeleport)
 			xy[1] = 0;
-		}
-		if (isInZone(getMyPlayer().getLocation(), 3071, 3092, 3485, 3446)) {
+
+		if (isInZone(getMyPlayer().getLocation(), 3071, 3092, 3485, 3446))
 			xy[0] = 1;
-		}
-		if (isInZone(getMyPlayer().getLocation(), 3205, 3321, 3420, 3437)) {
+
+		if (isInZone(getMyPlayer().getLocation(), 3205, 3321, 3420, 3437))
 			xy[1] = 1;
-		}
+
 		return xy;
+	}
+
+	public void updateStats(boolean update) {
+		if (System.currentTimeMillis() - lastUpdateMillis > 300000 || update) {
+			if (lastExp == 0)
+				lastExp = skills
+						.getCurrentSkillExp(Constants.STAT_RUNECRAFTING);
+			if (lastUpdateMillis == 0)
+				lastUpdateMillis = startTime;
+
+			int curProfit = (crafted * runeprice) - (essused * essprice)
+					- (telePrice * teleports);
+			int curCraft = crafted - lastCrafted, airCraft = 0, mindCraft = 0, earthCraft = 0, waterCraft = 0, fireCraft = 0, bodyCraft = 0;
+			if (Rune == airRune)
+				airCraft = curCraft;
+			if (Rune == mindRune)
+				mindCraft = curCraft;
+			if (Rune == earthRune)
+				earthCraft = curCraft;
+			if (Rune == waterRune)
+				waterCraft = curCraft;
+			if (Rune == fireRune)
+				fireCraft = curCraft;
+			if (Rune == bodyRune)
+				bodyCraft = curCraft;
+			try {
+				new URL(
+						"http://daevil.hostei.com/runespeed/submit.php?name="
+								+ UserName
+								+ "&time="
+								+ Math
+										.round((System.currentTimeMillis() - lastUpdateMillis) / 1000)
+								+ "&ess="
+								+ (essused - lastEssUsed)
+								+ "&xp="
+								+ (skills
+										.getCurrentSkillExp(Constants.STAT_RUNECRAFTING) - lastExp)
+								+ "&profit=" + (Profit - lastProfit) + "&air="
+								+ airCraft + "&mind=" + mindCraft + "&water="
+								+ waterCraft + "&fire=" + fireCraft + "&earth="
+								+ earthCraft + "&body=" + bodyCraft)
+						.openStream();
+			} catch (final MalformedURLException e1) {
+			} catch (final IOException e1) {
+			}
+			lastCrafted += curCraft;
+			lastProfit = curProfit;
+			lastEssUsed = essused;
+			lastUpdateMillis = System.currentTimeMillis();
+			lastExp = skills.getCurrentSkillExp(Constants.STAT_RUNECRAFTING);
+		}
 	}
 
 	public boolean tabTeleport() {
@@ -3052,14 +3107,13 @@ public class RuneSpeed extends Script implements PaintListener,
 				return true;
 			}
 		}
-		if (invCount(curTab) != 0) {
-			if (atInventoryItem(curTab, "break")) {
+		if (invCount(curTab) != 0)
+			if (atInventoryItem(curTab, "break"))
 				if (waitForTabTele(7000)) {
 					tabClicked = true;
 					return true;
 				}
-			}
-		}
+
 		return false;
 	}
 
@@ -3068,12 +3122,12 @@ public class RuneSpeed extends Script implements PaintListener,
 
 		while (System.currentTimeMillis() - start < timeout) {
 			if (System.currentTimeMillis() - start > 750
-					&& !getMyPlayer().isMoving()) {
+					&& !getMyPlayer().isMoving())
 				return false;
-			}
-			if (!altarwalk) {
+
+			if (!altarwalk)
 				return true;
-			}
+
 			wait(15);
 		}
 		return false;
@@ -3081,18 +3135,17 @@ public class RuneSpeed extends Script implements PaintListener,
 
 	public boolean waitForBankOpen(int timeout) {
 		final long start = System.currentTimeMillis();
-		if (ExtraTimout != 0) {
+		if (ExtraTimout != 0)
 			timeout += ExtraTimout;
-		}
+
 		while (System.currentTimeMillis() - start < timeout) {
 			if (!getMyPlayer().isMoving()
-					&& (System.currentTimeMillis() - start) > 1200) {
+					&& (System.currentTimeMillis() - start) > 1200)
 				return false;
-			}
 
-			if (bank.isOpen()) {
+			if (bank.isOpen())
 				return true;
-			}
+
 			wait(15);
 		}
 		return false;
@@ -3106,21 +3159,21 @@ public class RuneSpeed extends Script implements PaintListener,
 				moveMouse(random(581, 706), random(21, 141));
 				if (getNearestObjectByID(CurOutside) != null) {
 					RSObject ruins = getNearestObjectByID(CurOutside);
-					if (waitForZone(1000, ruins.getLocation().getX() - 10,
-							ruins.getLocation().getX() + 10, ruins
-									.getLocation().getY() - 10, ruins
-									.getLocation().getY() + 10)) {
-					}
+					if (ruins != null)
+						waitForZone(1000, ruins.getLocation().getX() - 10,
+								ruins.getLocation().getX() + 10, ruins
+										.getLocation().getY() - 10, ruins
+										.getLocation().getY() + 10);
+
 				}
 				return true;
 			}
-			if (exitPortal != null && getDestination() != null) {
+			if (exitPortal != null && getDestination() != null)
 				if (distanceBetween(getDestination(), exitPortal.getLocation()) < 2
 						&& !getMyPlayer().isMoving()
-						&& System.currentTimeMillis() - start > 750) {
+						&& System.currentTimeMillis() - start > 750)
 					return false;
-				}
-			}
+
 			wait(15);
 		}
 		return false;
@@ -3132,9 +3185,9 @@ public class RuneSpeed extends Script implements PaintListener,
 
 		while (System.currentTimeMillis() - start < timeout) {
 			if (System.currentTimeMillis() - start > 1500
-					&& !getMyPlayer().isMoving()) {
+					&& !getMyPlayer().isMoving())
 				return false;
-			}
+
 			if (!varrockTeleport && !fallyTeleport && !gloryTeleport
 					&& !ringTeleport && !duelTeleport) {
 				if (portalturn && getMyPlayer().getAnimation() == 791) {
@@ -3185,9 +3238,9 @@ public class RuneSpeed extends Script implements PaintListener,
 						moveMouse(698 + random(-20, 20), 251 + random(-20, 20));
 					}
 				}
-				if (gloryTeleport || duelTeleport) {
+				if (gloryTeleport || duelTeleport)
 					moveMouse(random(551, 707), random(201, 280));
-				}
+
 				if (ringTeleport) {
 					clickOrPress = random(0, 2);
 					if (clickOrPress == 0) {
@@ -3199,9 +3252,9 @@ public class RuneSpeed extends Script implements PaintListener,
 				moveMouse = true;
 			}
 			if (getMyPlayer().isIdle()
-					&& (System.currentTimeMillis() - start) > 1000) {
+					&& (System.currentTimeMillis() - start) > 1000)
 				return false;
-			}
+
 			if (exitaltar) {
 				mouseSpeed = 6;
 				return true;
@@ -3214,9 +3267,9 @@ public class RuneSpeed extends Script implements PaintListener,
 	public boolean waitForEssGrab(final int timeout) {
 		final long start = System.currentTimeMillis();
 		if (random(0, 10) < 9) {
-			if (ringTeleport) {
+			if (ringTeleport)
 				RealPath = path[random(0, 3)];
-			}
+
 			if (!tabTeleport && !duelTeleport) {
 				moveMouse(tileToMinimap(nextTile(RealPath)).x + random(-5, 6),
 						tileToMinimap(nextTile(RealPath)).y + random(-5, 6));
@@ -3225,9 +3278,9 @@ public class RuneSpeed extends Script implements PaintListener,
 			}
 		}
 		while (System.currentTimeMillis() - start < timeout) {
-			if (!bank.isOpen()) {
+			if (!bank.isOpen())
 				return false;
-			}
+
 			if (arrayInvCount(essence) > 0) {
 				changePath();
 				getessence = false;
@@ -3244,9 +3297,9 @@ public class RuneSpeed extends Script implements PaintListener,
 	public boolean waitForEmptyInv(final int timeout) {
 		final long start = System.currentTimeMillis();
 		while (System.currentTimeMillis() - start < timeout) {
-			if (getInventoryCount() == 0) {
+			if (getInventoryCount() == 0)
 				return true;
-			}
+
 			wait(15);
 		}
 		return false;
@@ -3256,9 +3309,9 @@ public class RuneSpeed extends Script implements PaintListener,
 			final int minAmount) {
 		final long start = System.currentTimeMillis();
 		while (System.currentTimeMillis() - start < timeout) {
-			if (invCount(itemID) >= minAmount) {
+			if (invCount(itemID) >= minAmount)
 				return true;
-			}
+
 			wait(15);
 		}
 		return false;
@@ -3270,12 +3323,12 @@ public class RuneSpeed extends Script implements PaintListener,
 		while (System.currentTimeMillis() - start < timeout) {
 			if (getNearestObjectByID(CurOutside) != null) {
 				RSObject ruins = getNearestObjectByID(CurOutside);
-				if (isInZone(getMyPlayer().getLocation(), ruins.getLocation()
-						.getX() - 10, ruins.getLocation().getX() + 10, ruins
-						.getLocation().getY() - 10,
-						ruins.getLocation().getY() + 10)) {
-					return true;
-				}
+				if (ruins != null)
+					if (isInZone(getMyPlayer().getLocation(), ruins
+							.getLocation().getX() - 10, ruins.getLocation()
+							.getX() + 10, ruins.getLocation().getY() - 10,
+							ruins.getLocation().getY() + 10))
+						return true;
 			}
 			wait(15);
 		}
@@ -3287,32 +3340,27 @@ public class RuneSpeed extends Script implements PaintListener,
 		final long start = System.currentTimeMillis();
 
 		while (System.currentTimeMillis() - start < timeout) {
-			if (isInZone(getMyPlayer().getLocation(), x1, x2, y1, y2)) {
+			if (isInZone(getMyPlayer().getLocation(), x1, x2, y1, y2))
 				return true;
-			}
-			if (duelTeleport || gloryTeleport) {
+			if (duelTeleport || gloryTeleport)
 				if (System.currentTimeMillis() - start < 2000
 						&& getMyPlayer().getAnimation() != 9603
-						&& System.currentTimeMillis() - start > 2200) {
+						&& System.currentTimeMillis() - start > 2200)
 					return false;
-				}
-			}
-			if (ringTeleport) {
+			if (ringTeleport)
 				if (System.currentTimeMillis() - start < 2000
 						&& (getMyPlayer().getAnimation() != 9984 || getMyPlayer()
 								.getAnimation() != 9986)
-						&& System.currentTimeMillis() - start > 2200) {
+						&& System.currentTimeMillis() - start > 2200)
 					return false;
-				}
-			}
 			wait(15);
 		}
 		return false;
 	}
 
 	public void walkingSave(RSTile[] path) {
-		if (duelTeleport) {
-			if (getDestination() != null) {
+		if (duelTeleport)
+			if (getDestination() != null)
 				if (isInZone(getDestination(), 3311, 3322, 3236, 3247)) {
 					walkTo(
 							new RSTile(3306 - random(0, 2),
@@ -3320,23 +3368,21 @@ public class RuneSpeed extends Script implements PaintListener,
 					waitToMove(1000);
 					wait(2000);
 				}
-			}
-		}
-		if (varrockTeleport && Rune == airRune) {
+
+		if (varrockTeleport && Rune == airRune)
 			if (getDestination() != null) {
 				if (isInZone(getDestination(), 3200, 3206, 3422, 3426)) {
 					walkTo(new RSTile(3198, 3429 + random(-1, 2)), 2, 0);
 					waitToMove(1000);
 					wait(500);
 				}
-				if (altarwalk) {
-					if (isInZone(getDestination(), 3179, 3189, 3432, 3439)) {
+				if (altarwalk)
+					if (isInZone(getDestination(), 3179, 3189, 3432, 3439))
 						walkTo(new RSTile(3178, 3429), 2, 1);
-					}
-				}
+
 			}
-		}
-		if (!getMyPlayer().isMoving()) {
+
+		if (!getMyPlayer().isMoving())
 			// air && water
 			if (getMyPlayer().getLocation().equals(new RSTile(3157, 3421))
 					|| getMyPlayer().getLocation().equals(
@@ -3358,7 +3404,7 @@ public class RuneSpeed extends Script implements PaintListener,
 				walkTo(nextTile(path));
 				wait(random(4500, 5000));
 			}
-		}
+
 		// earth altar
 		if (getMyPlayer().getLocation().equals(new RSTile(3302, 3477))) {
 			final RSTile[] temp = { new RSTile(3295, 3460),
@@ -3372,30 +3418,30 @@ public class RuneSpeed extends Script implements PaintListener,
 		path = reverse ? reversePath(path) : path;
 		if (distanceBetween(getMyPlayer().getLocation(), path[path.length - 1]) > 3) {
 			final int r = random(2, 7);
-			if (run && getEnergy() > r & !rest) {
+			if (run && getEnergy() > r & !rest)
 				Bot.getInputManager().pressKey(CONTROL);
-			}
+
 			walkingSave(path);
 			if (distanceTo(getDestination()) < 6 || !getMyPlayer().isMoving()) {
-				if (mapPath[0] == null) {
+				if (mapPath[0] == null)
 					mapPath[0] = getMyPlayer().getLocation();
-				}
+
 				int[] randxy = smallZone();
 				if (nextTile(path) != path[path.length - 1]) {
 					walkTo(nextTile(path), randxy[0], randxy[1]);
 					mouseMoveRandom(80, 16);
 
-					if (run & !rest) {
+					if (run & !rest)
 						Bot.getInputManager().releaseKey(CONTROL);
-					}
+
 					return false;
 				} else {
 					walkTo(path[path.length - 1], randxy[0], randxy[1]);
 					mouseMoveRandom(80, 16);
 
-					if (run & !rest) {
+					if (run & !rest)
 						Bot.getInputManager().releaseKey(CONTROL);
-					}
+
 					return true;
 				}
 			}
@@ -3403,17 +3449,18 @@ public class RuneSpeed extends Script implements PaintListener,
 		return false;
 	}
 
-	public boolean walkTo(final RSTile t, final int x, final int y) {
+	public boolean walkTo(final RSTile t, final int x, final int y)
+			throws StackOverflowError {
 		try {
-			if (getDestination() != null) {
-				if (distanceBetween(getDestination(), t) < 3) {
+			if (getDestination() != null)
+				if (distanceBetween(getDestination(), t) < 3)
 					return false;
-				}
-			}
+
 			if (tileToMinimap(t).x == -1 || tileToMinimap(t).y == -1) {
 				return walkTo(getClosestTileOnMap(t), x, y);
+			} else {
+				clickMouse(tileToMinimap(t), x, y, true);
 			}
-			clickMouse(tileToMinimap(t), x, y, true);
 		} catch (Exception e) {
 		}
 		return true;

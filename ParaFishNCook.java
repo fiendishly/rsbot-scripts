@@ -81,21 +81,26 @@ import org.rsbot.event.listeners.ServerMessageListener;
 import org.rsbot.util.GlobalConfiguration;
 
 @ScriptManifest(name = "ParaFishNCook", authors = {"Parameter"}, version = ParaFishNCook.VERSION,
-		category = "Fishing", description = "<h1>ParaFishNCook v" + ParaFishNCook.VERSION +
-		" by Parameter</h1>" +
-		"<b>Fisher & Cooker</b><br/>" +
-		"Start near the fishing spot you want to use. " +
+		category = "Fishing", description = "<html><head><style type='text/css'>" +
+		"body {background-color: #DAE2F0} " +
+		"h1 {font-family: 'Verdana'} " +
+		"div.title {background-color: #B9CBED} " +
+		"div.descr {background-color: 055BFA; color: #FFFFFF; font-weight: bold} " +
+		"</style></head><body>" +
+		"<div class='title'><h1>ParaFishNCook</h1></div> " +
+		"<div class='descr'>v" + ParaFishNCook.VERSION + " | Parameter | PowerFisher + Cooker</div>" +
+		"<p>Start near the fishing spot you want to use. " +
 		"If you're cooking, make sure that there are also some trees which you can chop " +
 		"and you have a hatchet and a tinderbox in your inventory.<br/>" +
 		"<b>Note: This is a powerfisher - it will drop the fish after " +
 		"it has been fished/cooked.<br/><br/>" +
-		"All options can be found in GUI.</b>")
+		"All options can be found in GUI.</b></p></body></html>")
 public class ParaFishNCook extends Script implements PaintListener, ServerMessageListener {
 
-	public static final double VERSION = 1.14;
+	public static final double VERSION = 1.15;
 
 	private static final int SETTINGS_VERSION = 3;
-
+	
 	private static final int FISHING = 0, CHOPPING = 1,
 		FIRING = 2, COOKING = 3, DROPPING = 4;
 	private int status = FISHING;
@@ -134,7 +139,6 @@ public class ParaFishNCook extends Script implements PaintListener, ServerMessag
 			27, 28, 31, 34, 35, 37, 40, 43, 44, 45, 46, 49, 52, 60, 70};
 
 	private static Methods m;
-
 	{
 		m = this;
 	}
@@ -147,6 +151,8 @@ public class ParaFishNCook extends Script implements PaintListener, ServerMessag
 	private double fishingXPGained, wcXPGained, fmXPGained, cookingXPGained;
 	private long startTime = System.currentTimeMillis();
 	private boolean mouseClicked = false;
+
+	private int hoverInvCount = -1;
 
 	private FishingStyle curStyle;
 	private int curStyleIndex;
@@ -304,9 +310,11 @@ public class ParaFishNCook extends Script implements PaintListener, ServerMessag
 		}
 
 		public int[] getCatchIDs() {
-			final int[] ids = new int[catches.length];
+			final int[] ids = new int[catches.length * 3];
 			for(int i = 0; i < catches.length; i++) {
-				ids[i] = catches[i].getID();
+				ids[i * 3] = catches[i].getID();
+				ids[i * 3 + 1] = catches[i].getCookedID();
+				ids[i * 3 + 2] = catches[i].getBurntID();
 			}
 			return ids;
 		}
@@ -510,7 +518,7 @@ public class ParaFishNCook extends Script implements PaintListener, ServerMessag
 			final Set<Tree> trees = new HashSet<Tree>();
 
 			try {
-				//System.out.println("---------------------------------");
+				System.out.println("---------------------------------");
 				final Client client = Bot.getClient();
 				final RSGround[][] rsGround = client.getRSGroundArray()[client.getPlane()];
 				final int baseX = client.getBaseX(), baseY = client.getBaseY();
@@ -983,6 +991,9 @@ public class ParaFishNCook extends Script implements PaintListener, ServerMessag
 					trips = fishCaught = fishingLvlsGained = logsChopped = wcLvlsGained =
 						logsBurned = fmLvlsGained = fishCooked = cookingLvlsGained =
 							gearFails = tinderBoxFails = 0;
+					status = FISHING;
+
+					hoverInvCount = -1;
 				}
 				run = !run;
 			} else if(command.equals("checkcooking")) {
@@ -1099,9 +1110,7 @@ public class ParaFishNCook extends Script implements PaintListener, ServerMessag
 			log("Can't read settings: " + e.getMessage());
 		} finally {
 			try {
-				if (in != null) {
-					in.close();
-				}
+				in.close();
 			} catch (final IOException e) {
 				log("Can't close settings stream: " + e);
 			}
@@ -1130,9 +1139,7 @@ public class ParaFishNCook extends Script implements PaintListener, ServerMessag
 			log("Can't save settings: " + e.getMessage());
 		} finally {
 			try {
-				if (out != null) {
-					out.close();
-				}
+				out.close();
 			} catch (final IOException e) {
 				log("Can't close settings stream: " + e);
 			}
@@ -1418,6 +1425,38 @@ public class ParaFishNCook extends Script implements PaintListener, ServerMessag
 		return false;
 	}
 
+	private int getInventoryCount(final Fish[] fish,
+			final boolean raw, final boolean cooked, final boolean burnt) {
+		final int[] invArray = getInventoryArray();
+		int count = 0;
+		for(final int id : invArray) {
+			for(final Fish f : fish) {
+				if((raw && f.getID() == id) ||
+						(cooked && f.getCookedID() == id) ||
+						(burnt && f.getBurntID() == id)) {
+					count++;
+				}
+			}
+		}
+		return count;
+	}
+
+	private int getInventoryCount(final Fish[] fish) {
+		return getInventoryCount(fish, true, true, true);
+	}
+
+	private int getFirstVerticalIndexFor(final int... ids) {
+		final int[] invArray = getInventoryArray();
+		for(int x = 0; x < 4; x++) {
+			for(int y = 0; y < 7; y++) {
+				if(arrayContains(invArray[y * 4 + x], ids)) {
+					return y * 4 + x;
+				}
+			}
+		}
+		return -1;
+	}
+
 	private Point getInvPointAt(final int index) {
 		final Point p = getInventoryItemPoint(index);
 		if(p.x == -1 || p.y == -1 || index == -1) return new Point(-1, -1);
@@ -1620,16 +1659,20 @@ public class ParaFishNCook extends Script implements PaintListener, ServerMessag
 
 	private boolean isCooking(final Fish fish, final RSTile tile, final int timeout) {
 		final long startTime = System.currentTimeMillis();
-		RSObject obj;
+		int fireFails = 0;
 		while(System.currentTimeMillis() - startTime < timeout &&
-				inventoryContains(fish.getID()) &&
-				(obj = getObjectAt(tile)) != null &&
-				obj.getID() == FIRE_ID) {
+				inventoryContains(fish.getID()) && fireFails < 3) {
 			if(getMyPlayer().getAnimation() == COOKING_ANIMATION ||
 					levelUpIface.isValid()) {
 				return true;
 			}
-			wait(random(150, 600));
+			final RSObject fire = getObjectAt(tile);
+			if(fire == null || fire.getID() != FIRE_ID) {
+				fireFails++;
+			} else {
+				fireFails = 0;
+			}
+			wait(random(100, 300));
 		}
 		return false;
 	}
@@ -1772,10 +1815,16 @@ public class ParaFishNCook extends Script implements PaintListener, ServerMessag
 				return -1;
 			}
 		}
+		if(hoverInvCount == -1) {
+			final int otherItemsCount = getInventoryCount() -
+				getInventoryCount(curStyle.getCatches());
+			hoverInvCount = fastPowerFish ? random(1, 3) :
+				random(25 - otherItemsCount, 28 - otherItemsCount);
+		}
 		final RSObject fire = cook ? getNearestObjectByID(FIRE_ID) : null;
 		switch(status) {
 		case FISHING:
-			if(fastPowerFish && getInventoryCount(curStyle.getCatchIDs()) >= 2 ||
+			if(fastPowerFish && getInventoryCount(curStyle.getCatches()) >= 2 ||
 					getInventoryCount() >=
 					(cook && fire != null && tileOnScreen(fire.getLocation()) ? 28 : 27)) {
 				status = cook ? CHOPPING : DROPPING;
@@ -1840,7 +1889,15 @@ public class ParaFishNCook extends Script implements PaintListener, ServerMessag
 					wait(random(250, 1250));
 					atInterface(levelUpIface);
 				}
-				doAntiBan();
+				if(!cook && getInventoryCount(curStyle.getCatches()) >= hoverInvCount) {
+					final Point invPoint = getInvPointAt(getFirstVerticalIndexFor(curStyle.getCatchIDs()));
+					if(invPoint.distance(getMouseLocation()) >= random(40, 81)) {
+						moveMouse(invPoint);
+					}
+					return random(50, 300);
+				} else {
+					doAntiBan();
+				}
 				return random(250, 1000);
 			}
 			break;
@@ -2024,8 +2081,16 @@ public class ParaFishNCook extends Script implements PaintListener, ServerMessag
 					wait(random(250, 1250));
 					atInterface(levelUpIface);
 				}
-				doAntiBan();
-				wait(random(150, 750));
+				if(getInventoryCount(curStyle.getCatches(), false, true, true) >= hoverInvCount) {
+					final Point invPoint = getInvPointAt(getFirstVerticalIndexFor(curStyle.getCatchIDs()));
+					if(invPoint.distance(getMouseLocation()) >= random(40, 81)) {
+						moveMouse(invPoint);
+					}
+					wait(random(50, 300));
+				} else {
+					doAntiBan();
+					wait(random(150, 750));
+				}
 			}
 			break;
 		case DROPPING:
@@ -2033,13 +2098,18 @@ public class ParaFishNCook extends Script implements PaintListener, ServerMessag
 			if(!inventoryContainsOneOf(Fish.values())) {
 				status = FISHING;
 				trips++;
+				hoverInvCount = -1;
 				break;
 			}
 			dropFish(Fish.values());
+			fishingSpot = getNearestNPCByID(curStyle.getSpotIDs());
+			if(fishingSpot != null && tileOnScreen(fishingSpot.getLocation())) {
+				moveMouse(Calculations.tileToScreen(fishingSpot.getLocation()), 5, 5);
+			}
 			waitForFish(Fish.values(), false, random(1500, 3000));
 			break;
 		}
-		return random(100, 750);
+		return random(100, 400);
 	}
 
 	private String getStatus() {
@@ -2079,7 +2149,7 @@ public class ParaFishNCook extends Script implements PaintListener, ServerMessag
 		if(amount < 1000) return String.valueOf(amount);
 		final int len = String.valueOf(amount).length();
 		if(len >= 6) {
-			return amount / (len == 6 ? 1000 : 1000000) + (len == 6 ? "k" : "m");
+			return ((int)(amount / (len == 6 ? 1000 : 1000000))) + (len == 6 ? "k" : "m");
 		}
 		return String.format(Locale.US, "%." + (3 - len % 3) + "f%c",
 				amount / (len < 7 ? 1000.0 : 1000000.0),

@@ -1,4 +1,3 @@
-
 /*
 * ZombieFisherEXTREME V7.4
 *
@@ -94,6 +93,8 @@ public class ZombieFisher extends Script implements ServerMessageListener, Paint
 	public boolean usePaint;
 	public boolean Sound;
 	public boolean isPvP;
+	public boolean hasEquipped;
+	public long oldCatches = 0;
 	public long catches = 0;
 
 	// Misc variables.
@@ -114,12 +115,18 @@ public class ZombieFisher extends Script implements ServerMessageListener, Paint
 	public int lastExp;
 	public int xpPerCatch = 0;
 	public int oldExp;
+	public int updateCheck = 0;
+	public RSPlayer PvPPlayer;
+	public int sCB;
 	public int startExp;
+	public boolean sRM;
 	public boolean StartedY;
 
 
 	public int[] whirlpools = new int[]{
 			403, 404, 406, 406};
+
+	int[] equipItems = {10129, 14109};
 
 	int[] itemIDs = {10129, 14109};
 
@@ -462,23 +469,6 @@ public class ZombieFisher extends Script implements ServerMessageListener, Paint
 			toArea = reversePath(toBank);
 			usesNPCBanking = true;
 
-			if (catchName.equals("Shrimp/Anchovies")) {
-				currentGear = GEAR_NET;
-				currentBait = BAIT_NONE;
-				fishingSpotID = 323;
-				currentCommand = "Net";
-				bankID = 11267;
-				return true;
-			}
-
-			if (catchName.equals("Herring/Sardines")) {
-				currentGear = GEAR_ROD;
-				currentBait = BAIT_BAIT;
-				fishingSpotID = 323;
-				currentCommand = "Bait";
-				bankID = 11267;
-				return true;
-			}
 
 			if (catchName.equals("Lobsters")) {
 				currentGear = GEAR_CAGE;
@@ -551,51 +541,6 @@ public class ZombieFisher extends Script implements ServerMessageListener, Paint
 				fishingSpotID = 324;
 				currentCommand = "Harpoon";
 				bankID = 495;
-				return true;
-			}
-
-		}
-
-		if (locationName.equals("[Sell]Karamja")) {
-			log("Setting Mummyfied paths for Karamja");
-			toBank = new RSTile[]{new RSTile(2923, 3170), new RSTile(2918, 3159), new RSTile(2909, 3151),
-					new RSTile(2905, 3145)};
-			toArea = reversePath(toBank);
-			usesNPCBanking = true;
-
-			if (catchName.equals("Shrimp/Anchovies")) {
-				currentGear = GEAR_NET;
-				currentBait = BAIT_NONE;
-				fishingSpotID = 323;
-				currentCommand = "Net";
-				shopID = 532;
-				return true;
-			}
-
-			if (catchName.equals("Herring/Sardines")) {
-				currentGear = GEAR_ROD;
-				currentBait = BAIT_BAIT;
-				fishingSpotID = 323;
-				currentCommand = "Bait";
-				shopID = 532;
-				return true;
-			}
-
-			if (catchName.equals("Lobsters")) {
-				currentGear = GEAR_CAGE;
-				currentBait = BAIT_NONE;
-				fishingSpotID = 324;
-				currentCommand = "Cage";
-				shopID = 532;
-				return true;
-			}
-
-			if (catchName.equals("Tuna/Swordfish")) {
-				currentGear = GEAR_HARPOON;
-				currentBait = BAIT_NONE;
-				fishingSpotID = 324;
-				currentCommand = "Harpoon";
-				shopID = 532;
 				return true;
 			}
 
@@ -879,7 +824,7 @@ public class ZombieFisher extends Script implements ServerMessageListener, Paint
 					if (getCurrentTab() != Constants.TAB_STATS) {
 						openTab(Constants.TAB_STATS);
 					}
-					moveMouse(696, 274, 50, 28);
+					moveMouse(700, 280, 50, 28);
 					return random(5000, 8000);
 				}
 
@@ -1756,6 +1701,7 @@ public class ZombieFisher extends Script implements ServerMessageListener, Paint
 			wait(250);
 		}
 		wait(random(100, 500));
+		return;
 	}
 
 

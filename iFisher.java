@@ -1,48 +1,48 @@
-import java.awt.Color;
-import java.awt.Font;
-import java.awt.Point;
-import java.awt.Graphics;
-import java.awt.event.KeyEvent;
-import java.util.Map;
 import java.io.*;
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.io.IOException;
+import java.awt.*;
+import java.util.Map;
+import java.awt.event.*;
 
 import org.rsbot.bot.*;
 import org.rsbot.script.*;
-import org.rsbot.bot.input.Mouse;
-import org.rsbot.script.wrappers.RSNPC;
-import org.rsbot.script.wrappers.RSInterface;
-import org.rsbot.script.wrappers.RSObject;
-import org.rsbot.script.wrappers.RSTile;
-import org.rsbot.event.events.ServerMessageEvent;
-import org.rsbot.event.listeners.ServerMessageListener;
-import org.rsbot.event.listeners.PaintListener;
+import org.rsbot.bot.input.*;
+import org.rsbot.event.listeners.*;
+import org.rsbot.script.wrappers.*;
 import org.rsbot.util.GlobalConfiguration;
-import org.rsbot.script.ScriptManifest;
+import org.rsbot.event.events.ServerMessageEvent;
 
-
-@ScriptManifest(authors = {"Issues"}, category = "Fishing", name = "iFisher", version = 2.8, description = "<html>" + "<body bgcolor='#B0C4DE'>" + "<h2><font color='#191970' size='6'><center>iFisher</center></font></h2>" + "" + "<center><font color='white' size='3'>All setting's can be configured in the GUI</font></center>" + "<center><font color='white' size='3'>Just select your account and press ok.</font></center>" + "</body>" + "</html>")
-public class iFisher extends Script implements PaintListener, ServerMessageListener {
+@ScriptManifest(authors = { "Issues" }, category = "Fishing", name = "iFisher", version = 3.4, description = "<html>"
+		+ "<body bgcolor='#B0C4DE'>"
+		+ "<h2><font color='#191970' size='6'><center>iFisher</center></font></h2>"
+		+ ""
+		+ "<center><font color='white' size='3'>All setting's can be configured in the GUI</font></center>"
+		+ "<center><font color='white' size='3'>Just select your account and press ok.</font></center>"
+		+ "</body>" + "</html>")
+public class iFisher extends Script implements PaintListener,
+		ServerMessageListener {
 
 	final ScriptManifest props = getClass().getAnnotation(ScriptManifest.class);
-	public long moneyGained, time, xpHour, levelIn;
-	public long startTime = System.currentTimeMillis();
-	public int runEnergy = random(50, 100);
-	public int bassPrice, mackerelPrice, codPrice, gearfails, levelGained, catchesPerHour, startexp, gearMode, fishSpot, fishId, fished, fishEquip, XPToGo, shrimpsPrice, anchoviesPrice, lobsterPrice, swordfishPrice, tunaPrice, herringPrice, sardinesPrice, sharkPrice, troutPrice, salmonPrice, pikePrice;
-	public boolean useAntiBan, dropTuna, drop, catherbyLoc, kjMode, paused, barbMode, paint, startScript, fishingGuild;
-	public String status, fishing, location2, fishComm = "";
-	public RSTile fishTile, bankTile;
-	public RSTile[] toBank, toFish;
+
+	private long moneyGained, time, xpHour, levelIn, moneyHour;
+	private String status = "Waiting", fishing, location2, fishComm;
+	private long startTime;
+	private long lastCheck, checkTime;
+
 	private GUI GUI;
+	private RSTile fishTile, bankTile;
+	private RSTile[] toBank, toFish;
+	private int fishPrice1, fishPrice2, fishPrice3;
+	private int levelGained, catchesPerHour, startexp, fishSpot, fishId, fished, XPToGo;
+	private boolean useAntiBan, dropTuna, drop, catherbyLoc, kjMode, paused, barbMode, paint, started, fishingGuild, useStiles;
+
+	private int fishEquip, fishBait;
+	private final int BAIT_NONE = -1, BAIT_BAIT = 313, BAIT_FEATHERS = 314;
+	private final int GEAR_NET = 303, GEAR_ROD = 307, GEAR_FLYROD = 309,GEAR_CAGE = 301, GEAR_CCAGE = 13431, GEAR_HARPOON = 311,GEAR_BIGNET = 305;
 
 	public boolean onStart(Map<String, String> args) {
 		GUI = new GUI();
 		GUI.setVisible(true);
-		while (!startScript) {
+		while (!started) {
 			fished = 0;
 			wait(10);
 		}
@@ -54,7 +54,36 @@ public class iFisher extends Script implements PaintListener, ServerMessageListe
 		GUI.setVisible(false);
 	}
 
+	private Color paintColor1 = new Color(25, 25, 112, 100);
+	private Color paintColor2 = new Color(0, 0, 205, 100);
+
+	private void drawButton(int x, int y, int w, int h, Graphics g) {
+		g.setColor(new Color(0, 0, 0));
+		g.drawRect(x, y, w, h);
+		g.setColor(paintColor1);
+		g.fillRect(x + 1, y + 7, w - 1, h - 7);
+		g.setColor(paintColor2);
+		g.fillRect(x + 1, y + 1, w - 1, h - 8);
+	}
+
+	private void paintBG(int x, int y, int w, int h, Graphics g) {
+		g.setColor(new Color(0, 0, 0));
+		g.drawRect(x, y, w, h);
+		g.setColor(paintColor2);
+		g.fillRect(x + 1, y + 1, w - 1, h - 42);
+		g.setColor(paintColor1);
+		g.fillRect(x + 1, y + 43, w - 1, h - 42);
+	}
+
+	private String insertCommas(String str) {
+        if(str.length() < 4){
+            return str;
+        }
+        return insertCommas(str.substring(0, str.length() - 3)) + "," + str.substring(str.length() - 3, str.length());
+    }
+
 	public void onRepaint(Graphics g) {
+		((Graphics2D) g).setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 		long millis = System.currentTimeMillis() - startTime;
 		long hours = millis / (1000 * 60 * 60);
 		millis -= hours * (1000 * 60 * 60);
@@ -62,296 +91,192 @@ public class iFisher extends Script implements PaintListener, ServerMessageListe
 		millis -= minutes * (1000 * 60);
 		long seconds = millis / 1000;
 		int xpGained;
-		if (startexp == 0) {
+		int xpToNext = skills.getXPToNextLevel(Constants.STAT_FISHING);
+		if (startexp == 0)
 			startexp = skills.getCurrentSkillExp(STAT_FISHING);
-		}
 		xpGained = skills.getCurrentSkillExp(STAT_FISHING) - startexp;
 		XPToGo = skills.getXPToNextLevel(STAT_FISHING);
 		time = (System.currentTimeMillis() - startTime) / 1000;
-
 		if (time > 0) {
 			catchesPerHour = (int) ((fished * 60 * 60) / time);
 			xpHour = (xpGained * 60 * 60) / time;
 			levelIn = (long) (60 * 60 * (XPToGo / (double) xpHour));
+			moneyHour = (moneyGained * 60 * 60) / time;
 		}
 
 		Mouse m = Bot.getClient().getMouse();
 		Point p = new Point(m.x, m.y);
 
-		//Status Button
-		if (startScript && paint) {
-			g.setColor(new Color(0, 0, 0));
-			g.drawRect(6, 175, 68, 14);
-			g.setColor(new Color(25, 25, 112, 100));
-			g.fillRect(7, 182, 67, 7);
-			g.setColor(new Color(0, 0, 205, 100));
-			g.fillRect(7, 176, 67, 6);
+		String paint1 = Integer.toString(xpGained);
+		String paint2 = Long.toString(xpHour);
+		String paint3 = Long.toString(catchesPerHour);
+		String paint4 = Integer.toString(fished);
+		String paint5 = Long.toString(moneyGained);
+		String paint6 = Long.toString(moneyHour);
+		String paint7 = Long.toString(xpToNext);
 
-			g.setColor(Color.WHITE);
-			g.setFont(new Font("Segoe UI", Font.BOLD, 10));
-			g.drawString("iFisher v" + props.version(), 9, 186);
+		if (started && paint) {
 
-			g.setColor(new Color(0, 0, 0));
-			g.drawRect(6, 192, 68, 14);
-			g.setColor(new Color(25, 25, 112, 100));//Bottom
-			g.fillRect(7, 199, 67, 7);
-			g.setColor(new Color(0, 0, 205, 100));//Top
-			g.fillRect(7, 193, 67, 6);
+			drawButton(6, 321, 68, 14, g);//Status Button
+			drawButton(77, 321, 68, 14, g);//EXP Button
+			drawButton(148, 321, 68, 14, g);//Profit Button
 
-			if (isWithinBounds(p, 6, 192, 68, 14)) {
-				g.setColor(new Color(255, 140, 0));
-			} else {
-				g.setColor(Color.WHITE);
-			}
-			g.setFont(new Font("Segoe UI", Font.BOLD, 10));
-			g.drawString("- Status", 9, 203);//Text
-
-			//Exp Button
-			g.setColor(new Color(0, 0, 0));
-			g.drawRect(6, 209, 68, 14);
-			g.setColor(new Color(25, 25, 112, 100));//Bottom
-			g.fillRect(7, 216, 67, 7);
-			g.setColor(new Color(0, 0, 205, 100));//Top
-			g.fillRect(7, 210, 67, 6);
-
-			if (isWithinBounds(p, 6, 209, 68, 14)) {
-				g.setColor(new Color(255, 140, 0));
-			} else {
-				g.setColor(Color.WHITE);
-			}
-			g.setFont(new Font("Segoe UI", Font.BOLD, 10));
-			g.drawString("- Experience", 9, 220);//Text
-
-			//Gold Button
-			g.setColor(new Color(0, 0, 0));
-			g.drawRect(6, 226, 68, 14);
-			g.setColor(new Color(25, 25, 112, 100));//Bottom
-			g.fillRect(7, 233, 67, 7);
-			g.setColor(new Color(0, 0, 205, 100));//Top
-			g.fillRect(7, 227, 67, 6);
-
-			if (isWithinBounds(p, 6, 226, 68, 14)) {
-				g.setColor(new Color(255, 140, 0));
-			} else {
-				g.setColor(Color.WHITE);
-			}
-			g.setFont(new Font("Segoe UI", Font.BOLD, 10));
-			g.drawString("- Profit", 9, 237);//Text
-
-			if (isWithinBounds(p, 6, 226, 68, 14)) {//Gold
-				g.setColor(new Color(0, 0, 0));
-				g.drawRect(75, 226, 113, 65);
-				g.setColor(new Color(0, 0, 205, 100));
-				g.fillRect(76, 227, 112, 32);
-				g.setColor(new Color(25, 25, 112, 100));
-				g.fillRect(76, 258, 112, 33);
-
+			if (isWithinBounds(p, 6, 321, 68, 14)) {
+				paintBG(6, 237, 210, 84, g);
 				g.setFont(new Font("Arial", Font.BOLD, 10));
 				g.setColor(Color.WHITE);
-				g.drawString("Fish: " + fished, 79, 240);
-				g.drawString("Fish/Hour: " + catchesPerHour, 79, 255);
-				if (drop) {
-					g.drawString("Gold: N/A", 79, 270);
-					g.drawString("Gold/Hour: N/A", 79, 285);
-				} else {
-					g.drawString("Gold: " + moneyGained, 79, 270);
-					if (fished > 0)
-						g.drawString("Gold/Hour: " + moneyGained / time * 3600, 79, 285);
-					else
-						g.drawString("Please Wait...", 79, 285);
-				}
-			}
-			if (isWithinBounds(p, 6, 209, 68, 14)) {//EXP
+				g.drawString("Status: " + status, 10, 252);
+				g.drawString("Locstion: " + location2, 10, 267);
+				g.drawString("Fishing: " + fishing, 10, 282);
+				if (drop)
+					g.drawString("Mode: Power Fishing", 10, 297);
+				else
+					g.drawString("Mode: Banking", 10, 297);
+				g.drawString("Run Time: " + hours + ":" + minutes + ":" + seconds + "", 10, 312);
 
-				g.setColor(new Color(0, 0, 0));
-				g.drawRect(75, 209, 113, 84);
-				g.setColor(new Color(0, 0, 205, 100));
-				g.fillRect(76, 210, 112, 34);
-				g.setColor(new Color(25, 25, 112, 100));
-				g.fillRect(76, 243, 112, 50);
-
-				g.setFont(new Font("Arial", Font.BOLD, 10));
-				g.setColor(Color.WHITE);
-
-				g.drawString("Exp Gained: " + xpGained, 79, 223);//Text
-				g.drawString("Exp/Hour: " + xpHour, 79, 238);//Text
-				if (fished > 0) {
-					g.drawString("Level in: " + levelIn / 3600 + ":" + ((levelIn / 60 % 60 < 10) ? "0" : "") + levelIn / 60 % 60 + ":" + ((levelIn % 60 < 10) ? "0" : "") + levelIn % 60, 79, 253);
-				} else {
-					g.drawString("Level In: 0:00:00", 79, 253);//Text
-				}
-
-				g.drawString("Levels Gained: " + levelGained, 79, 268);
-
-
-				g.setColor(new Color(0, 0, 0));
-				g.drawRect(80, 275, 100, 12);
-				g.setColor(new Color(255, 0, 0));
-				g.fillRect(81, 276, 99, 11);
-				g.setColor(new Color(34, 139, 34));
-				g.fillRect(81, 276, skills.getPercentToNextLevel(STAT_FISHING), 11);
-				g.setColor(Color.BLACK);
-				g.drawString("   " + skills.getPercentToNextLevel(STAT_FISHING) + "% to next Level", 79, 285);
-
-
-			}
-			if (isWithinBounds(p, 6, 192, 68, 14)) {//Status
-				g.setColor(new Color(0, 0, 0));
-				g.drawRect(75, 192, 113, 84);
-				g.setColor(new Color(0, 0, 205, 100));
-				g.fillRect(76, 193, 112, 34);
-				g.setColor(new Color(25, 25, 112, 100));
-				g.fillRect(76, 226, 112, 50);
-
-				g.setFont(new Font("Segoe UI", Font.BOLD, 10));
 				g.setColor(new Color(255, 140, 0));
-				g.drawString("" + status, 79, 208);
+			} else
+				g.setColor(Color.WHITE);
+			g.setFont(new Font("Segoe UI", Font.BOLD, 10));
+			g.drawString("- Status", 9, 332);
+
+			if (isWithinBounds(p, 77, 321, 68, 14)) {
+				paintBG(6, 237, 210, 84, g);
 				g.setFont(new Font("Arial", Font.BOLD, 10));
 				g.setColor(Color.WHITE);
-				g.drawString("" + location2, 79, 223);//Text
-				g.drawString("" + fishing, 79, 238);//Text
-				if (drop) {
-					g.drawString("Droping Fish", 79, 253);
-				} else {
-					g.drawString("Banking Fish", 79, 253);
-				}
-				g.drawString("Run for: " + hours + ":" + minutes + ":" + seconds + "", 79, 268);
+				g.drawString("EXP Gained: " + insertCommas(paint1), 10, 252);
+				g.drawString("EXP Hourly: " + insertCommas(paint2), 10, 267);
+				g.drawString("EXP TNL: " + insertCommas(paint7), 10, 282);
+				if (fished > 0)
+					g.drawString("Level in: " + levelIn / 3600 + ":" + ((levelIn / 60 % 60 < 10) ? "0" : "") + levelIn	/ 60 % 60 + ":" + ((levelIn % 60 < 10) ? "0" : "") + levelIn % 60, 10, 297);
+				else
+					g.drawString("Level In: 0:0:0", 10, 297);
+				g.drawString("Current Level: " + skills.getCurrentSkillLevel(STAT_FISHING) + " (" + levelGained + ")", 10, 312);
 
-			}
+				g.setColor(new Color(255, 140, 0));
+			} else
+				g.setColor(Color.WHITE);
+			g.setFont(new Font("Segoe UI", Font.BOLD, 10));
+			g.drawString("- Experience", 80, 332);
+
+			if (isWithinBounds(p, 148, 321, 68, 14)) {
+				paintBG(6, 237, 210, 84, g);
+				g.setFont(new Font("Arial", Font.BOLD, 10));
+				g.setColor(Color.WHITE);
+				g.drawString("", 10, 252);
+				g.drawString("Fish Gained: " + insertCommas(paint4), 10, 267);
+				g.drawString("Fish Hourly: " + insertCommas(paint3), 10, 282);
+				if (!drop) {
+					g.drawString("Gold Gained: " + insertCommas(paint5), 10, 297);
+					g.drawString("Gold Hourly: " + insertCommas(paint6), 10, 312);
+				} else {
+					g.drawString("Gold Gained: N/A", 10, 297);
+					g.drawString("Gold Hourly: N/A", 10, 312);
+				}
+				g.setColor(new Color(255, 140, 0));
+			} else
+				g.setColor(Color.WHITE);
+			g.setFont(new Font("Segoe UI", Font.BOLD, 10));
+			g.drawString("- Profit", 151, 332);
+
+			g.setColor(new Color(0, 0, 0));
+			g.drawRect(219, 321, 100, 14);
+			g.setColor(new Color(255, 0, 0, 100));
+			g.fillRect(220, 322, 99, 13);
+			g.setColor(new Color(34, 139, 34, 100));
+			g.fillRect(220, 322, skills.getPercentToNextLevel(STAT_FISHING), 13);
+			g.setColor(Color.BLACK);
+			g.drawString("   " + skills.getPercentToNextLevel(STAT_FISHING) + "% to next Level", 218, 332);
 		}
 	}
 
 	public void serverMessageRecieved(ServerMessageEvent e) {
 		String message = e.getMessage().toLowerCase();
-		if (message.contains("advanced")) {
+		if (message.contains("advanced"))
 			levelGained++;
-			wait(random(500, 1000));
-			clickContinue();
-		}
-		if (message.contains("bass")) {
-			moneyGained += bassPrice;
-			fished++;
-		}
-		if (message.contains("mackerel")) {
-			moneyGained += mackerelPrice;
-			fished++;
-		}
-		if (message.contains("cod")) {
-			moneyGained += codPrice;
-			fished++;
-		}
-		if (message.contains("you catch a crayfish")) {
-			fished++;
-		}
-		if (message.contains("shrimps")) {
-			moneyGained += shrimpsPrice;
-			fished++;
-		}
-		if (message.contains("anchovies")) {
-			moneyGained += anchoviesPrice;
-			fished++;
-		}
-		if (message.contains("you catch a lobster")) {
-			moneyGained += lobsterPrice;
-			fished++;
-		}
-		if (message.contains("you catch a tuna") && !dropTuna) {
-			moneyGained += tunaPrice;
-			fished++;
-		}
-		if (message.contains("you catch a swordfish")) {
-			moneyGained += swordfishPrice;
-			fished++;
-		}
-		if (message.contains("you catch a shark")) {
-			moneyGained += sharkPrice;
-			fished++;
-		}
-		if (message.contains("herring")) {
-			moneyGained = herringPrice;
-			fished++;
-		}
-		if (message.contains("sardines")) {
-			moneyGained += sardinesPrice;
-			fished++;
-		}
-		if (message.contains("trout")) {
-			moneyGained += troutPrice;
-			fished++;
-		}
-		if (message.contains("salmon")) {
-			moneyGained += salmonPrice;
-			fished++;
-		}
-		if (message.contains("pike")) {
-			moneyGained += pikePrice;
+		if (message.contains("you catch a")) {
+			if (message.contains("bass"))
+				moneyGained += fishPrice1;
+			if (message.contains("mackerel"))
+				moneyGained += fishPrice3;
+			if (message.contains("cod"))
+				moneyGained += fishPrice2;
+			if (message.contains("shrimps"))
+				moneyGained += fishPrice1;
+			if (message.contains("anchovies"))
+				moneyGained += fishPrice2;
+			if (message.contains("lobster"))
+				moneyGained += fishPrice1;
+			if (message.contains("tuna") && !dropTuna)
+				moneyGained += fishPrice1;
+			if (message.contains("swordfish"))
+				moneyGained += fishPrice2;
+			if (message.contains("shark"))
+				moneyGained += fishPrice1;
+			if (message.contains("herring"))
+				moneyGained = fishPrice1;
+			if (message.contains("sardines"))
+				moneyGained += fishPrice2;
+			if (message.contains("trout"))
+				moneyGained += fishPrice1;
+			if (message.contains("salmon"))
+				moneyGained += fishPrice2;
+			if (message.contains("pike"))
+				moneyGained += fishPrice1;
 			fished++;
 		}
 	}
 
-	public void openBank() {
-		if (kjMode) {
-			if (RSInterface.getInterface(11).isValid()) {
-				atInterface(RSInterface.getInterface(11).getChild(15));
-				wait(random(500, 1000));
-			}
-			RSObject depositbox = getNearestObjectByID(36788);
-			if (inventoryContains(fishId)) {
-				atInventoryItem(fishId, "Use");
-				wait(random(300, 500));
-				if (depositbox != null) {
-					if (!atObject(depositbox, "-> Bank")) {
-						setCameraAltitude(true);
-						setCameraRotation(getCameraAngle() + random(-90, 90));
-					}
-					wait(random(2000, 3000));
-					if (RSInterface.getInterface(232).isValid()) {
-						atInterface(RSInterface.getInterface(232).getChild(5));
-						wait(random(1000, 1500));
-					}
+	private boolean useDepositBox(int id, int item) {
+		RSObject depositbox = getNearestObjectByID(id);
+		if (RSInterface.getInterface(11).isValid()) {
+			atInterface(RSInterface.getInterface(11).getChild(15));
+			wait(random(500, 700));
+		}
+		if (inventoryContains(item)) {
+			atInventoryItem(item, "Use");
+			wait(random(300, 500));
+			if (depositbox != null) {
+				atObject(depositbox, "-> Bank");
+				wait(random(1000, 2000));
+				if (RSInterface.getInterface(232).isValid()) {
+					atInterface(RSInterface.getInterface(232).getChild(5));
+					wait(random(500, 750));
 				}
 			}
-			if (inventoryContains(359)) {//Tunas
-				atInventoryItem(359, "Use");
-				wait(random(300, 500));
-				if (depositbox != null) {
-					if (!atObject(depositbox, "-> Bank")) {
-						setCameraAltitude(true);
-						setCameraRotation(getCameraAngle() + random(-90, 90));
-					}
-					wait(random(2000, 3000));
-					if (RSInterface.getInterface(232).isValid()) {
-						atInterface(RSInterface.getInterface(232).getChild(5));
-						wait(random(1000, 1500));
-					}
-				}
-			}
+			return true;
+		}
+		return false;
+	}
+
+	private void openBank() {
+		if (useStiles) {
+			bankStiles();
+		} else if (kjMode) {
+			useDepositBox(36788, fishId);
+			useDepositBox(36788, 359);
 		} else {
 			RSNPC banker = getNearestNPCByID(494, 495, 496, 5912, 5913);
 			if (banker != null) {
-				if (!atNPC(banker, "Bank Banker")) {
-					setCameraAltitude(true);
+				if (!atNPC(banker, "Bank Banker"))
 					setCameraRotation(getCameraAngle() + random(-90, 90));
-				}
 				wait(random(500, 1000));
-			} else {
-				wait(random(1000, 1500));
 			}
 		}
 	}
 
-	public void fish() {
+	private void fish() {
 		if (getMyPlayer().getAnimation() == -1 && !getMyPlayer().isMoving()) {
 			RSNPC nSpot = getNearestNPCByID(fishSpot);
 			if (nSpot == null) {
-				if (catherbyLoc) {
-					walkTileMM(new RSTile(2847, 3422));//If not found walk here
-				}
+				if (catherbyLoc)
+					walkTileMM(new RSTile(2847, 3422));
 				wait(random(50, 150));
 			}
 			if (nSpot != null) {
 				if (distanceTo(nSpot.getLocation()) > 4 || !nSpot.isOnScreen()) {
-					RSTile destination = randomizeTile(nSpot.getLocation(), 2, 2);
+					RSTile destination = randomizeTile(nSpot.getLocation(), 2,
+							2);
 					walkTileMM(destination);
 					waitToStop();
 					wait(random(500, 1000));
@@ -365,159 +290,110 @@ public class iFisher extends Script implements PaintListener, ServerMessageListe
 		}
 	}
 
-	public int walkFish() {
+	private int walkFish() {
 		if (takeBoatToKaramja())
 			return random(5000, 6000);
-
-		if (distanceTo(getDestination()) < random(8, 12) || distanceTo(getDestination()) > 40) {
-			if (!walkPathMM(toFish)) {
+		if (distanceTo(getDestination()) < random(9, 12) || distanceTo(getDestination()) > 40) {
+			if (!walkPathMM(toFish))
 				walkToClosestTile(toFish);
-				return random(50, 150);
-			}
 		}
 		return random(50, 150);
 	}
 
-	public int walkBank() {
+	private int walkBank() {
 		if (takeBoatFromKaramja())
 			return random(5000, 6000);
-
 		if (dropTunas())
 			return random(200, 300);
-
 		if (fishingGuild) {
 			if (distanceTo(getDestination()) < random(5, 8) || distanceTo(getDestination()) > 40) {
-				if (!walkPathMM(toBank)) {
+				if (!walkPathMM(toBank))
 					walkToClosestTile(toBank, 1, 1);
-					return random(50, 150);
-				}
 			}
 		} else {
 			if (distanceTo(getDestination()) < random(8, 12) || distanceTo(getDestination()) > 40) {
-				if (!walkPathMM(toBank)) {
+				if (!walkPathMM(toBank))
 					walkToClosestTile(toBank);
-					return random(50, 150);
-				}
 			}
 		}
 		return random(50, 150);
 	}
 
-	public void gearCheck() {
+	private boolean gearCheck() {
 		if (kjMode && getInventoryCount(995) < 30) {
-			log("Not enough Gold to pay the fee.");
-			gearfails++;
+			log.severe("Not enough Gold to pay the fee.");
+			return false;
 		}
 		if (!barbMode) {
-			if (gearMode == 2) {//Bait
-				if (!inventoryContains(313, 307)) {
-					log("No Rod or Bait...");
-					gearfails++;
-					return;
+			if (!inventoryContains(fishEquip)) {
+				log.severe("Do NOT have primary fish gear!");
+				return false;
+			}
+			if (fishBait != -1) {
+				if (!inventoryContains(fishBait)) {
+					log.severe("Do NOT have secondary fish gear!");
+					return false;
 				}
 			}
-			if (gearMode == 1) {//Feathers
-				if (!inventoryContains(314, 309)) {
-					log("No Fly Rod or Feathers...");
-					gearfails++;
-					return;
-				}
-			}
-			if (gearMode == 3) {
-				if (!inventoryContains(303)) {
-					log("No Net...");
-					gearfails++;
-					return;
-				}
-			}
-			if (gearMode == 4) {
-				if (!inventoryContains(301)) {
-					log("No Lobster Cage...");
-					gearfails++;
-					return;
-				}
-			}
-			if (gearMode == 5) {
-				if (!inventoryContains(311)) {
-					log("No Harpoon...");
-					gearfails++;
-					return;
-				}
-			}
-			if (gearMode == 6) {
-				if (!inventoryContains(305)) {
-					log("No Net...");
-					gearfails++;
-					return;
-				}
-			}
-			if (gearMode == 7) {
-				if (!inventoryContains(13431)) {
-					log("No Crayfish Cage...");
-					gearfails++;
-					return;
-				}
-			}
-			gearfails = 0;
 		}
+		return true;
 	}
 
-	public boolean inArea(int maxX, int minY, int minX, int maxY) {
+	private boolean inArea(int maxX, int minY, int minX, int maxY) {
 		int x = getMyPlayer().getLocation().getX();
 		int y = getMyPlayer().getLocation().getY();
 		return x >= minX && x <= maxX && y >= minY && y <= maxY;
 	}
 
-	public boolean isWithinBounds(Point p, int x, int y, int w, int h) {
+	private boolean isWithinBounds(Point p, int x, int y, int w, int h) {
 		return p.x > x && p.x < x + w && p.y > y && p.y < y + h;
 	}
 
-	public void waitToStop() {
-		while (getMyPlayer().isMoving()) {
+	private void waitToStop() {
+		while (getMyPlayer().isMoving())
 			wait(150);
-		}
 	}
 
 	public int loop() {
-		if (atWelcomButton()) {
-			return 500;
-		}
-		if (!paused && startScript) {
+		if (!paused && started) {
 			gearCheck();
-			if (!isRunning() && getEnergy() >= runEnergy) {
-				runEnergy = random(50, 100);
+			if (getEnergy() > random(70, 100) && getSetting(173) != 1)
 				setRun(true);
-				wait(random(300, 700));
+			if (RSInterface.getInterface(INTERFACE_LEVELUP).isValid()) {
+				atInterface(RSInterface.getInterface(INTERFACE_LEVELUP).getChild(3));
+				return (random(2000, 3000));
 			}
 			switch (getState()) {
-				case FISH:
-					fish();
-					break;
-				case GOTO_FISH:
+			case FISH:
+				fish();
+				break;
+			case GOTO_FISH:
+				if (distanceTo(getDestination()) < random(5, 8) && useStiles)
+					walkPathMM(randomizePath(toFish,2,2));
+				else
 					walkFish();
-					break;
-				case GOTO_BANK:
+				break;
+			case GOTO_BANK:
+				if (distanceTo(getDestination()) < random(5, 8) && useStiles)
+					walkPathMM(randomizePath(toBank,2,2));
+				else
 					walkBank();
-					break;
-				case IDLE:
-					wait(random(1000, 2000));
-					if (useAntiBan) {
-						antiBan();
-					}
-					break;
-				case OPEN_BANK:
-					openBank();
-					break;
-				case USE_BANK:
-					if (kjMode) {
-						bank.depositAllExcept(fishEquip, 314, 309, 307, 303, 313, 311, 301, 995);//Money
-					} else {
-						bank.depositAllExcept(fishEquip, 314, 309, 307, 303, 313, 311, 301);
-					}
-					break;
-				case DROP:
-					dropAllExcept_(fishEquip, 314, 309, 307, 303, 313, 311, 301, 13431);
-					break;
+				break;
+			case IDLE:
+				antiBan();
+				break;
+			case OPEN_BANK:
+				openBank();
+				break;
+			case USE_BANK:
+				if (barbMode)
+					bank.depositAll();
+				else
+					bank.depositAllExcept(fishEquip, fishBait);
+				break;
+			case DROP:
+				dropAllExcept_(fishEquip, fishBait);
+				break;
 			}
 		}
 		return (random(500, 1000));
@@ -529,66 +405,70 @@ public class iFisher extends Script implements PaintListener, ServerMessageListe
 
 	private State getState() {
 		if (isInventoryFull() && drop) {
-			status = "Droping fish";
+			status = "Droping Fish";
 			return State.DROP;
 		}
 		if (isInventoryFull()) {
 			if (bank.isOpen() && !kjMode) {
-				status = "Depositing fish";
+				status = "Depositing Fish";
 				return State.USE_BANK;
 			} else if (distanceTo(bankTile) < 8 && !getMyPlayer().isMoving()) {
-				status = "Opening bank";
+				status = "Opening Bank";
 				return State.OPEN_BANK;
 			} else {
-				status = "Walking to bank";
+				status = "Walking To Bank";
 				return State.GOTO_BANK;
 			}
 		} else {
 			if (getMyPlayer().getAnimation() != -1) {
 				return State.IDLE;
-			} else if (catherbyLoc && inArea(2862, 3422, 2834, 3434) || distanceTo(fishTile) < 10) {
+			} else if (catherbyLoc && inArea(2862, 3422, 2834, 3434)
+					|| distanceTo(fishTile) < 10) {
 				status = "Fishing";
 				return State.FISH;
 			} else {
-				status = "Walking to fish";
+				status = "Walking To Fishing Area";
 				return State.GOTO_FISH;
 			}
 		}
 	}
 
-	public void dropAllExcept_(final int... items) {
+	private void dropAllExcept_(final int... items) {
 		try {
 			for (int c = 0; c < 4; c++) {
 				for (int r = 0; r < 7; r++) {
 					boolean found = false;
-					for (int i = 0; i < items.length && !found; i++) {
+					for (int i = 0; i < items.length && !found; i++)
 						found = items[i] == getInventoryArray()[c + r * 4];
-					}
-					if (!found) {
+					if (!found)
 						dropItem(c, r);
-					}
 				}
 			}
 		} catch (final Exception e) {
-			log("Prevented fatal error.");
+			log.severe("Prevented fatal error.");
 		}
 	}
 
-	public boolean atWelcomButton() {
-		RSInterface welcomeInterface = RSInterface.getInterface(378);
-		if (welcomeInterface.getChild(45).getAbsoluteX() > 20 || (!welcomeInterface.getChild(117).getText().equals("10.1120.190") && !welcomeInterface.getChild(117).getText().equals(""))) {
-			clickMouse(random(215, 555), random(420, 440), true);
-			return true;
-		} else {
-			return false;
+	private boolean bankStiles() {
+		RSNPC stiles = getNearestNPCByID(11267);
+		if (stiles != null) {
+			if (atNPC(stiles, "Exchange")) {
+				wait(random(500, 1000));
+				return true;
+			}
+			if (RSInterface.getInterface(241).isValid()) {
+				atInterface(RSInterface.getInterface(241).getChild(5));
+				wait(random(200, 300));
+				return true;
+			}
 		}
+		return false;
 	}
 
-	public boolean takeBoatFromKaramja() {
+	private boolean takeBoatFromKaramja() {
 		try {
 			RSNPC customsOfficer = getNearestNPCByID(380);
 			RSObject plank = getNearestObjectByID(2084);
-
 			if (plank != null) {
 				if (!getMyPlayer().isMoving()) {
 					atObject(plank, "Cross");
@@ -616,10 +496,15 @@ public class iFisher extends Script implements PaintListener, ServerMessageListe
 				wait(random(200, 300));
 				return true;
 			}
+			if (RSInterface.getInterface(64).getText().toLowerCase().contains(
+					"ok.")) {
+				atInterface(RSInterface.getInterface(64).getChild(5));
+				wait(random(7000, 8000));
+				return true;
+			}
 			if (RSInterface.getInterface(64).isValid()) {
 				atInterface(RSInterface.getInterface(64).getChild(5));
 				wait(random(200, 300));
-				gearfails = 0;
 				return true;
 			}
 			if (RSInterface.getInterface(228).isValid()) {
@@ -647,17 +532,15 @@ public class iFisher extends Script implements PaintListener, ServerMessageListe
 			}
 			wait(random(2000, 3000));
 		} catch (Exception e) {
-			//IGNORED
 		}
 		return false;
 	}
 
-	public boolean takeBoatToKaramja() {
+	private boolean takeBoatToKaramja() {
 		try {
-			int[] seamanIDs = new int[]{376, 377, 378};
+			int[] seamanIDs = new int[] { 376, 377, 378 };
 			RSNPC seaman = getNearestNPCByID(seamanIDs);
 			RSObject plank = getNearestObjectByID(2082);
-
 			if (plank != null) {
 				if (!getMyPlayer().isMoving()) {
 					atObject(plank, "Cross");
@@ -668,7 +551,6 @@ public class iFisher extends Script implements PaintListener, ServerMessageListe
 			if (RSInterface.getInterface(64).isValid()) {
 				atInterface(RSInterface.getInterface(64).getChild(5));
 				wait(random(6000, 7000));
-				gearfails = 0;
 				return true;
 			}
 			if (RSInterface.getInterface(228).isValid()) {
@@ -681,7 +563,6 @@ public class iFisher extends Script implements PaintListener, ServerMessageListe
 				wait(random(200, 300));
 				return true;
 			}
-
 			if (seaman != null) {
 				if (tileOnScreen(seaman.getLocation())) {
 					atNPC(seaman, "Pay-fare");
@@ -697,17 +578,15 @@ public class iFisher extends Script implements PaintListener, ServerMessageListe
 			}
 			wait(random(2000, 3000));
 		} catch (Exception e) {
-			//IGNORED
 		}
 		return false;
 	}
 
-	public boolean dropTunas() {
-		int[] keep = new int[]{311, 301, 995, 377, 371};
+	private boolean dropTunas() {
+		int[] keep = new int[] { 311, 301, 995, 377, 371 };
 		if (dropTuna) {
 			if (inventoryContains(359)) {
 				dropAllExcept_(keep);
-				dropAllExcept_(keep);//Drop 3 times to make sure all are gone.
 				dropAllExcept_(keep);
 				return true;
 			}
@@ -717,82 +596,97 @@ public class iFisher extends Script implements PaintListener, ServerMessageListe
 
 	private void antiBan() {
 		if (random(0, 10) == 0) {
-			final char[] LR = new char[]{KeyEvent.VK_LEFT, KeyEvent.VK_RIGHT};
-			final char[] UD = new char[]{KeyEvent.VK_DOWN, KeyEvent.VK_UP};
-			final char[] LRUD = new char[]{KeyEvent.VK_LEFT, KeyEvent.VK_RIGHT, KeyEvent.VK_UP, KeyEvent.VK_UP};
-			final int random2 = random(0, 2);
-			final int random1 = random(0, 2);
-			final int random4 = random(0, 4);
-			if (random(0, 3) == 0) {
-				Bot.getInputManager().pressKey(LR[random1]);
-				wait(random(100, 400));
-				Bot.getInputManager().pressKey(UD[random2]);
-				wait(random(300, 600));
-				Bot.getInputManager().releaseKey(UD[random2]);
-				wait(random(100, 400));
-				Bot.getInputManager().releaseKey(LR[random1]);
-			} else {
-				Bot.getInputManager().pressKey(LRUD[random4]);
-				if (random4 > 1) {
+			if (useAntiBan) {
+				final char[] LR = new char[] { KeyEvent.VK_LEFT,
+						KeyEvent.VK_RIGHT };
+				final char[] UD = new char[] { KeyEvent.VK_DOWN, KeyEvent.VK_UP };
+				final char[] LRUU = new char[] { KeyEvent.VK_LEFT,
+						KeyEvent.VK_RIGHT, KeyEvent.VK_UP, KeyEvent.VK_UP };
+				final int random2 = random(0, 2);
+				final int random1 = random(0, 2);
+				final int random4 = random(0, 4);
+				if (random(0, 5) == 0) {
+					Bot.getInputManager().pressKey(LR[random1]);
+					wait(random(100, 400));
+					Bot.getInputManager().pressKey(UD[random2]);
 					wait(random(300, 600));
+					Bot.getInputManager().releaseKey(UD[random2]);
+					wait(random(100, 400));
+					Bot.getInputManager().releaseKey(LR[random1]);
 				} else {
-					wait(random(500, 900));
+					Bot.getInputManager().pressKey(LRUU[random4]);
+					if (random4 > 1) {
+						wait(random(300, 600));
+					} else {
+						wait(random(500, 900));
+					}
+					Bot.getInputManager().releaseKey(LRUU[random4]);
 				}
-				Bot.getInputManager().releaseKey(LRUD[random4]);
-			}
-			if (random(0, 1) == 0) {
-				int x = random(0, 750);
-				int y = random(0, 500);
-				moveMouse(x, y);
+				if (random(0, 2) == 0) {
+					int x = random(0, 750);
+					int y = random(0, 500);
+					moveMouse(x, y);
+				}
+				if (random(0, 15) == 0) {
+					openTab(random(0, 15));
+					wait(random(3000, 5000));
+				}
+				if (System.currentTimeMillis() - lastCheck >= checkTime && getInventoryCount() <= 20) {
+					lastCheck = System.currentTimeMillis();
+					checkTime = random(60000, 180000);
+					if (getCurrentTab() != 1) {
+						openTab(1);
+					}
+					moveMouse(677, 268, 50, 20);
+					wait(random(5000, 8000));
+				}
 			}
 		} else {
 			wait(random(200, 2000));
 		}
 	}
 
-	public class GUI extends javax.swing.JFrame {
+	private class GUI extends javax.swing.JFrame {
 
+		private static final long serialVersionUID = 1L;
 		private final File settingsFile = new File(new File(GlobalConfiguration.Paths.getSettingsDirectory()), "iFisher.txt");
 
-		public GUI() {
-			initComponents();
-		}
+	    private GUI() {
+	        initComponents();
+	    }
 
-		@SuppressWarnings("unchecked")
-		private void initComponents() {
+	    private void initComponents() {
 
-			startButton = new javax.swing.JButton();
-			pauseButton = new javax.swing.JButton();
-			applyButton = new javax.swing.JButton();
-			barbBox = new javax.swing.JCheckBox();
-			dropTunaBox = new javax.swing.JCheckBox();
-			dropBox = new javax.swing.JCheckBox();
-			locationCBox = new javax.swing.JComboBox();
-			fishingCBox = new javax.swing.JComboBox();
-			locationLabel = new javax.swing.JLabel();
-			fishingLabel = new javax.swing.JLabel();
-			paintBox = new javax.swing.JCheckBox();
-			antibanBox = new javax.swing.JCheckBox();
+	        startButton = new javax.swing.JButton();
+	        pauseButton = new javax.swing.JButton();
+	        applyButton = new javax.swing.JButton();
+	        jLabel1 = new javax.swing.JLabel();
+	        locationCBox = new javax.swing.JComboBox();
+	        fishingCBox = new javax.swing.JComboBox();
+	        jLabel2 = new javax.swing.JLabel();
+	        dropTunaBox = new javax.swing.JCheckBox();
+	        dropBox = new javax.swing.JCheckBox();
+	        barbBox = new javax.swing.JCheckBox();
+	        paintBox = new javax.swing.JCheckBox();
+	        antibanBox = new javax.swing.JCheckBox();
 
-			setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
-			setTitle("iFisher v2.8");
-			setIconImages(null);
-			setResizable(false);
+	        setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
+	        setAlwaysOnTop(true);
+	        setResizable(false);
+	        setTitle("iFisher ");
 
-			startButton.setText("Start Script");
+	        startButton.setText("Start Script");
 			startButton.addActionListener(new java.awt.event.ActionListener() {
 				public void actionPerformed(java.awt.event.ActionEvent evt) {
 					startButtonActionPerformed(evt);
 				}
 			});
-
 			pauseButton.setText("Pause Script");
 			pauseButton.addActionListener(new java.awt.event.ActionListener() {
 				public void actionPerformed(java.awt.event.ActionEvent evt) {
 					pauseButtonActionPerformed(evt);
 				}
 			});
-
 			applyButton.setText("Apply Settings");
 			applyButton.addActionListener(new java.awt.event.ActionListener() {
 				public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -800,126 +694,76 @@ public class iFisher extends Script implements PaintListener, ServerMessageListe
 				}
 			});
 
-			barbBox.setText("Barbarian Mode");
+	        jLabel1.setText("Locations:");
 
-			dropTunaBox.setText("Anti-Tuna");
-
-			dropBox.setText("Power Fishing");
-
-			locationCBox.setMaximumRowCount(5);
-			locationCBox.setModel(new javax.swing.DefaultComboBoxModel(new String[]{"Al-Kharid", "Barbarian Village", "Catherby", "Draynor Village", "Fishing Guild", "Lumbridge", "Karamja", "Seers' Village"}));
-			locationCBox.setAutoscrolls(true);
-			locationCBox.setCursor(new java.awt.Cursor(java.awt.Cursor.DEFAULT_CURSOR));
-			locationCBox.addActionListener(new java.awt.event.ActionListener() {
+	        locationCBox.setMaximumRowCount(5);
+	        locationCBox.setModel(new javax.swing.DefaultComboBoxModel(new String[]{"Al-Kharid", "Barbarian Village", "Catherby", "Draynor Village", "Fishing Guild", "Lumbridge", "Karamja", "Karamja [Stiles]", "Seers' Village"}));
+	        locationCBox.addActionListener(new java.awt.event.ActionListener() {
 				public void actionPerformed(java.awt.event.ActionEvent evt) {
 					locationCBoxActionPerformed(evt);
 				}
 			});
 
-			fishingCBox.setMaximumRowCount(5);
-			fishingCBox.setModel(new javax.swing.DefaultComboBoxModel(new String[]{"Shrimp & Anchovies", "Herring & Sardines"}));
-			fishingCBox.addActionListener(new java.awt.event.ActionListener() {
+	        fishingCBox.setMaximumRowCount(5);
+	        fishingCBox.setModel(new javax.swing.DefaultComboBoxModel(new String[]{"Shrimp & Anchovies", "Herring & Sardines"}));
+	        fishingCBox.addActionListener(new java.awt.event.ActionListener() {
 				public void actionPerformed(java.awt.event.ActionEvent evt) {
 					fishingCBoxActionPerformed(evt);
 				}
 			});
 
-			locationLabel.setText("Location:");
+	        jLabel2.setText("Fishing:");
 
-			fishingLabel.setText("Fishing:");
+	        dropTunaBox.setText("Anti-Tuna");
 
-			paintBox.setSelected(true);
-			paintBox.setText("Paint Progress");
+	        dropBox.setText("Power Fishing");
 
-			antibanBox.setSelected(true);
-			antibanBox.setText("Anti-Ban");
+	        barbBox.setText("Barbarian Mode");
 
-			javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
-			getContentPane().setLayout(layout);
-			layout.setHorizontalGroup(
-					layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-							.addGroup(layout.createSequentialGroup()
-							.addContainerGap()
-							.addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-									.addGroup(layout.createSequentialGroup()
-											.addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-													.addComponent(locationCBox, javax.swing.GroupLayout.PREFERRED_SIZE, 123, javax.swing.GroupLayout.PREFERRED_SIZE)
-													.addComponent(barbBox)
-													.addComponent(dropBox)
-													.addComponent(dropTunaBox)
-													.addComponent(locationLabel))
-											.addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-											.addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-											.addComponent(antibanBox)
-											.addComponent(paintBox)
-											.addComponent(fishingLabel)
-											.addComponent(fishingCBox, 0, 162, Short.MAX_VALUE)))
-									.addGroup(layout.createSequentialGroup()
-									.addComponent(startButton)
-									.addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-									.addComponent(pauseButton)
-									.addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-									.addComponent(applyButton)))
-							.addGap(10, 10, 10))
-			);
-			layout.setVerticalGroup(
-					layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-							.addGroup(layout.createSequentialGroup()
-							.addContainerGap()
-							.addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-									.addComponent(fishingLabel)
-									.addComponent(locationLabel))
-							.addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-							.addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-									.addComponent(locationCBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-									.addComponent(fishingCBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-							.addGap(7, 7, 7)
-							.addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-									.addComponent(paintBox)
-									.addComponent(dropTunaBox))
-							.addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-							.addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-									.addComponent(antibanBox)
-									.addComponent(dropBox))
-							.addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-							.addComponent(barbBox)
-							.addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-							.addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-									.addComponent(pauseButton)
-									.addComponent(applyButton)
-									.addComponent(startButton))
-							.addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-			);
+	        paintBox.setSelected(true);
+	        paintBox.setText("Paint Progress");
+
+	        antibanBox.setSelected(true);
+	        antibanBox.setText("Use Anti-Ban");
+
+	        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
+	        getContentPane().setLayout(layout);
+	        layout.setHorizontalGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING).addGroup(layout.createSequentialGroup().addContainerGap().addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING).addComponent(barbBox).addGroup(layout.createSequentialGroup().addComponent(startButton).addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED).addComponent(pauseButton).addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED).addComponent(applyButton)).addGroup(layout.createSequentialGroup().addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING).addComponent(locationCBox, javax.swing.GroupLayout.PREFERRED_SIZE, 116, javax.swing.GroupLayout.PREFERRED_SIZE).addComponent(jLabel1).addComponent(dropTunaBox).addComponent(dropBox)).addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED).addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING).addComponent(antibanBox).addComponent(paintBox).addComponent(jLabel2).addComponent(fishingCBox, 0, 169, Short.MAX_VALUE)))).addContainerGap()));
+	        layout.setVerticalGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING).addGroup(layout.createSequentialGroup().addContainerGap().addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE).addComponent(jLabel1).addComponent(jLabel2)).addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED).addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE).addComponent(locationCBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE).addComponent(fishingCBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)).addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED).addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING).addComponent(antibanBox).addComponent(dropBox)).addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED).addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE).addComponent(paintBox).addComponent(dropTunaBox)).addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED).addComponent(barbBox).addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE).addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE).addComponent(startButton).addComponent(pauseButton).addComponent(applyButton)).addContainerGap()));
 			BufferedReader in;
 			try {
 				in = new BufferedReader(new FileReader(settingsFile));
 				String[] settings = new String[7];
 				String line;
-				for (int i = 0; i < settings.length && (line = in.readLine()) != null; i++) {
+				for (int i = 0; i < settings.length && (line = in.readLine()) != null; i++)
 					settings[i] = line;
-				}
 				try {
 					locationCBox.setSelectedIndex(Integer.parseInt(settings[1]));
-					makeChanges();
 					fishingCBox.setSelectedIndex(Integer.parseInt(settings[0]));
-					makeChanges();
 					barbBox.setSelected(settings[2].equals("1"));
 					dropBox.setSelected(settings[3].equals("1"));
 					dropTunaBox.setSelected(settings[4].equals("1"));
 					paintBox.setSelected(settings[5].equals("1"));
 					antibanBox.setSelected(settings[6].equals("1"));
-				} catch (Exception e) {
-					dropTunaBox.setSelected(false);
-				}
+					makeChanges();
+				} catch (Exception e) { }
 				in.close();
 			} catch (IOException e) {
 				log("No Settings File Found!");
 			}
 			makeChanges();
-			pack();
+	        pack();
+	    }
+
+	    private void setFishing(String f, String fc, int fs, int fe, int fb) {
+			fishing = f;
+			fishComm = fc;
+			fishSpot = fs;
+			fishEquip = fe;
+			fishBait = fb;
 		}
 
-		public void makeChanges() {
+		private void makeChanges() {
 			String fish = (String) fishingCBox.getSelectedItem();
 			if (fish.equals("Swordfish & Tuna")) {
 				dropTunaBox.setEnabled(true);
@@ -950,20 +794,21 @@ public class iFisher extends Script implements PaintListener, ServerMessageListe
 				location2 = "Barbarian Village";
 				bankTile = new RSTile(3094, 3490);
 				fishTile = new RSTile(3104, 3431);
-				toBank = new RSTile[]{new RSTile(3104, 3431), new RSTile(3100, 3434), new RSTile(3094, 3439), new RSTile(3091, 3445), new RSTile(3090, 3451), new RSTile(3090, 3457), new RSTile(3087, 3463), new RSTile(3093, 3464), new RSTile(3099, 3474), new RSTile(3100, 3480), new RSTile(3093, 3484), new RSTile(3090, 3490), new RSTile(3094, 3491)};
+				toBank = new RSTile[] { new RSTile(3104, 3431),
+						new RSTile(3100, 3434), new RSTile(3094, 3439),
+						new RSTile(3091, 3445), new RSTile(3090, 3451),
+						new RSTile(3090, 3457), new RSTile(3087, 3463),
+						new RSTile(3093, 3464), new RSTile(3099, 3474),
+						new RSTile(3100, 3480), new RSTile(3093, 3484),
+						new RSTile(3090, 3490), new RSTile(3094, 3491) };
 				toFish = reversePath(toBank);
 
 				if (fish.equals("Trout & Salmon")) {
-					fishing = "Trout & Salmon";
-					fishSpot = 328;
-					fishComm = "Lure";
-					gearMode = 1;
+					setFishing("Trout & Salmon", "Lure", 328, GEAR_FLYROD,
+							BAIT_FEATHERS);
 				}
 				if (fish.equals("Pike")) {
-					fishing = "Pike";
-					fishSpot = 328;
-					fishComm = "Bait";
-					gearMode = 2;
+					setFishing("Pike", "Bait", 328, GEAR_ROD, BAIT_BAIT);
 				}
 			}
 			if (location.equals("Lumbridge")) {
@@ -971,77 +816,60 @@ public class iFisher extends Script implements PaintListener, ServerMessageListe
 				drop = true;
 				if (fish.equals("Trout & Salmon")) {
 					fishTile = new RSTile(3240, 3247);
-					fishing = "Trout & Salmon";
-					fishSpot = 329;
-					fishComm = "Lure";
-					gearMode = 1;
+					setFishing("Trout & Salmon", "Lure", 329, GEAR_FLYROD,
+							BAIT_FEATHERS);
 				}
 				if (fish.equals("Pike")) {
 					fishTile = new RSTile(3240, 3247);
-					fishing = "Pike";
-					fishSpot = 329;
-					fishComm = "Bait";
-					gearMode = 2;
+					setFishing("Pike", "Bait", 329, GEAR_ROD, BAIT_BAIT);
 				}
 				if (fish.equals("Shrimp & Anchovies")) {
 					fishTile = new RSTile(3240, 3152);
-					fishing = "Shrimp & Anchovies";
-					fishSpot = 4908;
-					fishComm = "Net";
-					gearMode = 3;
+					setFishing("Shrimp & Anchovies", "Net", 4908, GEAR_NET,
+							BAIT_NONE);
 				}
 				if (fish.equals("Herring & Sardines")) {
 					fishTile = new RSTile(3240, 3152);
-					fishing = "Herring & Sardines";
-					fishSpot = 4908;
-					fishComm = "Bait";
-					gearMode = 2;
+					setFishing("Herring & Sardines", "Bait", 4908, GEAR_ROD,
+							BAIT_BAIT);
 				}
 				if (fish.equals("Crayfish")) {
 					fishTile = new RSTile(3256, 3205);
-					fishing = "Crayfish";
-					fishSpot = 6267;
-					fishComm = "Cage";
-					gearMode = 7;
+					setFishing("Crayfish", "Cage", 6267, GEAR_CCAGE, BAIT_NONE);
 				}
-				toFish = generateFixedPath(fishTile);//To stop from wandering off..
+				toFish = generateFixedPath(fishTile);
 			}
 			if (location.equals("Draynor Village")) {
 				location2 = "Draynor";
 				bankTile = new RSTile(3093, 3243);
 				fishTile = new RSTile(3087, 3228);
-				toBank = new RSTile[]{new RSTile(3086, 3238), new RSTile(3092, 3243)};
-				toFish = new RSTile[]{new RSTile(3086, 3238), new RSTile(3088, 3230)};
+				toBank = new RSTile[] { new RSTile(3086, 3238),
+						new RSTile(3092, 3243) };
+				toFish = new RSTile[] { new RSTile(3086, 3238),
+						new RSTile(3088, 3230) };
 				if (fish.equals("Shrimp & Anchovies")) {
-					fishing = "Shrimp & Anchovies";
-					fishSpot = 327;
-					fishComm = "Net";
-					gearMode = 3;
+					setFishing("Shrimp & Anchovies", "Net", 327, GEAR_NET,
+							BAIT_NONE);
 				}
 				if (fish.equals("Herring & Sardines")) {
-					fishing = "Herring & Sardines";
-					fishSpot = 327;
-					fishComm = "Bait";
-					gearMode = 2;
+					setFishing("Herring & Sardines", "Bait", 327, GEAR_ROD,
+							BAIT_BAIT);
 				}
 			}
 			if (location.equals("Al-Kharid")) {
 				location2 = "Al-Kharid";
 				bankTile = new RSTile(3269, 3166);
 				fishTile = new RSTile(3271, 3145);
-				toBank = new RSTile[]{new RSTile(3271, 3144), new RSTile(3276, 3157), new RSTile(3270, 3167)};
+				toBank = new RSTile[] { new RSTile(3271, 3144),
+						new RSTile(3276, 3157), new RSTile(3270, 3167) };
 				toFish = reversePath(toBank);
 				if (fish.equals("Shrimp & Anchovies")) {
-					fishing = "Shrimp & Anchovies";
-					fishSpot = 330;
-					fishComm = "Net";
-					gearMode = 3;
+					setFishing("Shrimp & Anchovies", "Net", 330, GEAR_NET,
+							BAIT_NONE);
 				}
 				if (fish.equals("Herring & Sardines")) {
-					fishing = "Herring & Sardines";
-					fishSpot = 330;
-					fishComm = "Bait";
-					gearMode = 2;
+					setFishing("Herring & Sardines", "Bait", 330, GEAR_ROD,
+							BAIT_NONE);
 				}
 			}
 			if (location.equals("Fishing Guild")) {
@@ -1049,31 +877,23 @@ public class iFisher extends Script implements PaintListener, ServerMessageListe
 				location2 = "Fishing Guild";
 				fishTile = new RSTile(2603, 3416);
 				bankTile = new RSTile(2589, 3418);
-				toBank = new RSTile[]{new RSTile(2594, 3415), new RSTile(2588, 3419)};
-				toFish = new RSTile[]{new RSTile(2599, 3421)};
+				toBank = new RSTile[] { new RSTile(2594, 3415),
+						new RSTile(2588, 3419) };
+				toFish = new RSTile[] { new RSTile(2599, 3421) };
 				if (fish.equals("Sharks")) {
-					fishSpot = 313;
-					fishComm = "Harpoon";
-					gearMode = 5;
-					fishing = "Sharks";
+					setFishing("Sharks", "Harpoon", 313, GEAR_HARPOON,
+							BAIT_NONE);
 				}
 				if (fish.equals("Swordfish & Tuna")) {
-					fishSpot = 312;
-					fishComm = "Harpoon";
-					gearMode = 5;//Harpoon
-					fishing = "Swordfish & Tuna";
+					setFishing("Swordfish & Tuna", "Harpoon", 312,
+							GEAR_HARPOON, BAIT_NONE);
 				}
 				if (fish.equals("Lobster")) {
-					fishSpot = 312;
-					fishComm = "Cage";
-					gearMode = 4;//Harpoon
-					fishing = "Lobster";
+					setFishing("Lobster", "Cage", 312, GEAR_CAGE, BAIT_NONE);
 				}
 				if (fish.equals("Bass & Cod & Mackerel")) {
-					fishing = "Bass & Cod & Mackerel";
-					fishSpot = 313;
-					fishComm = "Net";
-					gearMode = 6;
+					setFishing("Bass & Cod & Mackerel", "Net", 313,
+							GEAR_BIGNET, BAIT_NONE);
 				}
 			} else {
 				fishingGuild = false;
@@ -1083,89 +903,89 @@ public class iFisher extends Script implements PaintListener, ServerMessageListe
 				catherbyLoc = true;
 				fishTile = new RSTile(2847, 3430);
 				bankTile = new RSTile(2809, 3440);
-				toBank = new RSTile[]{new RSTile(2853, 3428), new RSTile(2849, 3431), new RSTile(2843, 3433), new RSTile(2837, 3435), new RSTile(2830, 3436), new RSTile(2824, 3437), new RSTile(2817, 3436), new RSTile(2811, 3436), new RSTile(2809, 3440)};
-				toFish = new RSTile[]{new RSTile(2811, 3435), new RSTile(2818, 3436), new RSTile(2824, 3437), new RSTile(2830, 3436), new RSTile(2835, 3435), new RSTile(2837, 3432)};
+				toBank = new RSTile[] { new RSTile(2853, 3428),
+						new RSTile(2849, 3431), new RSTile(2843, 3433),
+						new RSTile(2837, 3435), new RSTile(2830, 3436),
+						new RSTile(2824, 3437), new RSTile(2817, 3436),
+						new RSTile(2811, 3436), new RSTile(2809, 3440) };
+				toFish = new RSTile[] { new RSTile(2811, 3435),
+						new RSTile(2818, 3436), new RSTile(2824, 3437),
+						new RSTile(2830, 3436), new RSTile(2835, 3435),
+						new RSTile(2837, 3432) };
 				if (fish.equals("Sharks")) {
-					fishSpot = 322;
-					fishComm = "Harpoon";
-					gearMode = 5;
-					fishing = "Sharks";
+					setFishing("Sharks", "Harpoon", 322, GEAR_HARPOON,
+							BAIT_NONE);
 				}
 				if (fish.equals("Swordfish & Tuna")) {
-					fishSpot = 321;
-					fishComm = "Harpoon";
-					gearMode = 5;
-					fishing = "Swordfish & Tuna";
+					setFishing("Swordfish & Tuna", "Harpoon", 321,
+							GEAR_HARPOON, BAIT_NONE);
 				}
 				if (fish.equals("Lobster")) {
-					fishSpot = 321;
-					fishComm = "Cage";
-					gearMode = 4;
-					fishing = "Lobster";
+					setFishing("Lobster", "Cage", 321, GEAR_CAGE, BAIT_NONE);
 				}
 				if (fish.equals("Shrimp & Anchovies")) {
-					fishing = "Shrimp & Anchovies";
-					fishSpot = 320;
-					fishComm = "Net";
-					gearMode = 3;
+					setFishing("Shrimp & Anchovies", "Net", 320, GEAR_NET,
+							BAIT_NONE);
 				}
 				if (fish.equals("Herring & Sardines")) {
-					fishing = "Herring & Sardines";
-					fishSpot = 320;
-					fishComm = "Bait";
-					gearMode = 2;
+					setFishing("Herring & Sardines", "Bait", 320, GEAR_ROD,
+							BAIT_BAIT);
 				}
 				if (fish.equals("Bass & Cod & Mackerel")) {
-					fishing = "Bass & Cod & Mackerel";
-					fishSpot = 322;
-					fishComm = "Net";
-					gearMode = 6;
+					setFishing("Bass & Cod & Mackerel", "Net", 322,
+							GEAR_BIGNET, BAIT_NONE);
 				}
 			} else {
 				catherbyLoc = false;
+			}
+			if (location.equals("Karamja [Stiles]")) {
+				location2 = "Karamja";
+				useStiles = true;
+				bankTile = new RSTile(2851, 3142);
+				fishTile = new RSTile(2925, 3177);
+				toFish = new RSTile[] {new RSTile(2851, 3142), new RSTile(2861, 3147),
+						new RSTile(2870, 3151), new RSTile(2878, 3157), new RSTile(2886, 3163),
+						new RSTile(2893, 3169), new RSTile(2903, 3171), new RSTile(2913, 3171),
+						new RSTile(2922, 3172), new RSTile(2924, 3179)};
+				toBank = reversePath(toFish);
+
+				if (fish.equals("Lobster")) {
+					fishId = 377;
+					setFishing("Lobster", "Cage", 324, GEAR_CAGE, BAIT_NONE);
+				}
+				if (fish.equals("Swordfish & Tuna")) {
+					fishId = 371;
+					setFishing("Swordfish & Tuna", "Harpoon", 324,
+							GEAR_HARPOON, BAIT_NONE);
+				}
+			} else  {
+				useStiles = false;
 			}
 			if (location.equals("Karamja")) {
 				location2 = "Karamja";
 				kjMode = true;
 				bankTile = new RSTile(3047, 3235);
 				fishTile = new RSTile(2925, 3177);
-				toFish = new RSTile[]{new RSTile(3047, 3235), new RSTile(3041, 3236),
-						new RSTile(3034, 3236), new RSTile(3028, 3236),
-						new RSTile(3028, 3231), new RSTile(3028, 3227),
-						new RSTile(3028, 3222), new RSTile(3027, 3217),
-						new RSTile(2954, 3146), new RSTile(2948, 3146),
-						new RSTile(2943, 3145), new RSTile(2937, 3146),
-						new RSTile(2932, 3149), new RSTile(2925, 3150), //The longer the better...
-						new RSTile(2919, 3152), new RSTile(2915, 3156),
-						new RSTile(2919, 3160), new RSTile(2920, 3165),
-						new RSTile(2922, 3169), new RSTile(2925, 3173),
-						new RSTile(2925, 3179)};
+				toFish = new RSTile[] { new RSTile(3046,3236), new RSTile(3037,3236), new RSTile(3028,3232),
+						new RSTile(3028,3222), new RSTile(2952,3146), new RSTile(2941,3146), new RSTile(2932,3149),
+						new RSTile(2923,3150), new RSTile(2916,3156), new RSTile(2922,3163), new RSTile(2924,3173)};
 				toBank = reversePath(toFish);
 				if (fish.equals("Shrimp & Anchovies")) {
-					fishing = "Shrimp & Anchovies";
-					fishSpot = 323;
-					fishComm = "Net";
-					gearMode = 3;//Net
+					setFishing("Shrimp & Anchovies", "Net", 323, GEAR_NET,
+							BAIT_NONE);
 				}
 				if (fish.equals("Herring & Sardines")) {
-					fishing = "Herring & Sardines";
-					fishSpot = 323;
-					fishComm = "Bait";
-					gearMode = 2;//net
+					setFishing("Herring & Sardines", "Bait", 323, GEAR_ROD,
+							BAIT_BAIT);
 				}
 				if (fish.equals("Lobster")) {
 					fishId = 377;
-					fishing = "Lobster";
-					fishSpot = 324;
-					fishComm = "Cage";
-					gearMode = 4;//Lobster Cage
+					setFishing("Lobster", "Cage", 324, GEAR_CAGE, BAIT_NONE);
 				}
 				if (fish.equals("Swordfish & Tuna")) {
 					fishId = 371;
-					fishing = "Swordfish & Tuna";
-					fishSpot = 324;
-					fishComm = "Harpoon";
-					gearMode = 5;//Harpoon
+					setFishing("Swordfish & Tuna", "Harpoon", 324,
+							GEAR_HARPOON, BAIT_NONE);
 				}
 			} else {
 				kjMode = false;
@@ -1174,106 +994,92 @@ public class iFisher extends Script implements PaintListener, ServerMessageListe
 				location2 = "Seers' Village";
 				bankTile = new RSTile(2726, 3493);
 				fishTile = new RSTile(2722, 3529);
-				toBank = new RSTile[]{new RSTile(2722, 3529), new RSTile(2727, 3528), new RSTile(2732, 3526), new RSTile(2736, 3521), new RSTile(2740, 3514), new RSTile(2740, 3510), new RSTile(2742, 3504), new RSTile(2738, 3495), new RSTile(2735, 3490), new RSTile(2728, 3485), new RSTile(2725, 3491)};
+				toBank = new RSTile[] { new RSTile(2722, 3529),
+						new RSTile(2727, 3528), new RSTile(2732, 3526),
+						new RSTile(2736, 3521), new RSTile(2740, 3514),
+						new RSTile(2740, 3510), new RSTile(2742, 3504),
+						new RSTile(2738, 3495), new RSTile(2735, 3490),
+						new RSTile(2728, 3485), new RSTile(2725, 3491) };
 				toFish = reversePath(toBank);
 				if (fish.equals("Trout & Salmon")) {
-					fishing = "Trout & Salmon";
-					fishSpot = 315;
-					fishComm = "Lure";
-					gearMode = 1;
+					setFishing("Trout & Salmon", "Lure", 315, GEAR_FLYROD,
+							BAIT_FEATHERS);
 				}
 				if (fish.equals("Pike")) {
-					fishing = "Pike";
-					fishSpot = 315;
-					fishComm = "Bait";
-					gearMode = 2;
+					setFishing("Pike", "Bait", 315, GEAR_ROD, BAIT_BAIT);
 				}
 			}
 			PrintWriter out;
-			try {//Saves
+			try {
 				out = new PrintWriter(new FileWriter(settingsFile));
-				String[] settings = {
-						"" + fishingCBox.getSelectedIndex(),
+				String[] settings = { "" + fishingCBox.getSelectedIndex(),
 						"" + locationCBox.getSelectedIndex(),
 						barbBox.isSelected() ? "1" : "0",
 						dropBox.isSelected() ? "1" : "0",
 						dropTunaBox.isSelected() ? "1" : "0",
 						paintBox.isSelected() ? "1" : "0",
-						antibanBox.isSelected() ? "1" : "0",
-				};
+						antibanBox.isSelected() ? "1" : "0" };
 				for (String line : settings) {
 					out.println(line);
 				}
 				out.close();
 			} catch (IOException e) {
-				log("Saveing settings file failed!");
+				log.severe("Unable to save settings!");
 			}
-			getPrices();
+			getFishPrices();
 		}
 
-		public void getPrices() {
+		private void getFishPrices() {
 			String fish = (String) fishingCBox.getSelectedItem();
-			if (fish.equals("Bass & Cod & Mackerel")) {//Bass
+			if (fish.equals("Bass & Cod & Mackerel")) {
 				GEItemInfo rawFish = grandExchange.loadItemInfo(363);
-				bassPrice = rawFish.getMarketPrice();
-			}
-			if (fish.equals("Bass & Cod & Mackerel")) {//Cod
-				GEItemInfo rawFish = grandExchange.loadItemInfo(341);
-				codPrice = rawFish.getMarketPrice();
-			}
-			if (fish.equals("Bass & Cod & Mackerel")) {//Mackerel
-				GEItemInfo rawFish = grandExchange.loadItemInfo(353);
-				mackerelPrice = rawFish.getMarketPrice();
+				fishPrice1 = rawFish.getMarketPrice();
+				GEItemInfo rawFish2 = grandExchange.loadItemInfo(341);
+				fishPrice2 = rawFish2.getMarketPrice();
+				GEItemInfo rawFish3 = grandExchange.loadItemInfo(353);
+				fishPrice3 = rawFish3.getMarketPrice();
 			}
 			if (fish.equals("Shrimp & Anchovies")) {
 				GEItemInfo rawFish = grandExchange.loadItemInfo(317);
-				shrimpsPrice = rawFish.getMarketPrice();
-			}
-			if (fish.equals("Shrimp & Anchovies")) {
-				GEItemInfo rawFish = grandExchange.loadItemInfo(321);
-				anchoviesPrice = rawFish.getMarketPrice();
+				fishPrice1 = rawFish.getMarketPrice();
+				GEItemInfo rawFish2 = grandExchange.loadItemInfo(321);
+				fishPrice2 = rawFish2.getMarketPrice();
 			}
 			if (fish.equals("Lobster")) {
 				GEItemInfo rawFish = grandExchange.loadItemInfo(377);
-				lobsterPrice = rawFish.getMarketPrice();
+				fishPrice1 = rawFish.getMarketPrice();
 			}
 			if (fish.equals("Swordfish & Tuna")) {
 				GEItemInfo rawFish = grandExchange.loadItemInfo(359);
-				tunaPrice = rawFish.getMarketPrice();
-			}
-			if (fish.equals("Swordfish & Tuna")) {
-				GEItemInfo rawFish = grandExchange.loadItemInfo(371);
-				swordfishPrice = rawFish.getMarketPrice();
+				fishPrice1 = rawFish.getMarketPrice();
+				GEItemInfo rawFish2 = grandExchange.loadItemInfo(371);
+				fishPrice2 = rawFish2.getMarketPrice();
 			}
 			if (fish.equals("Herring & Sardines")) {
 				GEItemInfo rawFish = grandExchange.loadItemInfo(345);
-				herringPrice = rawFish.getMarketPrice();
-			}
-			if (fish.equals("Herring & Sardines")) {
-				GEItemInfo rawFish = grandExchange.loadItemInfo(345);
-				sardinesPrice = rawFish.getMarketPrice();
+				fishPrice1 = rawFish.getMarketPrice();
+				GEItemInfo rawFish2 = grandExchange.loadItemInfo(345);
+				fishPrice2 = rawFish2.getMarketPrice();
 			}
 			if (fish.equals("Trout & Salmon")) {
 				GEItemInfo rawFish = grandExchange.loadItemInfo(335);
-				troutPrice = rawFish.getMarketPrice();
-			}
-			if (fish.equals("Trout & Salmon")) {
-				GEItemInfo rawFish = grandExchange.loadItemInfo(331);
-				salmonPrice = rawFish.getMarketPrice();
+				fishPrice1 = rawFish.getMarketPrice();
+				GEItemInfo rawFish2 = grandExchange.loadItemInfo(331);
+				fishPrice2 = rawFish2.getMarketPrice();
 			}
 			if (fish.equals("Pike")) {
 				GEItemInfo rawFish = grandExchange.loadItemInfo(349);
-				pikePrice = rawFish.getMarketPrice();
+				fishPrice1 = rawFish.getMarketPrice();
 			}
 			if (fish.equals("Sharks")) {
 				GEItemInfo rawFish = grandExchange.loadItemInfo(383);
-				sharkPrice = rawFish.getMarketPrice();
+				fishPrice1 = rawFish.getMarketPrice();
 			}
 		}
 
 		private void startButtonActionPerformed(java.awt.event.ActionEvent evt) {
-			if (!startScript) {
-				startScript = true;
+			if (!started) {
+				started = true;
 				applyChanges();
 				startButton.setText("Stop Script");
 			} else {
@@ -1298,7 +1104,11 @@ public class iFisher extends Script implements PaintListener, ServerMessageListe
 		private void locationCBoxActionPerformed(java.awt.event.ActionEvent evt) {
 			String location = (String) locationCBox.getSelectedItem();
 			if (location.equals("Lumbridge")) {
-				fishingCBox.setModel(new javax.swing.DefaultComboBoxModel(new String[]{"Crayfish", "Shrimp & Anchovies", "Herring & Sardines", "Trout & Salmon", "Pike"}));
+				fishingCBox.setModel(new javax.swing.DefaultComboBoxModel(
+				new String[] { "Crayfish",
+				                "Shrimp & Anchovies",
+								"Herring & Sardines", "Trout & Salmon",
+								"Pike" }));
 				dropBox.setEnabled(false);
 				dropBox.setSelected(true);
 			} else {
@@ -1306,22 +1116,40 @@ public class iFisher extends Script implements PaintListener, ServerMessageListe
 				dropBox.setSelected(false);
 			}
 			if (location.equals("Al-Kharid")) {
-				fishingCBox.setModel(new javax.swing.DefaultComboBoxModel(new String[]{"Shrimp & Anchovies", "Herring & Sardines"}));
+				fishingCBox.setModel(new javax.swing.DefaultComboBoxModel(
+						new String[] { "Shrimp & Anchovies",
+								"Herring & Sardines" }));
 			}
-			if (location.equals("Barbarian Village") || location.equals("Seers' Village")) {
-				fishingCBox.setModel(new javax.swing.DefaultComboBoxModel(new String[]{"Trout & Salmon", "Pike"}));
+			if (location.equals("Barbarian Village")
+					|| location.equals("Seers' Village")) {
+				fishingCBox.setModel(new javax.swing.DefaultComboBoxModel(
+						new String[] { "Trout & Salmon", "Pike" }));
 			}
 			if (location.equals("Draynor Village")) {
-				fishingCBox.setModel(new javax.swing.DefaultComboBoxModel(new String[]{"Shrimp & Anchovies", "Herring & Sardines"}));
+				fishingCBox.setModel(new javax.swing.DefaultComboBoxModel(
+						new String[] { "Shrimp & Anchovies",
+								"Herring & Sardines" }));
 			}
 			if (location.equals("Karamja")) {
-				fishingCBox.setModel(new javax.swing.DefaultComboBoxModel(new String[]{"Shrimp & Anchovies", "Herring & Sardines", "Lobster", "Swordfish & Tuna"}));
+				fishingCBox.setModel(new javax.swing.DefaultComboBoxModel(
+						new String[] { "Shrimp & Anchovies",
+								"Herring & Sardines", "Lobster",
+								"Swordfish & Tuna" }));
+			}
+			if (location.equals("Karamja [Stiles]")) {
+				fishingCBox.setModel(new javax.swing.DefaultComboBoxModel(
+						new String[] { "Lobster", "Swordfish & Tuna" }));
 			}
 			if (location.equals("Catherby")) {
-				fishingCBox.setModel(new javax.swing.DefaultComboBoxModel(new String[]{"Shrimp & Anchovies", "Herring & Sardines", "Bass & Cod & Mackerel", "Lobster", "Swordfish & Tuna", "Sharks"}));
+				fishingCBox.setModel(new javax.swing.DefaultComboBoxModel(
+						new String[] { "Shrimp & Anchovies",
+								"Herring & Sardines", "Bass & Cod & Mackerel",
+								"Lobster", "Swordfish & Tuna", "Sharks" }));
 			}
 			if (location.equals("Fishing Guild")) {
-				fishingCBox.setModel(new javax.swing.DefaultComboBoxModel(new String[]{"Bass & Cod & Mackerel", "Lobster", "Swordfish & Tuna", "Sharks"}));
+				fishingCBox.setModel(new javax.swing.DefaultComboBoxModel(
+						new String[] { "Bass & Cod & Mackerel", "Lobster",
+								"Swordfish & Tuna", "Sharks" }));
 			}
 			makeChanges();
 		}
@@ -1330,18 +1158,18 @@ public class iFisher extends Script implements PaintListener, ServerMessageListe
 			makeChanges();
 		}
 
-		private javax.swing.JCheckBox antibanBox;
-		private javax.swing.JButton applyButton;
-		private javax.swing.JCheckBox barbBox;
-		private javax.swing.JCheckBox dropBox;
-		private javax.swing.JCheckBox dropTunaBox;
-		private javax.swing.JComboBox fishingCBox;
-		private javax.swing.JLabel fishingLabel;
-		private javax.swing.JComboBox locationCBox;
-		private javax.swing.JLabel locationLabel;
-		private javax.swing.JCheckBox paintBox;
-		private javax.swing.JButton pauseButton;
-		private javax.swing.JButton startButton;
 
+	    private javax.swing.JCheckBox antibanBox;
+	    private javax.swing.JButton applyButton;
+	    private javax.swing.JCheckBox barbBox;
+	    private javax.swing.JCheckBox dropBox;
+	    private javax.swing.JCheckBox dropTunaBox;
+	    private javax.swing.JComboBox fishingCBox;
+	    private javax.swing.JLabel jLabel1;
+	    private javax.swing.JLabel jLabel2;
+	    private javax.swing.JComboBox locationCBox;
+	    private javax.swing.JCheckBox paintBox;
+	    private javax.swing.JButton pauseButton;
+	    private javax.swing.JButton startButton;
 	}
 }

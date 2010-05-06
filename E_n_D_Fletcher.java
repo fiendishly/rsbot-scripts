@@ -1,12 +1,18 @@
 import java.awt.Color;
-import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Point;
 import java.awt.event.KeyEvent;
+import java.awt.image.BufferedImage;
+import java.io.IOException;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Map;
 
+import javax.imageio.ImageIO;
+
 import org.rsbot.bot.Bot;
+import org.rsbot.bot.input.Mouse;
 import org.rsbot.event.events.ServerMessageEvent;
 import org.rsbot.event.listeners.PaintListener;
 import org.rsbot.event.listeners.ServerMessageListener;
@@ -19,10 +25,13 @@ import org.rsbot.script.wrappers.RSNPC;
 import org.rsbot.script.wrappers.RSObject;
 import org.rsbot.script.wrappers.RSPlayer;
 import org.rsbot.script.wrappers.RSTile;
+import org.rsbot.util.ScreenshotUtil;
 
-@ScriptManifest(authors = { "Exempt", "DaRkY^" }, category = "Fletching", name = "E_n_D_Fletcher", version = 1.72, description = "<html>\n<head></head>\n<body style=\"text-align: center; font-family: Arial; padding: 5px;\">\n<p style=\"text-align: center;\"><b>E_n_D_Fletcher v1.72</b><br />Author: Exempt / DaRkY^<br /><br /><small>Updated by Jacmob</small><br /><br />You must be logged in to start the script.<br /><br />Fletching: <input type=checkbox name=fletchOp value=true></input><br />Using Clay Knife: <input type=checkbox name=clayKnifePick value=true></input><br /><br />What to fletch:<select name='fletchPick'><option>None<option>Short Bow<option>Long Bow</select><br />What type of logs:<select name='logPick'><option>None<option>Normal Logs<option>Oak Logs<option>Willow Logs<option>Maple Logs<option>Yew Logs<option>Magic Logs</select><br /><br /><hr /><br />Stringing: <input type=checkbox name=stringOp value=true></input><br /><br />What to string: <select name='stringPick'><option>None<option>Normal Short Bow<option>Normal Long Bow<option>Oak Short Bow<option>Oak Long Bow<option>Willow Short Bow<option>Willow Long Bow<option>Maple Short Bow<option>Maple Long Bow<option>Yew Short Bow<option>Yew Long Bow<option>Magic Short Bow<option>Magic Long Bow</select><br /><br /><hr /><br />If you use the built in antiban, turn your current antiban off.<br />Disable Status Display: <input type=checkbox name=paint value=true></input>Disable Antiban: <input type=checkbox name=antiban value=true></input><br /><br /><small>Adding to the delay will slow the script for laggers (1000 = 1 second)</small><br />Script Delay: <input type=text name=waitTime><br /><br /><br /></p></font></body>\n</html>")
-public class E_n_D_Fletcher extends Script implements PaintListener,
-		ServerMessageListener {
+@ScriptManifest(authors = { "Exempt", "DaRkY^" }, category = "Fletching", name = "E_n_D_Fletcher", version = 1.91, description = "<html><head></head><body style=\"text-align: center; font-family: Calibri, Arial; padding: 5px;\"><p style=\"text-align: center;\"><img src=\"http://i44.tinypic.com/2564mqq.png\" /><br /><small>(Picture by Pontus)</small><br /><u><b>Log in before starting this script</b></u><br /><br />Fletching: <input type=checkbox name=fletchOp value=true></input><br />Stringing: <input type=checkbox name=stringOp value=true></input><br />Using Clay Knife: <input type=checkbox name=clayKnifePick value=true></input><br /><br />What to fletch:<select name='fletchPick'><option>None<option>Short Bow<option>Long Bow</select><br />What type of logs:<select name='logPick'><option>None<option>Normal Logs<option>Oak Logs<option>Willow Logs<option>Maple Logs<option>Yew Logs<option>Magic Logs</select><br />What to string:<select name='stringPick'><option>None<option>Normal Short Bow<option>Normal Long Bow<option>Oak Short Bow<option>Oak Long Bow<option>Willow Short Bow<option>Willow Long Bow<option>Maple Short Bow<option>Maple Long Bow<option>Yew Short Bow<option>Yew Long Bow<option>Magic Short Bow<option>Magic Long Bow</select><br /><br /><hr /><br />Disable antiban if you are using the built in antiban.<br />Disable Antiban: <input type=checkbox name=antiban value=true></input><br />Hide paint?: <input type=checkbox name=paint value=true></input><br /><small>Add delay to slow down script (recommended for laggers)</small><br />Script Delay: <input type=text name=waitTime>ms (1000ms = 1sec)</p></font></body></html>")
+public class E_n_D_Fletcher extends Script implements PaintListener, ServerMessageListener {
+
+	BufferedImage normal = null;
+	BufferedImage clicked = null;
 
 	private enum State {
 		Bank, Fletch, String, Walk
@@ -105,7 +114,7 @@ public class E_n_D_Fletcher extends Script implements PaintListener,
 
 	// Strings
 	final String[] clickable = { "longbow", "shortbow", "Longbow", "Shortbow",
-			"Kinfe", "Bow string" };
+			"Knife", "Bow string" };
 
 	Point stat = new Point(576, 185);
 
@@ -113,7 +122,7 @@ public class E_n_D_Fletcher extends Script implements PaintListener,
 
 	Point friend = new Point(573, 487);
 
-	Point exp = new Point(630, 400);
+	Point exp = new Point(640, 363);
 
 	long antiTime = System.currentTimeMillis();
 
@@ -278,54 +287,6 @@ public class E_n_D_Fletcher extends Script implements PaintListener,
 		log("Stopping " + "E_n_D_Fletcher");
 	}
 
-	public void onRepaint(final Graphics g) {
-		if (isLoggedIn() && paint) {
-			long millis = System.currentTimeMillis() - startTime;
-			final long hours = millis / (1000 * 60 * 60);
-			millis -= hours * 1000 * 60 * 60;
-			final long minutes = millis / (1000 * 60);
-			millis -= minutes * 1000 * 60;
-			final long seconds = millis / 1000;
-
-			final int levelChange = skills
-					.getCurrentSkillLevel(Constants.STAT_FLETCHING)
-					- startStatLvl;
-			final int XPChange = skills
-					.getCurrentSkillExp(Constants.STAT_FLETCHING)
-					- startXp;
-			float xpPerSec = 0;
-			if ((minutes > 0 || hours > 0 || seconds > 0) && XPChange > 0) {
-				xpPerSec = (float) XPChange
-						/ (float) (seconds + minutes * 60 + hours * 60 * 60);
-			}
-			final float xpPerMin = xpPerSec * 60;
-			final float xpPerHour = xpPerMin * 60;
-
-			g.setColor(Color.black);
-			g.fill3DRect(516, 0, 248, 167, true);
-			g.setColor(Color.red);
-			g.setFont(new Font("Batang", Font.BOLD, 14));
-			g.drawString("E_n_D_Fletcher" + " v" + "1.72", 520, 15);
-			g.setFont(new Font("Batang", Font.BOLD, 12));
-			g.drawString("Runtime: " + hours + " : " + minutes + " : "
-					+ seconds + "s ", 520, 30);
-			g
-					.drawString(
-							"Exp Gained: "
-									+ (skills
-											.getCurrentSkillExp(Constants.STAT_FLETCHING) - startXp),
-							520, 45);
-			g.drawString("Exp Per Hour:   " + (int) xpPerHour, 520, 60);
-			g.drawString("Percent TNL:   %"
-					+ skills.getPercentToNextLevel(Constants.STAT_FLETCHING),
-					520, 75);
-			g.drawString("Bows Strung: " + amountStrung, 520, 90);
-			g.drawString("Logs Fletched: " + amountFletch, 520, 105);
-			g.drawString("Levels Gained: " + levelChange, 520, 120);
-			g.drawString("Status: " + status, 520, 135);
-		}
-	}
-
 	@SuppressWarnings("deprecation")
 	@Override
 	public boolean onStart(final Map<String, String> args) {
@@ -344,6 +305,7 @@ public class E_n_D_Fletcher extends Script implements PaintListener,
 					.getCurrentSkillLevel(Constants.STAT_FLETCHING);
 			log("Starting tile was saved. " + startTile);
 		}
+
 		final RSObject booth = getNearestObjectByID(E_n_D_Fletcher.BANKS);
 		final RSNPC banker = getNearestNPCByID(E_n_D_Fletcher.BANKNPCS);
 		final RSNPC mover = getNearestNPCByID(E_n_D_Fletcher.MOVING_NPC);
@@ -496,9 +458,22 @@ public class E_n_D_Fletcher extends Script implements PaintListener,
 			}
 		}
 		log("E_n_D_Fletcher" + " was successfully started!");
+		try {
+			final URL cursorURL = new URL("http://i45.tinypic.com/63rfuu.png*");
+			final URL cursor80URL = new URL(
+					"http://i48.tinypic.com/313623n.png");
+			normal = ImageIO.read(cursorURL);
+			clicked = ImageIO.read(cursor80URL);
+		} catch (MalformedURLException e) {
+			log("Unable to buffer cursor.");
+		} catch (IOException e) {
+			log("Unable to open cursor image.");
+			return true;
+		}
 		return true;
 	}
 
+	@SuppressWarnings("unused")
 	private boolean sendTextCheck(final String text) {
 		try {
 			sendText(text, false);
@@ -518,16 +493,6 @@ public class E_n_D_Fletcher extends Script implements PaintListener,
 		return false;
 	}
 
-	public void serverMessageRecieved(final ServerMessageEvent e) {
-		final String word = e.getMessage().toLowerCase();
-		if (word.contains("shortbow") || word.contains("longbow")) {
-			amountFletch++;
-		}
-		if (word.contains("string")) {
-			amountStrung++;
-		}
-	}
-
 	public void startFletch() {
 		try {
 			if (RSInterface.getInterface(Constants.INTERFACE_BANK).isValid()) {
@@ -544,7 +509,7 @@ public class E_n_D_Fletcher extends Script implements PaintListener,
 					if (count > 10) {
 						atMenu("Make X");
 						wait(random(wait1 * 3, wait2 * 3));
-						sendTextCheck("" + count);
+						sendText("27", true);
 						curTime = System.currentTimeMillis();
 					} else {
 						atMenu("10");
@@ -712,13 +677,242 @@ public class E_n_D_Fletcher extends Script implements PaintListener,
 			if (!bank.atItem(id, amount)) {
 				bank.atItem(id, "X");
 				wait(random(1500, 1750));
-				sendTextCheck(amount);
+				sendText(amount, true);
 				return true;
 			}
 			return false;
 		} catch (final Exception e) {
 			log("withdraw(String amount, int id) Error: " + e);
 			return false;
+
 		}
+	}
+
+	public void serverMessageRecieved(ServerMessageEvent e) {
+		String sString = e.getMessage();
+		if (sString.contains("You've just advanced")) {
+			try {
+				ScreenshotUtil.takeScreenshot(false);
+				clickContinue();
+			} catch (Exception e1) {
+				clickContinue();
+				e1.printStackTrace();
+			}
+		}
+		if (sString.contains("shortbow") || sString.contains("longbow")) {
+			try {
+				amountFletch++;
+			} catch (Exception e1) {
+				log.severe("Error During: ServerMessageRecieved - "
+						+ "amountFletch++");
+				e1.printStackTrace();
+			}
+		}
+		if (sString.contains("string")) {
+			try {
+				amountStrung++;
+			} catch (Exception e1) {
+				log.severe("Error During: ServerMessageRecieved - "
+						+ "amountStrung++");
+				e1.printStackTrace();
+			}
+		}
+	}
+
+	public void onRepaint(final Graphics g) {
+		if (isLoggedIn() && paint) {
+			long millis = System.currentTimeMillis() - startTime;
+			final long hours = millis / (1000 * 60 * 60);
+			millis -= hours * 1000 * 60 * 60;
+			final long minutes = millis / (1000 * 60);
+			millis -= minutes * 1000 * 60;
+			final long seconds = millis / 1000;
+
+			final int levelChange = skills
+					.getCurrentSkillLevel(Constants.STAT_FLETCHING)
+					- startStatLvl;
+			final int XPChange = skills
+					.getCurrentSkillExp(Constants.STAT_FLETCHING)
+					- startXp;
+			float xpPerSec = 0;
+			if ((minutes > 0 || hours > 0 || seconds > 0) && XPChange > 0) {
+				xpPerSec = (float) XPChange
+						/ (float) (seconds + minutes * 60 + hours * 60 * 60);
+			}
+			final float xpPerMin = xpPerSec * 60;
+			final float xpPerHour = xpPerMin * 60;
+
+			int xLoc = 16;
+			int yLoc = 367;
+
+			decorRect(g, 6, 345, 490, 113, 5, new Color(176, 44, 75),
+					new Color(99, 25, 42));
+
+			g.setColor(Color.WHITE);
+			g.drawString("Run Time: " + hours + ":" + minutes + ":" + seconds
+					+ "     Status: " + status, xLoc, yLoc);
+			yLoc += 15;
+			g
+					.drawString(
+							"Exp Gained: "
+									+ (skills
+											.getCurrentSkillExp(Constants.STAT_FLETCHING) - startXp)
+									+ "(" + (int) xpPerHour + "/hour)", xLoc,
+							yLoc);
+			yLoc += 15;
+			g.drawString("Bows Strung: " + amountStrung, xLoc, yLoc);
+			yLoc += 15;
+			g.drawString("Logs Fletched: " + amountFletch, xLoc, yLoc);
+			yLoc += 15;
+			g.drawString("Levels Gained: " + levelChange, xLoc, yLoc);
+			yLoc += 15;
+			ProgBar(g, xLoc + 1, 432, 250, 16, skills
+					.getPercentToNextLevel(STAT_FLETCHING),
+					new Color(0, 163, 0), new Color(0, 240, 0), Color.WHITE);
+
+			 if (normal != null) {
+			        final Mouse mouse = Bot.getClient().getMouse();
+			        final int mouse_x = mouse.getMouseX();
+			        final int mouse_y = mouse.getMouseY();
+			        final int mouse_x2 = mouse.getMousePressX();
+			        final int mouse_y2 = mouse.getMousePressY();
+			        final long mpt = System.currentTimeMillis()
+			                - mouse.getMousePressTime();
+			        if (mouse.getMousePressTime() == -1 || mpt >= 1000) {
+			            g.drawImage(normal, mouse_x - 8, mouse_y - 8, null); //this show the mouse when its not clicked
+			        }
+			        if (mpt < 1000) {
+			            g.drawImage(clicked, mouse_x2 - 8, mouse_y2 - 8, null); //this show the four squares where you clicked.
+			            g.drawImage(normal, mouse_x - 8, mouse_y - 8, null); //this show the mouse as normal when its/just clicked
+			      }
+		     }
+		 }
+	}
+
+	public void drawBorderedRectangle(Graphics g, int x, int y, int width,
+			int height, int bsize, int bgT, int bT, boolean hLight, Color bg,
+			Color bc, Color hlc) {
+		g.setColor(new Color(bc.getRed(), bc.getGreen(), bc.getBlue(), bT));
+		g.fill3DRect(x, y, width, height, false);
+
+		g.setColor(new Color(hlc.getRed(), hlc.getGreen(), hlc.getBlue()));
+		int xTimes = width / 6;
+		int yTimes = height / 6;
+
+		int[] totalX = { x + (xTimes * 1), x, x + (xTimes * 2), x,
+				x + (xTimes * 3), x, x + (xTimes * 4), x, x + (xTimes * 5), x,
+				x + (xTimes * 6), x };
+		int[] totalY = { y, y + (yTimes * 1), y, y + (yTimes * 2), y,
+				y + (yTimes * 3), y, y + (yTimes * 4), y, y + (yTimes * 5), y,
+				y + (yTimes * 6) };
+		int totalP = 24;
+
+		g.drawPolyline(totalX, totalY, totalP);
+
+		g.setColor(new Color(bg.getRed(), bg.getGreen(), bg.getBlue(), bgT));
+		g.fill3DRect(x + bsize, y + bsize, width - (bsize * 2), height
+				- (bsize * 2), false);
+
+		g.setColor(Color.BLACK);
+		g.drawLine(x, y, x + width, y);
+		g.drawLine(x + width, y, x + width, y + height);
+		g.drawLine(x + width, y + height, x, y + height);
+		g.drawLine(x, y + height, x, y);
+
+		x += bsize;
+		y += bsize;
+		int inW = width - (bsize * 2);
+		int inH = height - (bsize * 2);
+
+		g.drawLine(x, y, x + inW, y);
+		g.drawLine(x + inW, y, x + inW, y + inH);
+		g.drawLine(x + inW, y + inH, x, y + inH);
+		g.drawLine(x, y + inH, x, y);
+	}
+
+	public void continuePaint(Graphics g) {
+
+	}
+
+	public void ProgBar(Graphics g, int posX, int posY, int width, int height,
+			int Progress, Color color1, Color color2, Color text) {
+
+		int[] c1 = { color1.getRed(), color1.getGreen(), color1.getBlue(), 150 };
+		int[] c2 = { color2.getRed(), color2.getGreen(), color2.getBlue(), 150 };
+		if (c1[0] > 230) {
+			c1[0] = 230;
+		}
+		if (c1[1] > 230) {
+			c1[1] = 230;
+		}
+		if (c1[2] > 230) {
+			c1[2] = 230;
+		}
+		if (c2[0] > 230) {
+			c2[0] = 230;
+		}
+		if (c2[1] > 230) {
+			c2[1] = 230;
+		}
+		if (c2[2] > 230) {
+			c2[2] = 230;
+		}
+
+		g.setColor(new Color(c1[0], c1[1], c1[2], 200));
+		g.fillRoundRect(posX, posY, width, height, 5, 12);
+		g.setColor(new Color(c1[0] + 25, c1[1] + 25, c1[2] + 25, 200));
+		g.fillRoundRect(posX, posY, width, height / 2, 5, 12);
+
+		g.setColor(new Color(c2[0], c2[1], c2[2], 200));
+		g.fillRoundRect(posX, posY, (Progress * width) / 100, height, 5, 12);
+		g.setColor(new Color(c2[0] + 25, c2[1] + 25, c2[2] + 25, 150));
+		g
+				.fillRoundRect(posX, posY, (Progress * width) / 100,
+						height / 2, 5, 12);
+
+		g.setColor(Color.LIGHT_GRAY);
+		g.drawRoundRect(posX, posY, width, height, 5, 12);
+
+		g.setColor(text);
+		g.drawString("" + Progress + "% TNL. Current Level: "
+				+ skills.getCurrentSkillLevel(STAT_FLETCHING), posX
+				+ (width / 6), 444);
+		// Credits to PureFocus
+	}
+
+	public void decorRect(Graphics g, int x, int y, int width, int height,
+			int borderSize, Color border, Color backGround) {
+		int size = borderSize * 2;
+		int[] x1 = { x, x + size, x };
+		int[] x2 = { x + width - size, x + width, x + width };
+		int[] y1 = { y, y, y + size };
+		int[] y3 = { y + height, y + height, y + height - size };
+		g.setColor(backGround);
+		g.fillRect(x, y, width, height);
+		g.setColor(border);
+		g.fillRect(x, y, borderSize, height);
+		g.fillRect(x, y, width - 3, borderSize);
+		g.fillRect(x + width - borderSize, y, borderSize, height);
+		g.fillRect(x, y + height - borderSize, width - 3, borderSize);
+		g.setColor(new Color(255, 255, 255, 150));
+		g.fillPolygon(x1, y1, 3);
+		g.fillPolygon(x2, y1, 3);
+		g.fillPolygon(x1, y3, 3);
+		g.fillPolygon(x2, y3, 3);
+		g.setColor(new Color(0, 0, 0, 100));
+		g.drawPolygon(x1, y1, 3);
+		g.drawPolygon(x2, y1, 3);
+		g.drawPolygon(x1, y3, 3);
+		g.drawPolygon(x2, y3, 3);
+		g.draw3DRect(x + borderSize, y + borderSize, width - (borderSize * 2),
+				height - (borderSize * 2), true);
+		g.draw3DRect((x + 1) + borderSize, (y + 1) + borderSize, (width - 2)
+				- (borderSize * 2), (height - 2) - (borderSize * 2), true);
+		g.setColor(new Color(0, 0, 0, 20));
+		g.draw3DRect(x, y, width, height, true);
+		g.draw3DRect(x + 1, y + 1, width - 2, height - 2, true);
+		g.setColor(new Color(50, 50, 50, 60));
+		g.fillRect(x, y + (height / 2), width, height / 2);
+		// Credits to PureFocus
 	}
 }
