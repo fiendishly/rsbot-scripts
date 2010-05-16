@@ -7,7 +7,7 @@
  *
  *
  *	Made on 15th October 2009.
- *	Updated to Version 1.03 on 20th Feb 2010.
+ *	Updated to Version 1.04 on 15th May 2010.
  *
  *	Thanks to Exempt for some variables and IDs (couldn't be bothered to get my own).
  *
@@ -16,22 +16,14 @@
  *	Version 1.01 - Updated antiban.
  *	Version 1.02 - Made more efficient. Redid some methods.
  *	Version 1.03 - Made sure everything is checked for nulls, fixed most bugs, etc. Made way faster.
+ *	Version 1.04 - Cleaned code a little.
  */
 
 import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.event.KeyEvent;
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.net.URL;
-import java.net.URLConnection;
 import java.util.Map;
 
-import javax.swing.JFileChooser;
-import javax.swing.JOptionPane;
 
 import org.rsbot.bot.Bot;
 import org.rsbot.event.events.ServerMessageEvent;
@@ -47,16 +39,16 @@ import org.rsbot.script.wrappers.RSNPC;
 import org.rsbot.script.wrappers.RSObject;
 import org.rsbot.script.wrappers.RSTile;
 
-@ScriptManifest(authors = { "Speed" }, category = "Cooking", name = "Rouge Cooker", version = 1.03, description = "<html>"
+@ScriptManifest(authors = { "Speed" }, category = "Cooking", name = "Rouge Cooker", version = 1.04, description = "<html>"
 	+ "<head></head><body>"
 	+ "<h1> Rouge Cooker by Speed </h1>"
 	+ "<br><br>Run in Rogue's Den. Enter ID of Raw material here:"
 	+ "<br>Food ID: <input type=\"text\" name=\"foodID\"><br><br>"
-	+ "<b> Sponsored by: <a href = http://team-deathmatch.com>http://team-deathmatch.com</a></body></html>")
+	+ "<b> Enjoy</b></html>")
 public class RougeCooker extends Script implements PaintListener, ServerMessageListener {
 	private int tries = 0;
-	private final int BANK_ID = 2271;
-	private final int FIRE_ID = 2732;
+	private static final int BANK_ID = 2271;
+	private static final int FIRE_ID = 2732;
 	private int antibans;
 	private long seconds;
 	private long runTime;
@@ -69,71 +61,16 @@ public class RougeCooker extends Script implements PaintListener, ServerMessageL
 	private int XpGained;
 	private int startExp = skills.getCurrentSkillExp(STAT_COOKING);
 	private int startStatLvl = skills.getCurrentSkillLevel(STAT_COOKING);
-	private RSTile fireTile = new RSTile(3043, 4972);
 	private long startTime = System.currentTimeMillis();
 	private int foodID;
 	private int cookPerHour;
 	private int xpPerHour;
-	private final ScriptManifest properties = getClass().getAnnotation(ScriptManifest.class);
-
-	public double getVersion() {
-		return properties.version();
-	}
 
 	public int getMouseSpeed() {
 		return random(4, 6);
 	}
 
 	public boolean onStart(Map<String, String> args) {
-		URLConnection url = null;
-		BufferedReader in = null;
-		BufferedWriter out = null;
-		//Ask the user if they'd like to check for an update...
-		if(JOptionPane.showConfirmDialog(null, "Would you like to check for updates?\nPlease Note this requires an internet connection and the script will write files to your harddrive!") == 0){ //If they would, continue
-			try{
-				//Open the version text file
-				url = new URL("http://www.scapemarket.info/scripts/RougeCookerVERSION.txt").openConnection();
-				//Create an input stream for it
-				in = new BufferedReader(new InputStreamReader(url.getInputStream()));
-				//Check if the current version is outdated
-				if(Double.parseDouble(in.readLine()) > getVersion()) {
-					//If it is, check if the user would like to update.
-					if(JOptionPane.showConfirmDialog(null, "Update found. Do you want to update?") == 0){
-						//If so, allow the user to choose the file to be updated.
-						JOptionPane.showMessageDialog(null, "Please choose 'RougeCooker.java' in your scripts folder and hit 'Open'");
-						JFileChooser fc = new JFileChooser();
-						//Make sure "Open" was clicked.
-						if(fc.showOpenDialog(null) == JFileChooser.APPROVE_OPTION){
-							//If so, set up the URL for the .java file and set up the IO.
-							url = new URL("http://www.scapemarket.info/scripts/RougeCooker.java").openConnection();
-							in = new BufferedReader(new InputStreamReader(url.getInputStream()));
-							out = new BufferedWriter(new FileWriter(fc.getSelectedFile().getPath()));
-							String inp;
-							/* Until we reach the end of the file, write the next line in the file
-							 * and add a new line. Then flush the buffer to ensure we lose
-							 * no data in the process.
-							 */
-							while((inp = in.readLine()) != null){
-								out.write(inp);
-								out.newLine();
-								out.flush();
-							}
-							//Notify the user that the script has been updated, and a recompile and reload is needed.
-							log("Script successfully downloaded. Please recompile and reload your scripts!");
-							return false;
-						} else log("Update canceled");
-					} else log("Update canceled");
-				} else
-					JOptionPane.showMessageDialog(null, "You have the latest version. :)"); //User has the latest version. Tell them!
-				if(in != null)
-					in.close();
-				if(out != null)
-					out.close();
-			} catch (IOException e){
-				log("Problem getting version :/");
-				return false; //Return false if there was a problem
-			}
-		}  
 		startExp = skills.getCurrentSkillExp(STAT_COOKING);
 		startStatLvl = skills.getCurrentSkillLevel(STAT_COOKING);
 		startTime = System.currentTimeMillis();
@@ -197,7 +134,7 @@ public class RougeCooker extends Script implements PaintListener, ServerMessageL
 		if (getMyPlayer().getAnimation() != -1) {
 			curTime = System.currentTimeMillis();
 		}
-		RSObject range = getNearestObjectByID(FIRE_ID);
+		final RSObject range = getNearestObjectByID(FIRE_ID);
 		final RSInterfaceChild LOL_AREA = RSInterface.getChildInterface(513, 3);
 		if (range != null && !getMyPlayer().isMoving()  && (System.currentTimeMillis() - curTime) > 3500 && !LOL_AREA.isValid()) {
 			if(useItem(foodID, range) && !LOL_AREA.isValid()) {
@@ -330,18 +267,18 @@ public class RougeCooker extends Script implements PaintListener, ServerMessageL
 	}
 
 	private void useBank() {
-		RSNPC Banker = getNearestNPCByID(BANK_ID);
+		RSNPC banker = getNearestNPCByID(BANK_ID);
 		if(getSelectedInvItem() != -1) {
 			atInventoryItem(getSelectedInvItem(), "Use");
 		}
-		if (Banker != null) {
+		if (banker != null) {
 			if (!bank.isOpen()) {
-				RSTile bankerT = Banker.getLocation();
+				RSTile bankerT = banker.getLocation();
 				if(distanceTo(bankerT) < 3) {
-					if(tileOnScreen(Banker.getLocation())) {
-						atNPC(Banker, "Bank");
+					if(tileOnScreen(bankerT)) {
+						atNPC(banker, "Bank");
 					} else {
-						turnToTile(Banker.getLocation());
+						turnToTile(bankerT);
 					}
 				} else {
 					walkTileMM(bankerT);
@@ -378,21 +315,18 @@ public class RougeCooker extends Script implements PaintListener, ServerMessageL
 
 
 	public int loop() {
-		try{
-			getMouseSpeed();
-			if (getCurrentTab() != Constants.TAB_INVENTORY) {
-				openTab(Constants.TAB_INVENTORY);
-			}
-			if(!isBusy() && inventoryContains(foodID)){
-				useFire();
-			}
-			if(!isBusy() && !inventoryContains(foodID)){
-				useBank();
-			}
-			if(isBusy()){
-				antiban();
-			}
-		} catch(Exception e) {
+		getMouseSpeed();
+		if (getCurrentTab() != Constants.TAB_INVENTORY) {
+			openTab(Constants.TAB_INVENTORY);
+		}
+		if(!isBusy() && inventoryContains(foodID)){
+			useFire();
+		}
+		if(!isBusy() && !inventoryContains(foodID)){
+			useBank();
+		}
+		if(isBusy()){
+			antiban();
 		}
 		return random(100, 400);
 	}

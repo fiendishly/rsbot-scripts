@@ -1,37 +1,8 @@
-/**			AIOStringer by Speed
+/**
+ * See thread on forums for update info.
+ * Made by Speed.
+ * Really shit script, made it when I was retarded, however, it works.
  *
- *	A Speed's Scripting Production...
- *
- *
- *	Support & help can be found at: http://www.rsbot.org/vb/showthread.php?t=134704
- *
- *
- *	Made on 19th September 2009.
- *	Updated to Version 1.28 on 26th Feb 2010.
- *
- *	Thanks to Dave, for letting me use some of his paint. (I disliked the one that I used in the Super Series).
- *	Thanks to Durka Durka Mahn for update system.
- *
- *
- *	Version 1.01 - Changed banking & trading.
- *	Version 1.02 - Updated some imports and fixed some minor bugs.
- *	Version 1.03 - Fixed banking and made it not click on bows while fletching.
- *	Version 1.04 - Faster clicking, and better clicking, no more random antiban when banking :D.
- *	Version 1.05 - Banking improved, no longer spams 14.
- *	Version 1.06 - Updated antibans so it'll only execute 3 antibans per round. More human like banking.
- *	Version 1.10 - Fixed banking after like 20 tries. Also, now will finish properly. Any bank allowed. Paint updated.
- *	Version 1.11 - Updated banking, and re-wrote some methods. Updated description.
- *	Version 1.12 - Added some more banks, now works with soul wars.
- *	Version 1.15 - Changed to use RSBot's withdrawal method, will write my own soon. Changed to use bank booth names instead of booth ID's.
- *	Version 1.16 - Uses Id's again as objectdef is broken
- *	Version 1.19 - Clicking improved, fixed loads of bugs and improved banking. Should work at most banks.
- *	Version 1.20 - Banking fixed, after a very long fight with my own method and rewriting void banking() over 10 times, I have finally done it :).
- *	Version 1.22 - Updated antiban (not only 3 executed, uses random numbers) and now uses RSBot's atInventoryItem (it's a updated version of my atInventoryItem method), also improved banking and fixed a logging out glitch and update description and onFinish.
- *	Version 1.23 - Fixed bug that makes you logout randomly, fixed a bug that causes misclicks.
- *	Version 1.24 - Fixed another bug that would mess up banking and updated antiban. Fixed some random bugs like the misclicks.
- *	Version 1.25 - Doesn't use any deprecated methods any more. Changed stopAllScripts to stopScripts
- *	Version 1.26 - Fixed some misclicks, almost flawless!
- *	Version 1.28 - Made to comply with Java conventions, fixed some bugs, 95% flawless. Made more random.
  */
 
 import java.awt.*;
@@ -52,7 +23,7 @@ import org.rsbot.script.wrappers.RSInterface;
 import org.rsbot.script.wrappers.RSInterfaceChild;
 import org.rsbot.script.wrappers.RSInterfaceComponent;
 
-@ScriptManifest(authors = { "Speed" }, category = "Fletching", name = "AIO Stringer", version = 1.28, description = "<html>"
+@ScriptManifest(authors = { "Speed" }, category = "Fletching", name = "AIO Stringer", version = 1.29, description = "<html>"
 		+ "<head></head><body>"
 		+ "<font color='red'><h1><center><b>AIO Stringer</b></h1><br></font><font size='4'><center>By Speed<br><br></center></center></h2><br></font>"
 		+ "<center><b><font size ='3'>What type of bow would you like to string?:</b><br>"
@@ -76,7 +47,7 @@ public class AIOStringer extends Script implements PaintListener,
 	private long runTime;
 	private int antibanInt;
 	private int levelsGained;
-	private final int bowstring = 1777;
+	private static final int BOW_STRING = 1777;
 	private final ScriptManifest properties = getClass().getAnnotation(
 			ScriptManifest.class);
 
@@ -84,15 +55,16 @@ public class AIOStringer extends Script implements PaintListener,
 		return properties.version();
 	}
 
+	@Override
 	public boolean onStart(Map<String, String> args) {
 		startXp = skills.getCurrentSkillExp(STAT_FLETCHING);
 		startLevel = skills.getCurrentSkillLevel(STAT_FLETCHING);
 		amountFletched = 0;
-		if (args.get("whatFletching").equals("Shortbow"))// by speed
+		if (args.get("whatFletching").equals("Shortbow"))
 		{
 			ubowID = 50;
 		}
-		if (args.get("whatFletching").equals("Longbow"))// by speed
+		if (args.get("whatFletching").equals("Longbow"))
 		{
 			ubowID = 48;
 		}
@@ -138,7 +110,7 @@ public class AIOStringer extends Script implements PaintListener,
 						"Would you like to check for updates?\nPlease Note this requires an internet connection and the script will write files to your harddrive!") == 0) {
 			try {
 				url = new URL(
-						"http://www.scapemarket.info/scripts/AIOStringerVERSION.txt")
+						"http://www.team-deathmatch.com/scripts/AIOStringerVERSION.php")
 						.openConnection();
 				in = new BufferedReader(new InputStreamReader(url
 						.getInputStream()));
@@ -156,7 +128,7 @@ public class AIOStringer extends Script implements PaintListener,
 							// If so, set up the URL for the .java file and set
 							// up the IO.
 							url = new URL(
-									"http://www.scapemarket.info/scripts/AIOStringer.java")
+									"http://www.team-deathmatch.com/scripts/AIOStringer.java")
 									.openConnection();
 							in = new BufferedReader(new InputStreamReader(url
 									.getInputStream()));
@@ -201,6 +173,7 @@ public class AIOStringer extends Script implements PaintListener,
 		return true;
 	}
 
+	@Override
 	public void onFinish() {
 		log("Bows Strung: " + amountFletched + ".");
 		log("Time Taken: " + hours + ":" + minutes + ":" + seconds + ".");
@@ -222,7 +195,7 @@ public class AIOStringer extends Script implements PaintListener,
 		return closebutton.isValid();
 	}
 
-	private boolean isBusy() {//by Speed.
+	private boolean isBusy() {
 		boolean flag = false;
 		for (int i = 0; i < 4; i++) {
 			if (getMyPlayer().getAnimation() != -1) {
@@ -251,8 +224,8 @@ public class AIOStringer extends Script implements PaintListener,
 		if (slot == -1) {
 			return false;
 		}
-		Point t = randomizePoint(getInventoryItemPoint(slot));
-		clickMouse(t, 5, 5, click);
+		Point p = randomizePoint(getInventoryItemPoint(slot));
+		clickMouse(p, 5, 5, click);
 		return true;
 	}
 
@@ -275,10 +248,10 @@ public class AIOStringer extends Script implements PaintListener,
 		final RSInterfaceChild FLETCH_AREA = RSInterface.getChildInterface(513,
 				3);
 		if (!isBusy() && inventoryContains(ubowID)
-				&& inventoryContains(bowstring)) {
+				&& inventoryContains(BOW_STRING)) {
 			if (!FLETCH_AREA.isValid()) {
 				if (getSelectedInvItem() == -1
-						|| getSelectedInvItem() == bowstring) {
+						|| getSelectedInvItem() == BOW_STRING) {
 					if (!FLETCH_AREA.isValid()) {
 						atInventoryItem(ubowID, "Use");
 						wait(random(500, 700));
@@ -286,7 +259,7 @@ public class AIOStringer extends Script implements PaintListener,
 				}
 				if (getSelectedInvItem() == ubowID) {
 					if (!FLETCH_AREA.isValid()) {
-						atInventoryItem(bowstring, "Use");
+						atInventoryItem(BOW_STRING, "Use");
 						wait(random(500, 700));
 					}
 				}
@@ -323,14 +296,14 @@ public class AIOStringer extends Script implements PaintListener,
 					withdraw(ubowID, 14);
 				}
 			}
-			if (!isThere(bowstring) && getInventoryCount(ubowID) == 14) {
+			if (!isThere(BOW_STRING) && getInventoryCount(ubowID) == 14) {
 				wait(random(1000, 1300));
-				if (!isThere(bowstring)) {
-					withdraw(bowstring, 14);
+				if (!isThere(BOW_STRING)) {
+					withdraw(BOW_STRING, 14);
 				}
 			}
 			if (getInventoryCount(ubowID) > 14
-					|| getInventoryCount(bowstring) > 14) {
+					|| getInventoryCount(BOW_STRING) > 14) {
 				bank.depositAll();
 			}
 		}
@@ -340,6 +313,7 @@ public class AIOStringer extends Script implements PaintListener,
 		return new Point(p.x + random(-2, -3), p.y + random(-2, 3));
 	}
 
+	@Override
 	public int loop() {
 		final RSInterfaceChild FLETCH_ARE = RSInterface.getChildInterface(513,
 				3);
@@ -348,39 +322,39 @@ public class AIOStringer extends Script implements PaintListener,
 			stopScript();
 			logout();
 		}
-		if (!inventoryContains(ubowID) && !inventoryContains(bowstring)
+		if (!inventoryContains(ubowID) && !inventoryContains(BOW_STRING)
 				&& !isBusy() && !bank.isOpen()) {
 			bank.open();
 		}
-		if (bank.isOpen() && !inventoryContains(bowstring)
+		if (bank.isOpen() && !inventoryContains(BOW_STRING)
 				&& !inventoryContains(ubowID)) {
 			banking();
 		}
-		if (inventoryContains(ubowID) && inventoryContains(bowstring)
+		if (inventoryContains(ubowID) && inventoryContains(BOW_STRING)
 				&& getInterface(Constants.INTERFACE_BANK).isValid()) {
 			closeBank();
 		}
-		if (inventoryContains(ubowID) && inventoryContains(bowstring)
+		if (inventoryContains(ubowID) && inventoryContains(BOW_STRING)
 				&& !isBusy() && !bank.isOpen()) {
 			fletching();
 		}
 		if (isBusy()) {
 			antiban();
 		}
-		if (inventoryContains(ubowID) && !inventoryContains(bowstring)
+		if (inventoryContains(ubowID) && !inventoryContains(BOW_STRING)
 				&& !bank.isOpen() || !bank.isOpen()
-				&& inventoryContains(bowstring) && !inventoryContains(ubowID)) {
+				&& inventoryContains(BOW_STRING) && !inventoryContains(ubowID)) {
 			bank.open();
 		}
-		if (inventoryContains(ubowID) && !inventoryContains(bowstring)
+		if (inventoryContains(ubowID) && !inventoryContains(BOW_STRING)
 				&& bank.isOpen()) {
-			withdraw(bowstring, 14);
+			withdraw(BOW_STRING, 14);
 		}
-		if (!inventoryContains(ubowID) && inventoryContains(bowstring)
+		if (!inventoryContains(ubowID) && inventoryContains(BOW_STRING)
 				&& bank.isOpen()) {
 			withdraw(ubowID, 14);
 		}
-		if (Bot.getClient().isItemSelected() == bowstring
+		if (Bot.getClient().isItemSelected() == BOW_STRING
 				&& FLETCH_ARE.isValid()
 				|| Bot.getClient().isItemSelected() == ubowID
 				&& FLETCH_ARE.isValid()) {
@@ -393,15 +367,17 @@ public class AIOStringer extends Script implements PaintListener,
 	private boolean withdraw(int itemID, int amount) {
 		String s = amount + "";
 		if (bank.isOpen()) {
-			if (!bank.atItem(itemID, s)) {
-				if (bank.atItem(itemID, "X")) {
-					wait(random(500, 800));
-					sendText(s, true);
+			if(amount > 0) {
+				if (!bank.atItem(itemID, s)) {
+					if (bank.atItem(itemID, "X")) {
+						wait(random(500, 800));
+						sendText(s, true);
+						return true;
+					}
+				} else
 					return true;
-				}
-				return true;
 			} else {
-				return true;
+				return bank.atItem(itemID, "All");
 			}
 		}
 		return false;
