@@ -43,7 +43,7 @@ import org.rsbot.script.wrappers.RSTile;
 
 @ScriptManifest(authors = { "ByteCode" }, category = "Combat", name = "AlkharidFighter", version = 7.5,
 		description = "<html>" + "<body>" + "Click OK to start the GUI." + "</body>" + "</html>")
-@SuppressWarnings( { "unused", "unchecked", "serial" })
+@SuppressWarnings( { "unused", "serial" })
 public class AlkharidFighter extends Script implements PaintListener,
 		ServerMessageListener {
 

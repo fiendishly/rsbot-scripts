@@ -151,7 +151,6 @@ import org.rsbot.script.ScriptManifest;
 			}
 		}
 
-		int xpGained = 0;
 		if (isLoggedIn()) {
 			render.setColor(new Color(0, 0, 0, 175));
 			render.fillRoundRect(1, 231, 125, 370, 10, 10);
@@ -159,19 +158,19 @@ import org.rsbot.script.ScriptManifest;
 			.getPercentToNextLevel(Constants.STAT_PRAYER);
 			render.setColor(Color.black);
 			render.fillRoundRect(9, 345, 100, 10, 15, 15); // these must be on
-			// same cordinates
+			// same coordinates
 			render.setColor(Color.blue);
 			render.fillRoundRect(9, 345, percent, 10, 15, 15); // these must be
 			// on same
-			// cordinates
+			// coordinates
 			render.setColor(Color.white);
 			render.drawString("" + percent, 50, 355); // this must be on the
 			// center of the bar
 			render.drawRoundRect(9, 345, 100, 10, 15, 15); // these must be on
-			// same cordinates
+			// same coordinates
 			render.drawRoundRect(9, 345, percent, 10, 15, 15); // these must be
 			// on same
-			// cordinates
+			// coordinates
 			if (startexp == 0) {
 				startexp = skills.getCurrentSkillExp(Constants.STAT_PRAYER);
 			}

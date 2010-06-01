@@ -1307,6 +1307,7 @@ public class FoulFighterPro extends Script implements PaintListener, ServerMessa
 		log("Special will be used next at " + rndSpec + "%");
 	}
 
+	@SuppressWarnings("unused")
 	private String[][] getChatMessages() {
 		String[][] messages = new String[100][2];
 		int idx = 0;

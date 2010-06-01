@@ -1,11 +1,7 @@
-import java.awt.Color;
-import java.awt.Font;
-import java.awt.Graphics;
-import java.awt.Point;
+import java.awt.*;
 import java.util.*;
 
 import java.awt.event.KeyEvent;
-
 import org.rsbot.bot.Bot;
 import org.rsbot.script.*;
 import org.rsbot.script.wrappers.*;
@@ -13,37 +9,37 @@ import org.rsbot.event.listeners.PaintListener;
 import org.rsbot.event.listeners.ServerMessageListener;
 import org.rsbot.event.events.ServerMessageEvent;
 
-@ScriptManifest(authors = {"RawR"}, category = "Woodcutting", name = "Rawr Ivy Chopper", version = 1.61,
-		description =
-				"<html><body>" +
-						"<center><h2>RawR Ivy Chopper</h2></center>" +
-						"This script supports all Ivy cutting locations. <br />" +
-						"When starting, face the Ivy and the bot will do the rest.<br /><br />" +
-						"<b>Chopping location:</b> <select name='location'><option>Varrock Palace</option><option>Varrock Wall</option><option>N Fally</option><option>S Fally</option><option>Taverly</option><option>Ardougne</option><option>Yanille</option><option>CWars</option></select><br /><br />" +
-						"<b>antiBan:</b> <input type='checkbox' name='antiBan' value='true'><br />" +
-						"<font size='3'><b>Note:</b> This is extra antiBan, there's one already built in.</font>" +
-						"</body></html>")
-public class RawrIvy extends Script implements PaintListener, ServerMessageListener {
+@ScriptManifest(authors = { "RawR" }, category = "Woodcutting", name = "Rawr Ivy Chopper", version = 1.63, description = "<html><body>"
+		+ "<center><h2>RawR Ivy Chopper</h2></center>"
+		+ "This script supports all Ivy cutting locations. <br />"
+		+ "When starting, face the Ivy and the bot will do the rest.<br /><br />"
+		+ "<b>Chopping location:</b> <select name='location'><option>Varrock Palace</option><option>Varrock Wall</option><option>N Fally</option><option>S Fally</option><option>Taverly</option><option>Ardougne</option><option>Yanille</option><option>CWars</option></select><br /><br />"
+		+ "<b>antiBan:</b> <input type='checkbox' name='antiBan' value='true'><br />"
+		+ "<font size='3'><b>Note:</b> This is extra antiBan, there's one already built in.</font>"
+		+ "</body></html>")
+public class RawrIvy extends Script implements PaintListener,
+		ServerMessageListener {
 
-	//MULTI-THREADING
+	// MULTI-THREADING
 	RunAntiBan antiBan;
 	Thread t;
-	//VARIABLES
+	// VARIABLES
 	public String useAntiBan;
 	public String ivyLocation;
 	private String STATE = "Loading.";
 	private int AMOUNT_CHOPPED;
-	private int[] NEST_ID = {5070, 5071, 5072, 5073, 5074, 5075, 5076, 7413, 11966};
-	private int[] IVY_ID = {46318, 46320, 46322, 46324};
+	private int[] NEST_ID = { 5070, 5071, 5072, 5073, 5074, 5075, 5076, 7413,
+			11966 };
+	private int[] IVY_ID = { 46318, 46320, 46322, 46324 };
 
-	//PAINT VARIABLES
+	// PAINT VARIABLES
 	public long startTime = System.currentTimeMillis();
 	public long waitTimer = System.currentTimeMillis();
 	public int START_XP;
 	public int START_LVL;
 
 	public boolean onStart(Map<String, String> args) {
-		//DECLARING VARIABLES
+		// DECLARING VARIABLES
 		antiBan = new RunAntiBan();
 		t = new Thread(antiBan);
 		AMOUNT_CHOPPED = 0;
@@ -52,10 +48,6 @@ public class RawrIvy extends Script implements PaintListener, ServerMessageListe
 		ivyLocation = args.get("location");
 		useAntiBan = args.get("antiBan");
 		return true;
-	}
-
-	private double getVersion() {
-		return getClass().getAnnotation(ScriptManifest.class).version();
 	}
 
 	@Override
@@ -68,10 +60,13 @@ public class RawrIvy extends Script implements PaintListener, ServerMessageListe
 		if (curZ <= -950 && curZ >= -1050) {
 			return;
 		} else {
-			final char key = (char) (curZ < -1000 ? KeyEvent.VK_DOWN : KeyEvent.VK_UP);
+			final char key = (char) (curZ < -1000 ? KeyEvent.VK_DOWN
+					: KeyEvent.VK_UP);
 			input.pressKey(key);
 			final int finalZ = -1000 + random(-50, 51);
-			while (key == (char) KeyEvent.VK_DOWN ? Bot.getClient().getCamPosZ() < finalZ : Bot.getClient().getCamPosZ() > finalZ) {
+			while (key == (char) KeyEvent.VK_DOWN ? Bot.getClient()
+					.getCamPosZ() < finalZ
+					: Bot.getClient().getCamPosZ() > finalZ) {
 				wait(random(10, 20));
 			}
 			input.releaseKey(key);
@@ -90,44 +85,51 @@ public class RawrIvy extends Script implements PaintListener, ServerMessageListe
 
 	public boolean atIvy(final RSObject tree, final String action) {
 		try {
-			//North
+			// North
 			if (ivyLocation.equals("S Fally") || ivyLocation.equals("CWars")) {
 				RSTile loc1 = tree.getLocation();
 				RSTile loc4 = new RSTile(loc1.getX(), loc1.getY() + 1);
-				final Point screenLoc = Calculations.tileToScreen(loc4.getX(), loc4.getY(), 10);
+				final Point screenLoc = Calculations.tileToScreen(loc4.getX(),
+						loc4.getY(), 10);
 				if (screenLoc.x == -1 || screenLoc.y == -1) {
 					return false;
 				}
 				moveMouse(screenLoc, 3, 3);
 				wait(random(200, 300));
 			}
-			//South
-			if (ivyLocation.equals("Varrock Palace") || ivyLocation.equals("N Fally") || ivyLocation.equals("Yanille")) {
+			// South
+			if (ivyLocation.equals("Varrock Palace")
+					|| ivyLocation.equals("N Fally")
+					|| ivyLocation.equals("Yanille")) {
 				RSTile loc1 = tree.getLocation();
 				RSTile loc4 = new RSTile(loc1.getX(), loc1.getY() - 1);
-				final Point screenLoc = Calculations.tileToScreen(loc4.getX(), loc4.getY(), 10);
+				final Point screenLoc = Calculations.tileToScreen(loc4.getX(),
+						loc4.getY(), 10);
 				if (screenLoc.x == -1 || screenLoc.y == -1) {
 					return false;
 				}
 				moveMouse(screenLoc, 3, 3);
 				wait(random(200, 300));
 			}
-			//East
-			if (ivyLocation.equals("Varrock Wall") || ivyLocation.equals("Taverly")) {
+			// East
+			if (ivyLocation.equals("Varrock Wall")
+					|| ivyLocation.equals("Taverly")) {
 				RSTile loc1 = tree.getLocation();
 				RSTile loc4 = new RSTile(loc1.getX() + 1, loc1.getY());
-				final Point screenLoc = Calculations.tileToScreen(loc4.getX(), loc4.getY(), 10);
+				final Point screenLoc = Calculations.tileToScreen(loc4.getX(),
+						loc4.getY(), 10);
 				if (screenLoc.x == -1 || screenLoc.y == -1) {
 					return false;
 				}
 				moveMouse(screenLoc, 3, 3);
 				wait(random(200, 300));
 			}
-			//West
+			// West
 			if (ivyLocation.equals("Ardougne")) {
 				RSTile loc1 = tree.getLocation();
 				RSTile loc4 = new RSTile(loc1.getX() - 1, loc1.getY());
-				final Point screenLoc = Calculations.tileToScreen(loc4.getX(), loc4.getY(), 10);
+				final Point screenLoc = Calculations.tileToScreen(loc4.getX(),
+						loc4.getY(), 10);
 				if (screenLoc.x == -1 || screenLoc.y == -1) {
 					return false;
 				}
@@ -152,11 +154,16 @@ public class RawrIvy extends Script implements PaintListener, ServerMessageListe
 				log("antiBan has been initialized! You're now human-like.");
 			}
 		}
-		//VARROCK PALACE -
+		// VARROCK PALACE -
 		if (ivyLocation.equals("Varrock Palace")) {
-			RSTile[] varrockPalace = {new RSTile(3219, 3498), new RSTile(3218, 3498), new RSTile(3217, 3498), new RSTile(3216, 3498)};
+			RSTile[] varrockPalace = { new RSTile(3219, 3498),
+					new RSTile(3218, 3498), new RSTile(3217, 3498),
+					new RSTile(3216, 3498) };
 			RSObject Ivy = getNearestIvyByID(varrockPalace, IVY_ID);
-			if (Ivy != null && distanceTo(Ivy) < 10 && (System.currentTimeMillis() - waitTimer) > random(1850, 1950)) {
+			if (Ivy != null
+					&& distanceTo(Ivy) < 10
+					&& (System.currentTimeMillis() - waitTimer) > random(1850,
+							1950)) {
 				STATE = "Looking.";
 				setCompass('s');
 				atIvy(Ivy, "Chop Ivy");
@@ -168,11 +175,16 @@ public class RawrIvy extends Script implements PaintListener, ServerMessageListe
 				performHumanAction();
 			}
 		}
-		//VARROCK WALL -
+		// VARROCK WALL -
 		if (ivyLocation.equals("Varrock Wall")) {
-			RSTile[] varrockWall = {new RSTile(3233, 3461), new RSTile(3233, 3460), new RSTile(3233, 3459), new RSTile(3233, 3457), new RSTile(3233, 3456)};
+			RSTile[] varrockWall = { new RSTile(3233, 3461),
+					new RSTile(3233, 3460), new RSTile(3233, 3459),
+					new RSTile(3233, 3457), new RSTile(3233, 3456) };
 			RSObject Ivy = getNearestIvyByID(varrockWall, IVY_ID);
-			if (Ivy != null && distanceTo(Ivy) < 10 && (System.currentTimeMillis() - waitTimer) > random(1850, 1950)) {
+			if (Ivy != null
+					&& distanceTo(Ivy) < 10
+					&& (System.currentTimeMillis() - waitTimer) > random(1850,
+							1950)) {
 				STATE = "Looking for Ivy.";
 				setCompass('e');
 				atIvy(Ivy, "Chop Ivy");
@@ -184,11 +196,17 @@ public class RawrIvy extends Script implements PaintListener, ServerMessageListe
 				performHumanAction();
 			}
 		}
-		//N FALLY -
+		// N FALLY -
 		if (ivyLocation.equals("N Fally")) {
-			RSTile[] nFally = {new RSTile(3011, 3392), new RSTile(3012, 3392), new RSTile(3014, 3392), new RSTile(3015, 3392), new RSTile(3016, 3392), new RSTile(3017, 3392), new RSTile(3018, 3392)};
+			RSTile[] nFally = { new RSTile(3011, 3392), new RSTile(3012, 3392),
+					new RSTile(3014, 3392), new RSTile(3015, 3392),
+					new RSTile(3016, 3392), new RSTile(3017, 3392),
+					new RSTile(3018, 3392) };
 			RSObject Ivy = getNearestIvyByID(nFally, IVY_ID);
-			if (Ivy != null && distanceTo(Ivy) < 10 && (System.currentTimeMillis() - waitTimer) > random(1850, 1950)) {
+			if (Ivy != null
+					&& distanceTo(Ivy) < 10
+					&& (System.currentTimeMillis() - waitTimer) > random(1850,
+							1950)) {
 				STATE = "Looking for Ivy.";
 				setCompass('s');
 				atIvy(Ivy, "Chop Ivy");
@@ -200,11 +218,17 @@ public class RawrIvy extends Script implements PaintListener, ServerMessageListe
 				performHumanAction();
 			}
 		}
-		//S FALLY -
+		// S FALLY -
 		if (ivyLocation.equals("S Fally")) {
-			RSTile[] sFally = {new RSTile(3052, 3328), new RSTile(3051, 3328), new RSTile(3049, 3328), new RSTile(3048, 3328), new RSTile(3047, 3328), new RSTile(3045, 3328), new RSTile(3044, 3328)};
+			RSTile[] sFally = { new RSTile(3052, 3328), new RSTile(3051, 3328),
+					new RSTile(3049, 3328), new RSTile(3048, 3328),
+					new RSTile(3047, 3328), new RSTile(3045, 3328),
+					new RSTile(3044, 3328) };
 			RSObject Ivy = getNearestIvyByID(sFally, IVY_ID);
-			if (Ivy != null && distanceTo(Ivy) < 10 && (System.currentTimeMillis() - waitTimer) > random(1850, 1950)) {
+			if (Ivy != null
+					&& distanceTo(Ivy) < 10
+					&& (System.currentTimeMillis() - waitTimer) > random(1850,
+							1950)) {
 				STATE = "Looking for Ivy.";
 				setCompass('n');
 				atIvy(Ivy, "Chop Ivy");
@@ -216,11 +240,16 @@ public class RawrIvy extends Script implements PaintListener, ServerMessageListe
 				performHumanAction();
 			}
 		}
-		//TAVERLY -
+		// TAVERLY -
 		if (ivyLocation.equals("Taverly")) {
-			RSTile[] taverly = {new RSTile(2943, 3420), new RSTile(2943, 3419), new RSTile(2943, 3418), new RSTile(2943, 3417), new RSTile(2943, 3416)};
+			RSTile[] taverly = { new RSTile(2943, 3420),
+					new RSTile(2943, 3419), new RSTile(2943, 3418),
+					new RSTile(2943, 3417), new RSTile(2943, 3416) };
 			RSObject Ivy = getNearestIvyByID(taverly, IVY_ID);
-			if (Ivy != null && distanceTo(Ivy) < 10 && (System.currentTimeMillis() - waitTimer) > random(1850, 1950)) {
+			if (Ivy != null
+					&& distanceTo(Ivy) < 10
+					&& (System.currentTimeMillis() - waitTimer) > random(1850,
+							1950)) {
 				STATE = "Looking for Ivy.";
 				setCompass('e');
 				atIvy(Ivy, "Chop Ivy");
@@ -232,27 +261,39 @@ public class RawrIvy extends Script implements PaintListener, ServerMessageListe
 				performHumanAction();
 			}
 		}
-		//ARDOUGNE -
+		// ARDOUGNE -
 		if (ivyLocation.equals("Ardougne")) {
-			RSTile[] ardougne = {new RSTile(2622, 3304), new RSTile(2622, 3305), new RSTile(2622, 3307), new RSTile(2622, 3308), new RSTile(2622, 3310)};
+			RSTile[] ardougne = { new RSTile(2622, 3304),
+					new RSTile(2622, 3305), new RSTile(2622, 3307),
+					new RSTile(2622, 3308), new RSTile(2622, 3310) };
 			RSObject Ivy = getNearestIvyByID(ardougne, IVY_ID);
-			if (Ivy != null && distanceTo(Ivy) < 10 && (System.currentTimeMillis() - waitTimer) > random(1850, 1950)) {
+			if (Ivy != null
+					&& distanceTo(Ivy) < 10
+					&& (System.currentTimeMillis() - waitTimer) > random(1850,
+							1950)) {
 				STATE = "Looking for Ivy.";
 				setCompass('w');
 				atIvy(Ivy, "Chop Ivy");
 				wait(random(2000, 2500));
 			}
-			if (Ivy != null && Ivy != null && getMyPlayer().getAnimation() != -1) {
+			if (Ivy != null && Ivy != null
+					&& getMyPlayer().getAnimation() != -1) {
 				STATE = "Chopping.";
 				waitTimer = System.currentTimeMillis();
 				performHumanAction();
 			}
 		}
-		//YANILLE -
+		// YANILLE -
 		if (ivyLocation.equals("Yanille")) {
-			RSTile[] yanille = {new RSTile(2597, 3111), new RSTile(2596, 3111), new RSTile(2595, 3111), new RSTile(2593, 3111), new RSTile(2592, 3111), new RSTile(2591, 3111)};
+			RSTile[] yanille = { new RSTile(2597, 3111),
+					new RSTile(2596, 3111), new RSTile(2595, 3111),
+					new RSTile(2593, 3111), new RSTile(2592, 3111),
+					new RSTile(2591, 3111) };
 			RSObject Ivy = getNearestIvyByID(yanille, IVY_ID);
-			if (Ivy != null && distanceTo(Ivy) < 10 && (System.currentTimeMillis() - waitTimer) > random(1850, 1950)) {
+			if (Ivy != null
+					&& distanceTo(Ivy) < 10
+					&& (System.currentTimeMillis() - waitTimer) > random(1850,
+							1950)) {
 				STATE = "Looking for Ivy.";
 				setCompass('s');
 				atIvy(Ivy, "Chop Ivy");
@@ -264,11 +305,17 @@ public class RawrIvy extends Script implements PaintListener, ServerMessageListe
 				performHumanAction();
 			}
 		}
-		//CWARS -
+		// CWARS -
 		if (ivyLocation.equals("CWars")) {
-			RSTile[] cwars = {new RSTile(2430, 3068), new RSTile(2429, 3068), new RSTile(2428, 3068), new RSTile(2426, 3068), new RSTile(2425, 3068), new RSTile(2424, 3068), new RSTile(2423, 3068)};
+			RSTile[] cwars = { new RSTile(2430, 3068), new RSTile(2429, 3068),
+					new RSTile(2428, 3068), new RSTile(2426, 3068),
+					new RSTile(2425, 3068), new RSTile(2424, 3068),
+					new RSTile(2423, 3068) };
 			RSObject Ivy = getNearestIvyByID(cwars, IVY_ID);
-			if (Ivy != null && distanceTo(Ivy) < 10 && (System.currentTimeMillis() - waitTimer) > random(1850, 1950)) {
+			if (Ivy != null
+					&& distanceTo(Ivy) < 10
+					&& (System.currentTimeMillis() - waitTimer) > random(1850,
+							1950)) {
 				STATE = "Looking for Ivy.";
 				setCompass('n');
 				atIvy(Ivy, "Chop Ivy");
@@ -340,16 +387,20 @@ public class RawrIvy extends Script implements PaintListener, ServerMessageListe
 		if (serverString.toLowerCase().contains("chop away some ivy")) {
 			AMOUNT_CHOPPED++;
 		}
-		if (serverString.toLowerCase().contains("What is your level in Woodcutting")) {
+		if (serverString.toLowerCase().contains(
+				"What is your level in Woodcutting")) {
 			sendText("" + skills.getRealSkillLevel(STAT_WOODCUTTING), true);
 		}
-		if (serverString.toLowerCase().contains("What is your level in woodcutting")) {
+		if (serverString.toLowerCase().contains(
+				"What is your level in woodcutting")) {
 			sendText("" + skills.getRealSkillLevel(STAT_WOODCUTTING), true);
 		}
-		if (serverString.toLowerCase().contains("Wc?") || serverString.toLowerCase().contains("wc?")) {
+		if (serverString.toLowerCase().contains("Wc?")
+				|| serverString.toLowerCase().contains("wc?")) {
 			sendText("" + skills.getRealSkillLevel(STAT_WOODCUTTING), true);
 		}
-		if (serverString.toLowerCase().contains("Wc lvl") || serverString.toLowerCase().contains("wc lvl")) {
+		if (serverString.toLowerCase().contains("Wc lvl")
+				|| serverString.toLowerCase().contains("wc lvl")) {
 			sendText("" + skills.getRealSkillLevel(STAT_WOODCUTTING), true);
 		}
 	}
@@ -365,7 +416,8 @@ public class RawrIvy extends Script implements PaintListener, ServerMessageListe
 	public void drawMouse(final Graphics g) {
 		final Point loc = getMouseLocation();
 		Color ORANGE = new Color(255, 140, 0);
-		if (System.currentTimeMillis() - Bot.getClient().getMouse().getMousePressTime() < 500) {
+		if (System.currentTimeMillis()
+				- Bot.getClient().getMouse().getMousePressTime() < 500) {
 			g.setColor(ORANGE);
 			g.fillRect(loc.x - 3, loc.y - 3, 5, 5);
 			g.fillRect(loc.x - 7, loc.y - 1, 17, 5);
@@ -377,19 +429,19 @@ public class RawrIvy extends Script implements PaintListener, ServerMessageListe
 	}
 
 	public void onRepaint(Graphics g) {
-		//TIMER INTs
+		// TIMER INTs
 		long millis = System.currentTimeMillis() - startTime;
 		long hours = millis / (1000 * 60 * 60);
 		millis -= hours * (1000 * 60 * 60);
 		long minutes = millis / (1000 * 60);
 		millis -= minutes * (1000 * 60);
 		long seconds = millis / 1000;
-		//COLOR INTs
+		// COLOR INTs
 		Color BACKGROUND = new Color(0, 0, 0, 75);
 		Color GREEN = new Color(0, 139, 0, 255);
 		if (isLoggedIn()) {
 			drawMouse(g);
-			//XP / LEVELS
+			// XP / LEVELS
 			int XP_GAINED = 0;
 			int LVLS_GAINED = 0;
 			if (START_XP == 0) {
@@ -399,33 +451,46 @@ public class RawrIvy extends Script implements PaintListener, ServerMessageListe
 			if (START_LVL == 0) {
 				START_LVL = skills.getRealSkillLevel(STAT_WOODCUTTING);
 			}
-			LVLS_GAINED = skills.getRealSkillLevel(STAT_WOODCUTTING) - START_LVL;
+			LVLS_GAINED = skills.getRealSkillLevel(STAT_WOODCUTTING)
+					- START_LVL;
 			int XP_TNL = skills.getXPToNextLevel(STAT_WOODCUTTING);
-			int XP_HOUR = (int) ((XP_GAINED) * 3600000D / (System.currentTimeMillis() - startTime));
-			//BACKGROUND
+			int XP_HOUR = (int) ((XP_GAINED) * 3600000D / (System
+					.currentTimeMillis() - startTime));
+			// BACKGROUND
 			g.setColor(Color.WHITE);
 			g.drawRect(3, 160, 175, 148);
 			g.setColor(BACKGROUND);
 			g.fillRect(4, 161, 173, 146);
-			//% BAR
+			// % BAR
 			g.setColor(Color.WHITE);
 			g.drawRect(3, 312, 175, 25);
 			g.setColor(BACKGROUND);
 			g.fillRect(4, 313, 174, 24);
 			g.setColor(GREEN);
-			g.fillRect(4, 313, ((skills.getPercentToNextLevel(STAT_WOODCUTTING) * 2) - 25), 24);
+			g
+					.fillRect(
+							4,
+							313,
+							((skills.getPercentToNextLevel(STAT_WOODCUTTING) * 2) - 25),
+							24);
 			g.setColor(Color.WHITE);
-			g.drawString(skills.getPercentToNextLevel(STAT_WOODCUTTING) + " % to " + (skills.getRealSkillLevel(STAT_WOODCUTTING) + 1) + " Woodcutting.", 23, 330);
-			//STATISTICS
+			g.drawString(skills.getPercentToNextLevel(STAT_WOODCUTTING)
+					+ " % to "
+					+ (skills.getRealSkillLevel(STAT_WOODCUTTING) + 1)
+					+ " Woodcutting.", 23, 330);
+			// STATISTICS
 			g.setColor(GREEN);
 			g.setFont(new Font("Palatino Linotype", Font.BOLD, 16));
 			g.drawString("Ivy Chopper", 45, 180);
 			g.setColor(Color.WHITE);
 			g.setFont(new Font("Arial", Font.PLAIN, 12));
-			g.drawString("Time running: " + hours + ":" + minutes + ":" + seconds, 10, 200);
+			g.drawString("Time running: " + hours + ":" + minutes + ":"
+					+ seconds, 10, 200);
 			g.drawString("State: " + STATE, 10, 215);
 			g.drawString("Chopped " + AMOUNT_CHOPPED + " Ivy.", 10, 230);
-			g.drawString("WC LVL: " + skills.getRealSkillLevel(STAT_WOODCUTTING) + " || Gained: " + LVLS_GAINED + " LVLS.", 10, 245);
+			g.drawString("WC LVL: "
+					+ skills.getRealSkillLevel(STAT_WOODCUTTING)
+					+ " || Gained: " + LVLS_GAINED + " LVLS.", 10, 245);
 			g.drawString("XP Gained: " + XP_GAINED, 10, 260);
 			g.drawString("XP / HR: " + XP_HOUR, 10, 275);
 			g.drawString("XP TNL: " + XP_TNL, 10, 290);
@@ -434,13 +499,16 @@ public class RawrIvy extends Script implements PaintListener, ServerMessageListe
 		}
 	}
 
+	// CREDITS TO KILLA
 	private RSObject getFenceAt3(int x, int y) {
 		org.rsbot.accessors.RSObject rsObj;
 		org.rsbot.accessors.RSInteractable obj;
 		RSObject thisObject = null;
 		final org.rsbot.accessors.Client client = Bot.getClient();
 		try {
-			final org.rsbot.accessors.RSGround rsGround = client.getRSGroundArray()[client.getPlane()][x - client.getBaseX()][y - client.getBaseY()];
+			final org.rsbot.accessors.RSGround rsGround = client
+					.getRSGroundArray()[client.getPlane()][x
+					- client.getBaseX()][y - client.getBaseY()];
 			if (client.getRSGroundArray() == null) {
 				return null;
 			}
@@ -467,7 +535,8 @@ public class RawrIvy extends Script implements PaintListener, ServerMessageListe
 			if (o != null) {
 				for (int id : ids) {
 					if (o.getID() == id) {
-						final double distTmp = calculateDistance(getMyPlayer().getLocation(), o.getLocation());
+						final double distTmp = calculateDistance(getMyPlayer()
+								.getLocation(), o.getLocation());
 						if (nearest == null) {
 							dist = distTmp;
 							nearest = o;
@@ -482,6 +551,7 @@ public class RawrIvy extends Script implements PaintListener, ServerMessageListe
 		return nearest;
 	}
 
+	// Thanks Taha.
 	private class RunAntiBan implements Runnable {
 		public boolean stopThread;
 
@@ -489,9 +559,13 @@ public class RawrIvy extends Script implements PaintListener, ServerMessageListe
 			while (!stopThread) {
 				try {
 					if (random(0, 15) == 0) {
-						final char[] LR = new char[]{KeyEvent.VK_LEFT, KeyEvent.VK_RIGHT};
-						final char[] UD = new char[]{KeyEvent.VK_DOWN, KeyEvent.VK_UP};
-						final char[] LRUD = new char[]{KeyEvent.VK_LEFT, KeyEvent.VK_RIGHT, KeyEvent.VK_UP, KeyEvent.VK_UP};
+						final char[] LR = new char[] { KeyEvent.VK_LEFT,
+								KeyEvent.VK_RIGHT };
+						final char[] UD = new char[] { KeyEvent.VK_DOWN,
+								KeyEvent.VK_UP };
+						final char[] LRUD = new char[] { KeyEvent.VK_LEFT,
+								KeyEvent.VK_RIGHT, KeyEvent.VK_UP,
+								KeyEvent.VK_UP };
 						final int random2 = random(0, 2);
 						final int random1 = random(0, 2);
 						final int random4 = random(0, 4);
@@ -514,7 +588,8 @@ public class RawrIvy extends Script implements PaintListener, ServerMessageListe
 							if (randNum == random(3, 4)) {
 								int x = input.getX();
 								int y = input.getY();
-								moveMouse(x + random(-100, 100), y + random(-100, 100));
+								moveMouse(x + random(-100, 100), y
+										+ random(-100, 100));
 							} else {
 								Thread.sleep(random(400, 700));
 							}

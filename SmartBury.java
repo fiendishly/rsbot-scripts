@@ -76,7 +76,6 @@ public class SmartBury extends Script implements PaintListener,
 	}
 
 	@Override
-	@SuppressWarnings("static-access")
 	public int loop() {
 		getMouseSpeed();
 		setCameraAltitude(true);
@@ -223,7 +222,6 @@ public class SmartBury extends Script implements PaintListener,
 		return random(200, 400);
 	}
 
-	@SuppressWarnings("static-access")
 	private boolean nearBank() {
 		bankBooth = getNearestObjectByID(Bank.BankBooths);
 		banker = getNearestNPCByID(Bank.Bankers);
