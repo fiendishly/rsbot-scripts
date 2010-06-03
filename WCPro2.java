@@ -1,8 +1,10 @@
-/* WCPro Version 4.11
+/* WCPro Version 2
  * Script support and updates by Taha/Jacmob
- * GUI Help from Pauwelz & Zenzie <3
+ * GUI Help from Pauwelz & Zenzie
  * Script base by Deviant
  * Code formatting by Fusion89k
+ * V2 by VbulletV
+ * Mouse aim + player tile by RcZhang
  */
 
 import java.awt.BorderLayout;
@@ -17,12 +19,9 @@ import java.awt.event.WindowEvent;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.Map;
 
@@ -55,14 +54,18 @@ import org.rsbot.script.wrappers.RSPlayer;
 import org.rsbot.script.wrappers.RSTile;
 import org.rsbot.util.GlobalConfiguration;
 
-@ScriptManifest(authors = { "Taha", "Jacmob", "Deviant", "Fusion89k" }, category = "Woodcutting", name = "WCPro", version = 4.11, description = "<html><body style='font-family: Arial; margin: 10px;'><span style='color: #00AA00; font-weight: bold;'>WCPro</span>&nbsp;<strong>Version:&nbsp;4.11</strong><br />Select your account and press OK to configure the script settings.</body></html>")
-public class WCPro extends Script implements PaintListener {
+@ScriptManifest(authors = { "Taha", "Jacmob", "Deviant", "Fusion89k",
+		"VBulletV" }, category = "Woodcutting", name = "WCPro 2", version = 2.0, description = "<html>"
+		+ "<body style='font-family: Arial; margin: 10px;'><span style='color: #00AA00; font-weight: bold;'>WCPro 2</span>&nbsp;<br />"
+		+ "<br>Select your account and press OK to configure the script settings."
+		+ "<br> " + "</html>")
+public class WCPro2 extends Script implements PaintListener {
 
 	public enum Action {
 		OPENDOOR, ANTIBAN, BANK, WALKTOTREES, WALKTOBANK, WAITING, CHOP, DROP, WITHDRAW
 	}
 
-	WCProGUI gui;
+	WCPro2GUI gui;
 
 	public final int[] axeIDs = { 1351, 1349, 1353, 1361, 1355, 1357, 1359,
 			4031, 6739, 13470, 14108 }, nestIDs = { 5070, 5071, 5072, 5073,
@@ -93,7 +96,7 @@ public class WCPro extends Script implements PaintListener {
 	public String message, currentState = "Starting up...", chopping = "--";
 
 	public final File settingsFile = new File(new File(
-			GlobalConfiguration.Paths.getSettingsDirectory()), "WCProS.txt");
+			GlobalConfiguration.Paths.getSettingsDirectory()), "WCPro2S.txt");
 
 	public boolean atChest(final RSTile tile, final String action) {
 		try {
@@ -191,36 +194,6 @@ public class WCPro extends Script implements PaintListener {
 			}
 		}
 		return closest;
-	}
-
-	public void depositAllBut(final int... items) {
-		int inventory[] = getInventoryArray();
-		if (inventory == null || items == null) {
-			return;
-		}
-		for (int index = 0; index < inventory.length; ++index) {
-			inventory = getInventoryArray();
-			if (inventory == null || items == null) {
-				return;
-			}
-			if (getInventoryCount() < 2) {
-				return;
-			}
-			depositItem = true;
-			if (inventory[index] == -1) {
-				depositItem = false;
-			}
-			for (int item = 0; item < items.length; ++item) {
-				if (inventory[index] == items[item]) {
-					depositItem = false;
-				}
-			}
-			if (depositItem) {
-				clickMouse(getDepositInventoryItemPoint(index), false);
-				atMenu("Deposit-All");
-				wait(random(500, 650));
-			}
-		}
 	}
 
 	public RSTile findBusyTree() {
@@ -511,13 +484,18 @@ public class WCPro extends Script implements PaintListener {
 			if (getMyPlayer().isInCombat()) {
 				currentState = "Evading Combat...";
 				if (!isMoving()) {
+					setCameraRotation(90 + random(-5, 5));
 					walkToBank();
 				}
 				return random(200, 400);
 			}
 			int treeIndex;
 			setMaxAltitude();
-			nest();
+			// nest();
+			if (getMyPlayer().getAnimation() == -1 && isInventoryFull()) {
+				setCameraRotation(90 + random(-5, 5));
+				walkToBank();
+			}
 			if (getEnergy() > random(30, 50)) {
 				setRun(true);
 			}
@@ -549,6 +527,7 @@ public class WCPro extends Script implements PaintListener {
 									return random(50, 200);
 								}
 								atTree(tree.getLocation());
+								clickMouse(true);
 								currentState = "Chopping...";
 								walkedToWaitTile = false;
 								return random(10, 20);
@@ -654,18 +633,17 @@ public class WCPro extends Script implements PaintListener {
 								Constants.INTERFACE_DEPOSITBOX).isValid()) {
 							if (wieldAxe()) {
 								currentState = "Depositing...";
-								clickMouse(random(332, 349), random(268, 283),
-										true);
+								bank.depositAllExcept(axeIDs);
 								return random(500, 700);
 							} else {
-								depositAllBut(axeIDs);
+								bank.depositAllExcept(axeIDs);
 								return random(1000, 2000);
 							}
 						}
 
 						if (bank.isOpen()) {
 							if (wieldAxe()) {
-								bank.depositAll();
+								bank.depositAllExcept(axeIDs);
 							} else {
 								bank.depositAllExcept(axeIDs);
 							}
@@ -675,87 +653,7 @@ public class WCPro extends Script implements PaintListener {
 					break;
 
 				case WITHDRAW:
-					currentState = "Withdrawing an axe...";
-					randomBooth = random(0, bankTile.length);
-					if (isInventoryFull()
-							&& tileOnScreenDeviant(bankTile[randomBooth])
-							&& !getMyPlayer().isMoving()) {
-						if (!checkedEquipment) {
-							openTab(Constants.TAB_EQUIPMENT);
-							checkedEquipment = true;
-							wait(random(100, 500));
-							openTab(Constants.TAB_INVENTORY);
-							break;
-						}
-						if (booth && !bank.getInterface().isValid()) {
-							currentState = "Banking...";
-							if (!tileOnScreenDeviant(bankTile[randomBooth])) {
-								turnToTile(bankTile[randomBooth]);
-							}
-							if (distanceTo(bankTile[randomBooth]) > 3) {
-								walkTo(bankTile[randomBooth]);
-							}
-							bank.atBankBooth(bankTile[randomBooth],
-									"use-quickly");
-							return random(500, 800);
-						}
-						if (chest && !bank.getInterface().isValid()) {
-							currentState = "Banking...";
-							if (!tileOnScreenDeviant(bankTile[randomBooth])) {
-								turnToTile(bankTile[randomBooth]);
-							}
-							atChest(bankTile[randomBooth], "Bank");
-							return random(500, 800);
-						}
-						if (GE && !bank.getInterface().isValid()) {
-							currentState = "Banking...";
-							setCameraRotation(90 + random(-5, 5));
-							npc = getNearestNPCByID(bankerID);
-							atNPC(npc, "Bank Banker");
-							return random(500, 800);
-						}
-
-						if (deposit
-								&& !RSInterface.getInterface(
-										Constants.INTERFACE_DEPOSITBOX)
-										.isValid()) {
-							currentState = "Banking...";
-							atTile(bankTile[randomBooth], "");
-							return random(1000, 2000);
-						}
-
-						if (RSInterface.getInterface(
-								Constants.INTERFACE_DEPOSITBOX).isValid()) {
-							if (wieldAxe()) {
-								currentState = "Depositing...";
-								clickMouse(random(332, 349), random(268, 283),
-										true);
-								return random(500, 700);
-							} else {
-								depositAllBut(axeIDs);
-								return random(1000, 2000);
-							}
-						}
-					}
-					if (bank.isOpen()) {
-						if (bank.searchItem("hatchet")) {
-							int bestAxe = 0;
-							for (int a = axeIDs.length - 1; a > -1; --a) {
-								if (bank.getItemByID(axeIDs[a]) != null) {
-									bestAxe = axeIDs[a];
-									break;
-								}
-							}
-							bank.withdraw(bestAxe, 1);
-							wait(random(800, 1000));
-							if (getInventoryCount(bestAxe) > 0) {
-								checkedAxe = true;
-								bank.close();
-							}
-						} else {
-							log("Failed to search for a hatchet.");
-						}
-					}
+					currentState = "No Axe Avaliable";
 					break;
 
 				case OPENDOOR:
@@ -908,16 +806,17 @@ public class WCPro extends Script implements PaintListener {
 			int y = topY + 5;
 			final int x = topX + 5;
 
+			drawPlayer(g);
+			drawMouse(g);
 			g.setColor(BG);
 			g.fill3DRect(topX, topY, 516 - topX, 338 - topY, true);
 			g.setFont(new Font("Verdana", Font.BOLD, 12));
 			g.setColor(new Color(0, 90, 0, 255));
-			g.drawString(getClass().getAnnotation(ScriptManifest.class).name(),
-					x, y + 13);
+			g.drawString("WCPro", x, y + 13);
 			g.setColor(new Color(0, 60, 0, 255));
-			g.drawString("Version "
+			g.drawString(""
 					+ getClass().getAnnotation(ScriptManifest.class).version(),
-					x + 48, y += 13);
+					x + 53, y += 13);
 			g.setColor(font);
 			g.drawString("Runtime: " + hours + "h " + minutes + "min "
 					+ seconds + "sec", x, y += 13);
@@ -938,7 +837,7 @@ public class WCPro extends Script implements PaintListener {
 											/ (float) exp)
 									+ " "
 									+ chopping
-									+ " Until Level "
+									+ " Until Lvl "
 									+ (skills
 											.getCurrentSkillLevel(Constants.STAT_WOODCUTTING) + 1)
 									+ " WC", x, y += 13);
@@ -954,6 +853,26 @@ public class WCPro extends Script implements PaintListener {
 			g.drawRect(barx, y, 110, 9);
 			g.setColor(Color.white);
 			g.drawString("State: " + currentState, x, y += 23);
+
+			g.setColor(new Color(255, 255, 255));
+			g.drawRect(4, 457, 506, 13);
+			g.setColor(new Color(0, 0, 0));
+			g.fillRect(3, 457, 508, 15);
+			g.setFont(new Font("MV Boli", 0, 21));
+			g.setColor(new Color(0, 0, 0));
+			g.drawString("WCPro v2", 22, 33);
+			g.setColor(new Color(0, 0, 0));
+			g.drawRect(-3, -1, 157, 48);
+			g.setFont(new Font("MV Boli", 0, 21));
+			g.setColor(new Color(255, 255, 255));
+			g.drawString("Username", 8, 471);
+			g.setFont(new Font("MV Boli", 0, 21));
+			g.setColor(new Color(255, 255, 255));
+			g.drawString("Username", 407, 470);
+			g.setFont(new Font("MV Boli", 0, 21));
+			g.setColor(new Color(255, 51, 51));
+			g.drawString("WCPro v2", 22, 34);
+
 		}
 	}
 
@@ -965,7 +884,7 @@ public class WCPro extends Script implements PaintListener {
 
 		}
 		log.info("Loading GUI...");
-		gui = new WCProGUI(this);
+		gui = new WCPro2GUI(this);
 		gui.setLocationRelativeTo(null);
 		gui.setVisible(true);
 		try {
@@ -978,7 +897,7 @@ public class WCPro extends Script implements PaintListener {
 			wait(500);
 		}
 		if (runScript) {
-			log("WCPro initiliazed!");
+			log("WCPro2 initiliazed!");
 			startTime = System.currentTimeMillis();
 			return true;
 		} else {
@@ -1021,6 +940,38 @@ public class WCPro extends Script implements PaintListener {
 				wait(random(1500, 2000));
 			}
 		}
+	}
+
+	private void drawMouse(final Graphics g) {
+		final Point loc = getMouseLocation();
+		if (System.currentTimeMillis()
+				- Bot.getClient().getMouse().getMousePressTime() < 500) {
+			g.setColor(new Color(0, 0, 0, 50));
+			g.fillOval(loc.x - 5, loc.y - 5, 10, 10);
+		} else {
+			g.setColor(Color.BLACK);
+		}
+		g.drawLine(0, loc.y, 766, loc.y);
+		g.drawLine(loc.x, 0, loc.x, 505);
+	}
+
+	private void drawPlayer(final Graphics g) {
+		final RSTile t = getMyPlayer().getLocation();
+		Calculations.tileToScreen(t);
+		final Point pn = Calculations.tileToScreen(t.getX(), t.getY(), 0, 0, 0);
+		final Point px = Calculations.tileToScreen(t.getX() + 1, t.getY(), 0,
+				0, 0);
+		final Point py = Calculations.tileToScreen(t.getX(), t.getY() + 1, 0,
+				0, 0);
+		final Point pxy = Calculations.tileToScreen(t.getX() + 1, t.getY() + 1,
+				0, 0, 0);
+		getMyPlayer().getHeight();
+		g.setColor(Color.BLACK);
+		g.drawPolygon(new int[] { py.x, pxy.x, px.x, pn.x }, new int[] { py.y,
+				pxy.y, px.y, pn.y }, 4);
+		g.setColor(new Color(240, 240, 240, 75));
+		g.fillPolygon(new int[] { py.x, pxy.x, px.x, pn.x }, new int[] { py.y,
+				pxy.y, px.y, pn.y }, 4);
 	}
 
 	public boolean pointOnScreenDeviant(final Point p) {
@@ -1557,26 +1508,6 @@ public class WCPro extends Script implements PaintListener {
 		return pointOnScreenDeviant(Calculations.tileToScreen(t));
 	}
 
-	public void visitButtonActionPerformed(final ActionEvent evt) {
-		visitThread();
-	}
-
-	public void visitThread() {
-		final String URL = "http://www.rsbot.org/vb/showthread.php?t=94181";
-		final java.awt.Desktop browser = java.awt.Desktop.getDesktop();
-		java.net.URI location = null;
-		try {
-			location = new java.net.URI(URL);
-		} catch (final URISyntaxException a) {
-			a.printStackTrace();
-		}
-		try {
-			browser.browse(location);
-		} catch (final IOException e) {
-			e.printStackTrace();
-		}
-	}
-
 	public boolean walkToBank() {
 		return walkPathMM(treesToBank, 3, 3);
 	}
@@ -1589,10 +1520,10 @@ public class WCPro extends Script implements PaintListener {
 		return !inventoryContainsOneOf(axeIDs);
 	}
 
-	private class WCProGUI extends JFrame {
-		WCPro script;
+	private class WCPro2GUI extends JFrame {
+		WCPro2 script;
 		private final File settingsFile = new File(new File(
-				GlobalConfiguration.Paths.getSettingsDirectory()), "WCPro.txt");
+				GlobalConfiguration.Paths.getSettingsDirectory()), "WCPro2.txt");
 
 		private static final long serialVersionUID = 7165405076486776117L;
 		private JPanel northPanel;
@@ -1644,39 +1575,17 @@ public class WCPro extends Script implements PaintListener {
 			}
 		}
 
-		private WCProGUI(final WCPro scr) {
+		private WCPro2GUI(final WCPro2 scr) {
 			super();
 			script = scr;
 			initGUI();
-		}
-
-		private void getChangeLog() {
-			try {
-				settingsFile.createNewFile();
-				final BufferedReader in = new BufferedReader(
-						new InputStreamReader(
-								new URL(
-										"http://www.itaha.com/rsbot/WCProChangeLog.txt")
-										.openStream()));
-				final BufferedWriter out = new BufferedWriter(new FileWriter(
-						settingsFile));
-				String temp;
-				while ((temp = in.readLine()) != null) {
-					out.append(temp);
-					out.newLine();
-				}
-				in.close();
-				out.close();
-			} catch (final Exception e) {
-				System.out.print("Unable to retrieve latest changelog.");
-			}
 		}
 
 		private void initGUI() {
 			try {
 				setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
 				setResizable(false);
-				setTitle("WCPro Script Options");
+				setTitle("WCPro2 Script Options");
 				setAlwaysOnTop(true);
 				addWindowListener(new WindowAdapter() {
 					public void windowClosing(final WindowEvent ev) {
@@ -1694,7 +1603,7 @@ public class WCPro extends Script implements PaintListener {
 					{
 						mainLabel = new JLabel();
 						northPanel.add(mainLabel);
-						mainLabel.setText("WCPro Script Options");
+						mainLabel.setText("WCPro2 Script Options");
 						mainLabel.setForeground(new java.awt.Color(0, 0, 255));
 						mainLabel.setFont(new java.awt.Font("Comic Sans MS", 0,
 								16));
@@ -1710,7 +1619,7 @@ public class WCPro extends Script implements PaintListener {
 					{
 						startButton = new JButton();
 						southPanel.add(startButton);
-						startButton.setText("Start!");
+						startButton.setText("Start");
 						startButton.setFont(new java.awt.Font("Comic Sans MS",
 								0, 11));
 						startButton.setPreferredSize(new java.awt.Dimension(65,
@@ -1725,7 +1634,7 @@ public class WCPro extends Script implements PaintListener {
 					{
 						exitButton = new JButton();
 						southPanel.add(exitButton);
-						exitButton.setText("Exit!");
+						exitButton.setText("Exit");
 						exitButton.setFont(new java.awt.Font("Comic Sans MS",
 								0, 11));
 						exitButton.setPreferredSize(new java.awt.Dimension(59,
@@ -1965,77 +1874,6 @@ public class WCPro extends Script implements PaintListener {
 							}
 						}
 						{
-							updatesTab = new JPanel();
-							centerTabbedPane.addTab("Updates", null,
-									updatesTab, null);
-							updatesTab.setFont(new java.awt.Font(
-									"Comic Sans MS", 0, 12));
-							{
-								jPanel1 = new JPanel();
-								updatesTab.add(jPanel1);
-								jPanel1
-										.setPreferredSize(new java.awt.Dimension(
-												389, 53));
-								{
-									jLabel3 = new JLabel();
-									jPanel1.add(jLabel3);
-									jLabel3.setText("Current Script Version:");
-									jLabel3
-											.setPreferredSize(new java.awt.Dimension(
-													235, 20));
-								}
-								{
-									jLabel4 = new JLabel();
-									jPanel1.add(jLabel4);
-									jLabel4.setText("0.0");
-									jLabel4
-											.setPreferredSize(new java.awt.Dimension(
-													81, 14));
-								}
-								{
-									jLabel6 = new JLabel();
-									jPanel1.add(jLabel6);
-									jLabel6.setText("Latest Script Version:");
-									jLabel6
-											.setPreferredSize(new java.awt.Dimension(
-													235, 20));
-								}
-								{
-									jLabel5 = new JLabel();
-									jPanel1.add(jLabel5);
-									jLabel5.setText("0.0");
-									jLabel5
-											.setPreferredSize(new java.awt.Dimension(
-													81, 14));
-								}
-							}
-
-							jLabel4.setText(Double.toString(script.getClass()
-									.getAnnotation(ScriptManifest.class)
-									.version()));
-							jLabel5.setText(jLabel4.getText());
-							jLabel4.setForeground(Color.blue);
-							jLabel5.setForeground(Color.blue);
-							{
-								jScrollPane1 = new JScrollPane();
-								updatesTab.add(jScrollPane1);
-								{
-									jTextArea1 = new JTextArea();
-									jScrollPane1.setViewportView(jTextArea1);
-									jScrollPane1
-											.setPreferredSize(new java.awt.Dimension(
-													384, 108));
-									jTextArea1
-											.setText("Fetching Change Log...");
-									jTextArea1.setEditable(false);
-									jTextArea1.setFont(new java.awt.Font(
-											"Comic Sans MS", 0, 12));
-									jTextArea1.setColumns(20);
-									jTextArea1.setRows(5);
-								}
-							}
-						}
-						{
 							creditsTab = new JPanel();
 							centerTabbedPane.addTab("Credits", null,
 									creditsTab, null);
@@ -2098,7 +1936,7 @@ public class WCPro extends Script implements PaintListener {
 									jLabel7 = new JLabel();
 									creditsPanel.add(jLabel7);
 									jLabel7
-											.setText("Zenzie + Pauwelz for helping me when in need <3");
+											.setText("VBulletV for WCPro V2 Update");
 									jLabel7.setFont(new java.awt.Font(
 											"Comic Sans MS", 0, 12));
 									jLabel7
@@ -2112,18 +1950,6 @@ public class WCPro extends Script implements PaintListener {
 								threadPanel
 										.setPreferredSize(new java.awt.Dimension(
 												177, 29));
-							}
-							{
-								threadButton = new JButton();
-								creditsTab.add(threadButton);
-								threadButton.setText("RSBot Script Thread");
-								threadButton
-										.addActionListener(new ActionListener() {
-											public void actionPerformed(
-													final ActionEvent evt) {
-												script.visitThread();
-											}
-										});
 							}
 						}
 					}
@@ -2156,21 +1982,6 @@ public class WCPro extends Script implements PaintListener {
 						locComboBox.setEnabled(false);
 					}
 				}
-				// GET CHANGE LOG
-				final Thread change = new Thread(new Runnable() {
-					public void run() {
-						getChangeLog();
-						try {
-							jTextArea1.read(new BufferedReader(new FileReader(
-									settingsFile)), settingsFile);
-						} catch (final FileNotFoundException e) {
-							System.out.println("Changelog file not found.");
-						} catch (final IOException e) {
-							System.out.println("Unable to open changelog.");
-						}
-					}
-				});
-				change.start();
 			} catch (final Exception e) {
 				e.printStackTrace();
 			}

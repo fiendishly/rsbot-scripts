@@ -2,20 +2,17 @@ import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.Point;
 import java.awt.event.KeyEvent;
+import java.awt.Rectangle;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
-import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.ArrayList;
 import java.util.Map;
-
-import javax.swing.JFileChooser;
-import javax.swing.JOptionPane;
 
 import org.rsbot.bot.Bot;
 import org.rsbot.bot.input.Mouse;
@@ -38,60 +35,12 @@ import org.rsbot.script.wrappers.RSNPC;
 import org.rsbot.script.wrappers.RSTile;
 
 @ScriptManifest(name = "Sexy Miner", authors = { "Imasexybeast", "Fusion89k",
-		"Asamin", "Fred" }, category = "Mining", version = 1.42, description = "<html><body><b>All settings are on the GUI =)</b><br><img src=\"http://i126.photobucket.com/albums/p98/ketekcomp/sgm.png\" /></body></html>")
+		"Asamin", "Fred" }, category = "Mining", version = 1.44, description = "<html><body><b>All settings are on the GUI =)</b><br><img src=\"http://i126.photobucket.com/albums/p98/ketekcomp/sgm.png\" /></body></html>")
 public class SexyGuildMiner extends Script implements PaintListener,
 		ServerMessageListener {
 
-	public class getupdate extends Thread {
-		public void run() {
-			URLConnection url = null;
-			BufferedReader in2 = null;
-			BufferedWriter out = null;
-			try {
-				url = new URL(
-						"http://pzycho.apex-hosting.com.au/sexyguildminer/scripts/SGMVERSION.txt")
-						.openConnection();
-				in2 = new BufferedReader(new InputStreamReader(url
-						.getInputStream()));
-				if (Double.parseDouble(in2.readLine()) > Double
-						.parseDouble(getVersion())) {
-					if (JOptionPane.showConfirmDialog(null,
-							"Update found. Do you want to update?") == 0) {
-						JOptionPane
-								.showMessageDialog(null,
-										"Please choose 'ScriptName.java' in your scripts folder and hit 'Open'");
-						JFileChooser fc = new JFileChooser();
-						if (fc.showOpenDialog(null) == JFileChooser.APPROVE_OPTION) {
-							url = new URL(
-									"http://pzycho.apex-hosting.com.au/sexyguildminer/scripts/SexyGuildMiner.java")
-									.openConnection();
-							in2 = new BufferedReader(new InputStreamReader(url
-									.getInputStream()));
-							out = new BufferedWriter(new FileWriter(fc
-									.getSelectedFile().getPath()));
-							String inp;
-							while ((inp = in2.readLine()) != null) {
-								out.write(inp);
-								out.newLine();
-								out.flush();
-							}
-							log("Script successfully downloaded. Please recompile and reload your scripts!");
-						} else
-							log("Update canceled");
-					} else
-						log("Update canceled");
-				}
-				if (in2 != null)
-					in2.close();
-				if (out != null)
-					out.close();
-			} catch (IOException e) {
-				log("Problem getting version :/");
-			}
-		}
-	}
-
 	public class antiban extends Thread {
+
 		public void CameraAlt() {
 			try {
 				int key = (random(0, 2) == 0) ? KeyEvent.VK_UP
@@ -119,9 +68,9 @@ public class SexyGuildMiner extends Script implements PaintListener,
 				// 2 interfaces, one for the pickaxe image, other for the skill
 				// text
 				final RSInterfaceChild one = RSInterface.getInterface(320)
-						.getChild(6);
+						.getChild(180);
 				final RSInterfaceChild two = RSInterface.getInterface(320)
-						.getChild(7);
+						.getChild(181);
 				if (random(0, 2) == 0) {
 					moveMouse(new Point(one.getAbsoluteX()
 							+ random(2, one.getWidth() - 1), one.getAbsoluteY()
@@ -236,7 +185,6 @@ public class SexyGuildMiner extends Script implements PaintListener,
 
 	int[] bankBoothID = { 11758 };
 	int[] bankerID = { 6200 };
-
 	RSTile bankTile = new RSTile(3015, 3354);
 	RSTile randTile = new RSTile(0001, 0001);
 	RSTile nullTile = new RSTile(0000, 0000);
@@ -269,9 +217,7 @@ public class SexyGuildMiner extends Script implements PaintListener,
 	long chatresponddelay = System.currentTimeMillis();
 	private gui gui;
 	public boolean startScript = false;
-	Thread GU = new getupdate();
 	Thread Antiban = new antiban();
-
 	int coalDropped = 0;
 	int coalID = 453;
 	int WHnb = 0;
@@ -286,19 +232,13 @@ public class SexyGuildMiner extends Script implements PaintListener,
 	int energyToRestAt = random(15, 25);
 	int[] gemID = { 1617, 1619, 1621, 1623 };
 	int gemsBanked = 0;
-
 	int gemsDropped = 0;
-
 	int goldPiecesID = 995;
 	int headAttempts;
 	int height = 1;
-
 	int invCountToDrop = random(10, 29);
-
 	int[] junkItems = { 1917, 1971 }; // beer, kebab
-
 	int[] ladderID = { 30941 };
-
 	RSTile ladderTile = new RSTile(3021, 3340);
 	// RSTile[] topLadderTiles = { new RSTile(3022, 3341), new RSTile(3022,
 	// 3337) };
@@ -363,8 +303,12 @@ public class SexyGuildMiner extends Script implements PaintListener,
 	int Goal2 = 0;
 	int Goal3 = 0;
 	int Goal4 = 0;
+	int Goal5 = 0;
+	int Goal6 = 0;
 	int mLevel2 = 0;
 	int oMined2 = 0;
+	int cMined2 = 0;
+	int mMined2 = 0;
 	long Time2 = -1;
 	int mithBanked = 0;
 	int mithDropped = 0;
@@ -375,13 +319,11 @@ public class SexyGuildMiner extends Script implements PaintListener,
 	int[] pickaxeHandleID = { 466 };
 	int[] pickaxeHeadID = { 480, 482, 484, 486, 488, 490 };
 	int getupdate = 0;
-
 	int[] pickaxeID = { 1265, 1267, 1269, 1273, 1271, 1275, 15259, 15261 };
 	int[] pickaxeandnatureandfireID = { 1265, 1267, 1269, 1273, 1271, 1275,
-			15259, 15261, 561, 1387 };
+			15259, 15261, 561, 1387, 18339 };
 	boolean powermine = false;
 	int priceOfCoal = 0;
-
 	int priceOfMithril = 0;
 	int priceOfMB = 0;
 	int ranAwayFromCombat = 0;
@@ -390,27 +332,25 @@ public class SexyGuildMiner extends Script implements PaintListener,
 	RSObject rock3;
 	boolean runAway = false;
 	boolean pickFound = false;
-
 	int startingExperience = skills.getCurrentSkillExp(Constants.STAT_MINING);
 	int startingLevel = skills.getCurrentSkillLevel(Constants.STAT_MINING);
-
 	long startTime = System.currentTimeMillis();
-
 	long timeIdle = System.currentTimeMillis();
-
 	long Mining = System.currentTimeMillis();
-
 	RSTile topLadderObjectTile = new RSTile(3019, 3339);
-
 	int tries = 0;
-
 	long upLadderTimer = System.currentTimeMillis();
-
 	boolean walkBack = false;
-
 	int xpPerCoal = 50;
-
 	int xpPerMithril = 80;
+	int[] toPick;
+	int[] toDrop;
+	RSObject[] chooseRandomRock = new RSObject[0];
+	boolean coalBagFilled = false;
+	int coalNeededToFillBag = 27;
+	boolean coalBagEmpty = true;
+	int coalInBag = 0;
+	boolean autoHidePaint = false;
 
 	public boolean atRock(final RSObject obj) {
 		try {
@@ -670,7 +610,7 @@ public class SexyGuildMiner extends Script implements PaintListener,
 			} catch (final Exception ignored) {
 			}
 		}
-		if (isInventoryFull() && bank.isOpen()) {
+		if ((isInventoryFull() || inventoryContains(18339)) && bank.isOpen()) {
 			setCameraAltitude(true);
 			fs = 0;
 			fs2++;
@@ -771,19 +711,51 @@ public class SexyGuildMiner extends Script implements PaintListener,
 	}
 
 	private RSObject findNearestUnoccupiedObject(final RSObject... objects) {
-		RSObject nearestObj = null;
-		for (final RSObject object : objects) {
-			if (isObjectOccupied(object)) {
-				continue;
+		if (chooseRandomRock.length == 0) {
+			RSObject nearestObj = null;
+			for (final RSObject object : objects) {
+				if (isObjectOccupied(object)) {
+					continue;
+				}
+				if (nearestObj == null) {
+					nearestObj = object;
+				} else if (distanceTo(object.getLocation()) < distanceTo(nearestObj
+						.getLocation())) {
+					nearestObj = object;
+				}
 			}
-			if (nearestObj == null) {
-				nearestObj = object;
-			} else if (distanceTo(object.getLocation()) < distanceTo(nearestObj
+			return nearestObj;
+		} else {
+			chooseRandomRock = new RSObject[chooseRandomRock.length];
+			for (final RSObject object : objects) {
+				if (isObjectOccupied(object)) {
+					continue;
+				}
+				insertObject(object);
+			}
+			int rocklimit = 0;
+			for (int m = 0; m < chooseRandomRock.length; m++) {
+				if (chooseRandomRock[m] != null) {
+					rocklimit = m;
+				}
+			}
+			return chooseRandomRock[random(0, rocklimit + 1)];
+		}
+	}
+
+	public void insertObject(RSObject object) {
+		for (int m = 0; m < chooseRandomRock.length; m++) {
+			if (chooseRandomRock[m] == null) {
+				chooseRandomRock[m] = object;
+				return;
+			} else if (distanceTo(object.getLocation()) < distanceTo(chooseRandomRock[m]
 					.getLocation())) {
-				nearestObj = object;
+				RSObject temp = chooseRandomRock[m];
+				chooseRandomRock[m] = object;
+				insertObject(temp);
+				return;
 			}
 		}
-		return nearestObj;
 	}
 
 	public RSObject[] findObjects(final int range, final int... ids) {
@@ -905,150 +877,172 @@ public class SexyGuildMiner extends Script implements PaintListener,
 		return null;
 	}
 
-    public int getNewPick() {
-        if (getMyPlayer().getLocation().getY() > 6000) {
-            if (getDestination() != null) {
-                if (getDestination().getX() <= 3023 && getDestination().getY() > 6000) {
-                    waitUntilNotMoving();
-                }
-            }
-            if (myWalkPath(coalToLadderPath, 15, 3)) {
-                waitUntilNotMoving();
-                climbUpLadder();
-                wait(random(200, 300));
-            }
-            return random(100, 200);
-        }
-        if (distanceTo(bankTile) > 4) {
-            buffTile = new RSTile(bankTile.getX() + random(-1, 1), bankTile.getY() + random(-1, 1));
-            if (getDestination() != null) {
-                if (getDestination().getX() >= 3009 && getDestination().getX() <= 3018 && getDestination().getY() >= 3353 && getDestination().getY() <= 3357) {
-                    if (getCameraAngle() > 225 || getCameraAngle() < 135) {
-                        setCameraRotation(random(135, 225));
-                    }
-                    if (getCameraAngle() < 180) {
-                        int key = KeyEvent.VK_DOWN;
-                        Bot.getInputManager().pressKey((char)key);
-                        wait(random(500, 1200));
-                        Bot.getInputManager().releaseKey((char)key);
-                    }
-                    while (getMyPlayer().getLocation().getX() > 3018 || getMyPlayer().getLocation().getX() < 3009 || getMyPlayer().getLocation().getY() > 3360 || getMyPlayer().getLocation().getY() < 3355) {
-                        wait(10);
-                    }
-                    banking();
-                    return random(200, 300);
-                }
-                if (getDestination().getX() >= 3022 && getDestination().getX() <= 3031 && getDestination().getY() >= 3348 && getDestination().getY() <= 3356) {
-                    Point az = tileToMinimap(buffTile);
-                    while ((az.x == -1 || az.y == -1) && getMyPlayer().isMoving()) {
-                        wait(10);
-                        az = tileToMinimap(buffTile);
-                    }
-                }
-            }
-            randTile = new RSTile(buffTile.getX(), buffTile.getY());
-            try {
-            SGMWalk(randTile);
-            } catch (final Exception ignored) {
-            }
-            if (random(0, 4) < 3) {
-                moveMouse(random(100, 415), random(100, 237));
-            }
-            Antiban.run();
-            return random(200, 300);
-        }
-        if (distanceTo(bankTile) <= 4 && !Calculations.onScreen(Calculations.tileToScreen(bankTile)) && !getMyPlayer().isMoving()) {
-            try {
-            SGMWalk(bankTile);
-            } catch (final Exception ignored) {
-            }
-        }
-        if (bank.isOpen()) {
-            setCameraAltitude(true);
-            fs = 0;
-            fs2++;
-            if (fs2 > 6) {
-                bankfs = 0;
-            }
-            int total = getInventoryCount(453) + getInventoryCount(447) + getInventoryCount(454) + getInventoryCount(1617) + getInventoryCount(1619) + getInventoryCount(1621) + getInventoryCount(1623);
-            if (total == 28 && superheat == 0) {
-                if (bankfs == 0) {
-                    coalBanked += getInventoryCount(coalID);
-                    mithBanked += getInventoryCount(mithrilID);
-                    gemsBanked += getInventoryCount(gemID);
-                    bank.depositAll();
-                    depositdelay = System.currentTimeMillis();
-                    while ((System.currentTimeMillis() - depositdelay) < 4000 && isInventoryFull()) {
-                        wait(10);
-                    }
-                    if (isInventoryFull()) {
-                        bank.depositAll();
-                    }
-                    
-                    bankfs = 1;
-                    fs2 = 0;
-                    RSInterfaceComponent[] bankcomponents = getInterface(762).getChild(87).getComponents();
-                    for (int k = 0; k < bankcomponents.length; k++) {
-                        for (int l = pickaxeID.length - 1; l >= 0; l--) {
-                            if (bankcomponents[k].getComponentID() == pickaxeID[l]) {
-                                bank.withdraw(pickaxeID[l], 1);
-                                pickFound = true;
-                                break;
-                            }
-                        } 
-                    }
-                    if (!pickFound) {
-                        log("No useable pickaxe, ending script =(");
-                        bank.close();
-                        printProgressReport();
-                        stopScript();
-                    }
-                }
-                if (random(0, 5) == 0) {
-                    bank.close();
-                }
-                wait(random(25, 100));
-            } else {
-                if (bankfs == 0) {
-                    coalBanked += getInventoryCount(coalID);
-                    mithBanked += getInventoryCount(mithrilID);
-                    gemsBanked += getInventoryCount(gemID);
-                    MithrilBarBanked += getInventoryCount(2359);
-                    bank.depositAllExcept(pickaxeandnatureandfireID);
-                    while ((System.currentTimeMillis() - depositdelay) < 4000 && isInventoryFull()) {
-                        wait(10);
-                    }
-                    if (isInventoryFull()) {
-                        bank.depositAllExcept(pickaxeandnatureandfireID);
-                    }
-                    bankfs = 1;
-                    fs2 = 0;
-                    RSInterfaceComponent[] bankcomponents = getInterface(762).getChild(87).getComponents();
-                    for (int k = 0; k < bankcomponents.length; k++) {
-                        for (int l = pickaxeID.length - 1; l >= 0; l--) {
-                            if (bankcomponents[k].getComponentID() == pickaxeID[l]) {
-                                bank.withdraw(pickaxeID[l], 1);
-                                pickFound = true;
-                                break;
-                            }
-                        } 
-                    }
-                    if (!pickFound) {
-                        log("No useable pickaxe, ending script =(");
-                        bank.close();
-                        printProgressReport();
-                        stopScript();
-                    }
-                }
-                if (random(0, 5) == 0) {
-                    bank.close();
-                }
-                wait(random(25, 100));
-            }
-            wait(random(200, 300));
-        }
-        return random(200, 300);
-    }
+	public int getNewPick() {
+		if (getMyPlayer().getLocation().getY() > 6000) {
+			if (getDestination() != null) {
+				if (getDestination().getX() <= 3023
+						&& getDestination().getY() > 6000) {
+					waitUntilNotMoving();
+				}
+			}
+			if (myWalkPath(coalToLadderPath, 15, 3)) {
+				waitUntilNotMoving();
+				climbUpLadder();
+				wait(random(200, 300));
+			}
+			return random(100, 200);
+		}
+		if (distanceTo(bankTile) > 4) {
+			buffTile = new RSTile(bankTile.getX() + random(-1, 1), bankTile
+					.getY()
+					+ random(-1, 1));
+			if (getDestination() != null) {
+				if (getDestination().getX() >= 3009
+						&& getDestination().getX() <= 3018
+						&& getDestination().getY() >= 3353
+						&& getDestination().getY() <= 3357) {
+					if (getCameraAngle() > 225 || getCameraAngle() < 135) {
+						setCameraRotation(random(135, 225));
+					}
+					if (getCameraAngle() < 180) {
+						int key = KeyEvent.VK_DOWN;
+						Bot.getInputManager().pressKey((char) key);
+						wait(random(500, 1200));
+						Bot.getInputManager().releaseKey((char) key);
+					}
+					while (getMyPlayer().getLocation().getX() > 3018
+							|| getMyPlayer().getLocation().getX() < 3009
+							|| getMyPlayer().getLocation().getY() > 3360
+							|| getMyPlayer().getLocation().getY() < 3355) {
+						wait(10);
+					}
+					banking();
+					return random(200, 300);
+				}
+				if (getDestination().getX() >= 3022
+						&& getDestination().getX() <= 3031
+						&& getDestination().getY() >= 3348
+						&& getDestination().getY() <= 3356) {
+					Point az = tileToMinimap(buffTile);
+					while ((az.x == -1 || az.y == -1)
+							&& getMyPlayer().isMoving()) {
+						wait(10);
+						az = tileToMinimap(buffTile);
+					}
+				}
+			}
+			randTile = new RSTile(buffTile.getX(), buffTile.getY());
+			try {
+				SGMWalk(randTile);
+			} catch (final Exception ignored) {
+			}
+			if (random(0, 4) < 3) {
+				moveMouse(random(100, 415), random(100, 237));
+			}
+			Antiban.run();
+			return random(200, 300);
+		}
+		if (distanceTo(bankTile) <= 4
+				&& !Calculations.onScreen(Calculations.tileToScreen(bankTile))
+				&& !getMyPlayer().isMoving()) {
+			try {
+				SGMWalk(bankTile);
+			} catch (final Exception ignored) {
+			}
+		}
+		if (bank.isOpen()) {
+			setCameraAltitude(true);
+			fs = 0;
+			fs2++;
+			if (fs2 > 6) {
+				bankfs = 0;
+			}
+			int total = getInventoryCount(453) + getInventoryCount(447)
+					+ getInventoryCount(454) + getInventoryCount(1617)
+					+ getInventoryCount(1619) + getInventoryCount(1621)
+					+ getInventoryCount(1623);
+			if (total == 28 && superheat == 0) {
+				if (bankfs == 0) {
+					coalBanked += getInventoryCount(coalID);
+					mithBanked += getInventoryCount(mithrilID);
+					gemsBanked += getInventoryCount(gemID);
+					bank.depositAll();
+					depositdelay = System.currentTimeMillis();
+					while ((System.currentTimeMillis() - depositdelay) < 4000
+							&& isInventoryFull()) {
+						wait(10);
+					}
+					if (isInventoryFull()) {
+						bank.depositAll();
+					}
+
+					bankfs = 1;
+					fs2 = 0;
+					RSInterfaceComponent[] bankcomponents = getInterface(762)
+							.getChild(87).getComponents();
+					for (int k = 0; k < bankcomponents.length; k++) {
+						for (int l = pickaxeID.length - 1; l >= 0; l--) {
+							if (bankcomponents[k].getComponentID() == pickaxeID[l]) {
+								bank.withdraw(pickaxeID[l], 1);
+								pickFound = true;
+								break;
+							}
+						}
+					}
+					if (!pickFound) {
+						log("No useable pickaxe, ending script =(");
+						bank.close();
+						printProgressReport();
+						stopScript();
+					}
+				}
+				if (random(0, 5) == 0) {
+					bank.close();
+				}
+				wait(random(25, 100));
+			} else {
+				if (bankfs == 0) {
+					coalBanked += getInventoryCount(coalID);
+					mithBanked += getInventoryCount(mithrilID);
+					gemsBanked += getInventoryCount(gemID);
+					MithrilBarBanked += getInventoryCount(2359);
+					bank.depositAllExcept(pickaxeandnatureandfireID);
+					while ((System.currentTimeMillis() - depositdelay) < 4000
+							&& isInventoryFull()) {
+						wait(10);
+					}
+					if (isInventoryFull()) {
+						bank.depositAllExcept(pickaxeandnatureandfireID);
+					}
+					bankfs = 1;
+					fs2 = 0;
+					RSInterfaceComponent[] bankcomponents = getInterface(762)
+							.getChild(87).getComponents();
+					for (int k = 0; k < bankcomponents.length; k++) {
+						for (int l = pickaxeID.length - 1; l >= 0; l--) {
+							if (bankcomponents[k].getComponentID() == pickaxeID[l]) {
+								bank.withdraw(pickaxeID[l], 1);
+								pickFound = true;
+								break;
+							}
+						}
+					}
+					if (!pickFound) {
+						log("No useable pickaxe, ending script =(");
+						bank.close();
+						printProgressReport();
+						stopScript();
+					}
+				}
+				if (random(0, 5) == 0) {
+					bank.close();
+				}
+				wait(random(25, 100));
+			}
+			wait(random(200, 300));
+		}
+		return random(200, 300);
+	}
 
 	public String getVersion() {
 		return "" + getClass().getAnnotation(ScriptManifest.class).version();
@@ -1069,29 +1063,18 @@ public class SexyGuildMiner extends Script implements PaintListener,
 		return false;
 	}
 
-	public boolean isLost() {
-		if (distanceTo(lumbridgeTile) <= 17) {
-			return false;
-		}
-		if (distanceTo(bankTile) <= 17) {
-			return false;
-		}
-		if (distanceTo(ladderTile) <= 17) {
-			return false;
-		}
-		for (int i = 0; i < betweenBankAndLadderTiles.length - 1; i++) {
-			if (distanceTo(betweenBankAndLadderTiles[i]) <= 17) {
-				return false;
-			}
-		}
-		for (int i = 0; i < coalToLadderPath.length - 1; i++) {
-			if (distanceTo(coalToLadderPath[i]) <= 17) {
-				return false;
-			}
-		}
-		return true;
-	}
-
+	/*
+	 * public boolean isLost() { if (!isLoggedIn() ||
+	 * getInterface(906).isValid()) { return false; } if
+	 * (distanceTo(lumbridgeTile) <= 17) { return false; } if
+	 * (distanceTo(bankTile) <= 17) { return false; } if (distanceTo(ladderTile)
+	 * <= 17) { return false; } for (int i = 0; i <
+	 * betweenBankAndLadderTiles.length - 1; i++) { if
+	 * (distanceTo(betweenBankAndLadderTiles[i]) <= 17) { return false; } } for
+	 * (int i = 0; i < coalToLadderPath.length - 1; i++) { if
+	 * (distanceTo(coalToLadderPath[i]) <= 17) { return false; } } return true;
+	 * }
+	 */
 	private boolean isObjectOccupied(final RSObject obj) {
 		if (rocksteal == 1) {
 			return false;
@@ -1170,11 +1153,19 @@ public class SexyGuildMiner extends Script implements PaintListener,
 			logout();
 			stopScript();
 		}
+		if (Goal5 == 1 && coalBanked >= cMined2) {
+			logout();
+			stopScript();
+		}
+		if (Goal6 == 1 && mithBanked >= mMined2) {
+			logout();
+			stopScript();
+		}
 		if (Goal4 == 1 && (System.currentTimeMillis() - startTime) > Time2) {
 			logout();
 			stopScript();
 		}
-		if (!isLoggedIn()) {
+		if (!isLoggedIn() || getInterface(906).isValid()) {
 			return random(500, 800);
 		}
 		if (isLoggedIn() && WHnb != 0
@@ -1183,7 +1174,7 @@ public class SexyGuildMiner extends Script implements PaintListener,
 			worldHop();
 			return random(500, 800);
 		}
-		if (startfs == 0 && isLoggedIn()) {
+		if (startfs == 0 && isLoggedIn() && !getInterface(906).isValid()) {
 			startingLevel = skills.getCurrentSkillLevel(Constants.STAT_MINING);
 			startingExperience = skills
 					.getCurrentSkillExp(Constants.STAT_MINING);
@@ -1222,7 +1213,15 @@ public class SexyGuildMiner extends Script implements PaintListener,
 		if (getGroundItemByID(17, pickaxeHeadID) != null) {
 			return fixPickaxe();
 		}
-
+		if (toPick.length > 0) {
+			RSItemTile itemToPick = getNearestGroundItemByID(toPick);
+			if (itemToPick != null) {
+				if (!tileOnScreen(itemToPick)) {
+					walkTileMM(itemToPick);
+				}
+				atTile(itemToPick, "Take");
+			}
+		}
 		if (getEnergy() >= energyToRunAt && rest == 0) {
 			energyToRunAt = random(40, 90);
 			setRun(true);
@@ -1256,37 +1255,10 @@ public class SexyGuildMiner extends Script implements PaintListener,
 		if (distanceTo(lumbridgeTile) <= 17) {
 			walkBack = true;
 		}
-
-		if (isLost()) {
-			if (myGetNextTile(lumbridgeToFalidorPath, 17) == null) {
-				return teleportToLumbridge();
-			}
-			walkBack = true;
-		}
-		if (isInventoryFull() && highalch == 1) {
-			Highalch();
-			lastRockLocation = new RSTile(0000, 0000);
-			return random(200, 300);
-		}
-		if ((getInventoryCount(453) >= 4 && getInventoryCount(447) >= 1)
-				&& superheat == 1) {
-			Superheat();
-			return random(200, 300);
-		}
-		RSObject bankbooth = getNearestObjectById(15, bankBoothID);
-
-		if ((isInventoryFull()) && getMyPlayer().getLocation().getX() <= 3018
-				&& getMyPlayer().getLocation().getX() >= 3009
-				&& getMyPlayer().getLocation().getY() <= 3360
-				&& getMyPlayer().getLocation().getY() >= 3355 && !bank.isOpen()) {
-			banking();
-		}
-		if (bankbooth != null && bankbooth.getLocation() != null) {
-			if ((isInventoryFull()) && tileOnScreen(bankbooth.getLocation())) {
-				banking();
-			}
-		}
-
+		/*
+		 * if (isLost()) { if (myGetNextTile(lumbridgeToFalidorPath, 17) ==
+		 * null) { return teleportToLumbridge(); } walkBack = true; }
+		 */
 		if (walkBack) {
 			if (myWalkPath(lumbridgeToFalidorPath, 17, 1)) {
 				walkBack = false;
@@ -1336,11 +1308,89 @@ public class SexyGuildMiner extends Script implements PaintListener,
 			return dropInventory();
 		}
 
+		if (isInventoryFull() && highalch == 1) {
+			Highalch();
+			lastRockLocation = new RSTile(0000, 0000);
+			return random(200, 300);
+		}
+
+		if ((getInventoryCount(453) >= 4 && getInventoryCount(447) >= 1)
+				&& superheat == 1) {
+			Superheat();
+			return random(200, 300);
+		}
+
+		if (isInventoryFull() && getInventoryCount(18339) > 0 && !coalBagFilled
+				&& getMyPlayer().getLocation().getY() > 6000) {
+			int coalInInventory = getInventoryCount(453);
+			if (coalInInventory != 0) {
+				while (isInventoryFull() && !coalBagFilled) {
+					atInventoryItem(453, "Use");
+					wait(random(500, 750));
+					atInventoryItem(18339, "Use");
+					wait(random(750, 1000));
+					if (coalInInventory >= coalNeededToFillBag) {
+						coalBagFilled = true;
+						coalBagEmpty = false;
+						coalNeededToFillBag = 0;
+						coalInBag = 27;
+					} else {
+						coalNeededToFillBag -= coalInInventory;
+						coalInBag += coalInInventory;
+						coalBagEmpty = false;
+					}
+				}
+				return random(200, 300);
+			}
+		}
+
+		RSObject bankbooth = getNearestObjectById(15, bankBoothID);
+		if ((isInventoryFull()) && getMyPlayer().getLocation().getX() <= 3018
+				&& getMyPlayer().getLocation().getX() >= 3009
+				&& getMyPlayer().getLocation().getY() <= 3360
+				&& getMyPlayer().getLocation().getY() >= 3355 && !bank.isOpen()) {
+			banking();
+		}
+
+		if (bankbooth != null && bankbooth.getLocation() != null) {
+			if ((isInventoryFull()) && tileOnScreen(bankbooth.getLocation())) {
+				banking();
+			}
+		}
+
 		if (isInventoryFull() && !powermine) {
 			return depositInventory();
 		}
 
 		if (isInventoryFull()) {
+			return depositInventory();
+		}
+
+		if (!isInventoryFull() && !coalBagEmpty
+				&& getMyPlayer().getLocation().getX() <= 3018
+				&& getMyPlayer().getLocation().getX() >= 3009
+				&& getMyPlayer().getLocation().getY() <= 3360
+				&& getMyPlayer().getLocation().getY() >= 3355) {
+			if (bank.isOpen()) {
+				bank.close();
+			}
+			int freeSpaceInInventory = (28 - getInventoryCount());
+			while (getInventoryCount(453) == 0 && !coalBagEmpty) {
+				atInventoryItem(18339, "Withdraw-many");
+				wait(random(750, 1000));
+				if (freeSpaceInInventory >= coalInBag) {
+					coalBagEmpty = true;
+					coalBagFilled = false;
+					coalInBag = 0;
+					coalNeededToFillBag = 27;
+				} else {
+					coalBagFilled = false;
+					coalInBag -= freeSpaceInInventory;
+					coalNeededToFillBag += freeSpaceInInventory;
+				}
+			}
+			bankfs = 0;
+			banking();
 			return depositInventory();
 		}
 
@@ -1416,7 +1466,15 @@ public class SexyGuildMiner extends Script implements PaintListener,
 
 		while (!mineNewRock() && !getMyPlayer().isMoving()
 				&& getInventoryCount() < 27) {
-			moveMouseoverobj();
+			if (toDrop.length > 0) {
+				if (inventoryContainsOneOf(toDrop)) {
+					moveMouseOverInvItem();
+				} else {
+					moveMouseoverobj();
+				}
+			} else {
+				moveMouseoverobj();
+			}
 			if (random(1, 20) == 10) {
 				Antiban.run();
 			}
@@ -1456,6 +1514,14 @@ public class SexyGuildMiner extends Script implements PaintListener,
 		}
 		if (isInventoryFull()) {
 			return random(100, 200);
+		}
+		if (toDrop.length > 0) {
+			for (int m = 0; m < toDrop.length; m++) {
+				while (getInventoryItemByID(toDrop[m]) != null) {
+					atInventoryItem(toDrop[m], "Drop");
+					wait(random(1000, 1500));
+				}
+			}
 		}
 
 		if (mineNewRock() || getMyPlayer().getAnimation() == -1
@@ -1568,7 +1634,11 @@ public class SexyGuildMiner extends Script implements PaintListener,
 				}
 				while (isCameraMoving(100, 7) || getMyPlayer().isMoving()) {
 				}
-				return random(50, 200);
+				if (chooseRandomRock.length == 0) {
+					return random(50, 200);
+				} else if (isObjectOccupied(rock)) {
+					return random(50, 200);
+				}
 			}
 			if (delay1 != 0) {
 				wait(delay1 + random(0, 100));
@@ -1582,7 +1652,19 @@ public class SexyGuildMiner extends Script implements PaintListener,
 			while (isCameraMoving(100, 7) || getMyPlayer().isMoving()) {
 			}
 			wait(random(500, 750));
-			moveMouseoverobj();
+			if (toDrop.length > 0) {
+				if (inventoryContainsOneOf(toDrop)) {
+					moveMouseOverInvItem();
+				} else {
+					if (chooseRandomRock.length == 0) {
+						moveMouseoverobj();
+					}
+				}
+			} else {
+				if (chooseRandomRock.length == 0) {
+					moveMouseoverobj();
+				}
+			}
 			return random(100, 300);
 		}
 		Antiban.run();
@@ -1708,7 +1790,7 @@ public class SexyGuildMiner extends Script implements PaintListener,
 			g.drawString("Loading...", 295, 19);
 		} else {
 			Mouse m = Bot.getClient().getMouse();
-			if (isLoggedIn()) {
+			if (isLoggedIn() && !getInterface(906).isValid()) {
 				if (startTime == 0) {
 					startTime = System.currentTimeMillis();
 				}
@@ -1783,7 +1865,8 @@ public class SexyGuildMiner extends Script implements PaintListener,
 					break;
 				}
 				g.drawRoundRect(x, y, 230, height, 20, 15);
-				if (m.x > 515 || m.x < 285 || m.y > height + 4 || m.y < y) {
+				if ((m.x > 515 || m.x < 285 || m.y > height + 4 || m.y < y)
+						&& autoHidePaint) {
 					switch (Color) {
 					case 1:
 						g.setColor(new Color(255, 255, 255, 255));
@@ -2254,6 +2337,7 @@ public class SexyGuildMiner extends Script implements PaintListener,
 		g.drawString("Next Rock", p.x - 30, p.y - 40);
 	}
 
+	@Override
 	public boolean onStart(final Map<String, String> args) {
 
 		gui = new gui();
@@ -2389,17 +2473,95 @@ public class SexyGuildMiner extends Script implements PaintListener,
 						end));
 				begin = pageSource.indexOf("chatrespondacd")
 						+ "chatrespondacd".length();
-				end = pageSource.indexOf("agcabc");
+				end = pageSource.indexOf("agc", begin);
 				gui.chatrespond.setSelected(Boolean.parseBoolean(pageSource
+						.substring(begin, end)));
+				begin = pageSource.indexOf("dropSapphire")
+						+ "dropSapphire".length();
+				end = pageSource.indexOf("agc", begin);
+				gui.dropSapphire.setSelected(Boolean.parseBoolean(pageSource
+						.substring(begin, end)));
+				begin = pageSource.indexOf("dropEmerald")
+						+ "dropEmerald".length();
+				end = pageSource.indexOf("agc", begin);
+				gui.dropEmerald.setSelected(Boolean.parseBoolean(pageSource
+						.substring(begin, end)));
+				begin = pageSource.indexOf("dropRuby") + "dropRuby".length();
+				end = pageSource.indexOf("agc", begin);
+				gui.dropRuby.setSelected(Boolean.parseBoolean(pageSource
+						.substring(begin, end)));
+				begin = pageSource.indexOf("dropDiamond")
+						+ "dropDiamond".length();
+				end = pageSource.indexOf("agc", begin);
+				gui.dropDiamond.setSelected(Boolean.parseBoolean(pageSource
+						.substring(begin, end)));
+				begin = pageSource.indexOf("pickupSapphire")
+						+ "pickupSapphire".length();
+				end = pageSource.indexOf("agc", begin);
+				gui.pickupSapphire.setSelected(Boolean.parseBoolean(pageSource
+						.substring(begin, end)));
+				begin = pageSource.indexOf("pickupEmerald")
+						+ "pickupEmerald".length();
+				end = pageSource.indexOf("agc", begin);
+				gui.pickupEmerald.setSelected(Boolean.parseBoolean(pageSource
+						.substring(begin, end)));
+				begin = pageSource.indexOf("pickupRuby")
+						+ "pickupRuby".length();
+				end = pageSource.indexOf("agc", begin);
+				gui.pickupRuby.setSelected(Boolean.parseBoolean(pageSource
+						.substring(begin, end)));
+				begin = pageSource.indexOf("pickupDiamond")
+						+ "pickupDiamond".length();
+				end = pageSource.indexOf("agc", begin);
+				gui.pickupDiamond.setSelected(Boolean.parseBoolean(pageSource
+						.substring(begin, end)));
+				begin = pageSource.indexOf("pickupCoal")
+						+ "pickupCoal".length();
+				end = pageSource.indexOf("agc", begin);
+				gui.pickupCoal.setSelected(Boolean.parseBoolean(pageSource
+						.substring(begin, end)));
+				begin = pageSource.indexOf("pickupMith")
+						+ "pickupMith".length();
+				end = pageSource.indexOf("agc", begin);
+				gui.pickupMith.setSelected(Boolean.parseBoolean(pageSource
+						.substring(begin, end)));
+				begin = pageSource.indexOf("selectRandomRockCheck")
+						+ "selectRandomRockCheck".length();
+				end = pageSource.indexOf("agc", begin);
+				gui.selectRandomRockCheck.setSelected(Boolean
+						.parseBoolean(pageSource.substring(begin, end)));
+				begin = pageSource.indexOf("randomRockNumber")
+						+ "randomRockNumber".length();
+				end = pageSource.indexOf("agc", begin);
+				gui.randomRockNumber.setText(pageSource.substring(begin, end));
+				begin = pageSource.indexOf("agcccMinedacd")
+						+ "agcccMinedacd".length();
+				end = pageSource.indexOf("agc", begin);
+				gui.ccMined.setSelected(Boolean.parseBoolean(pageSource
+						.substring(begin, end)));
+				begin = pageSource.indexOf("agccMinedacd")
+						+ "agccMinedacd".length();
+				end = pageSource.indexOf("agc", begin);
+				gui.cMined.setText(pageSource.substring(begin, end));
+				begin = pageSource.indexOf("agccmMinedacd")
+						+ "agccmMinedacd".length();
+				end = pageSource.indexOf("agc", begin);
+				gui.cmMined.setSelected(Boolean.parseBoolean(pageSource
+						.substring(begin, end)));
+				begin = pageSource.indexOf("agcmMinedacd")
+						+ "agcmMinedacd".length();
+				end = pageSource.indexOf("agc", begin);
+				gui.mMined.setText(pageSource.substring(begin, end));
+				begin = pageSource.indexOf("autoHidePaint")
+						+ "autoHidePaint".length();
+				end = pageSource.indexOf("agc", begin);
+				gui.autoHideCheck.setSelected(Boolean.parseBoolean(pageSource
 						.substring(begin, end)));
 			} catch (final Exception ignored) {
 			}
 		}
 		while (!startScript) {
 			wait(10);
-		}
-		if (getupdate == 1) {
-			GU.run();
 		}
 		startTime = System.currentTimeMillis();
 		priceOfCoal = getMarketPriceOfItem(coalID);
@@ -2549,7 +2711,7 @@ public class SexyGuildMiner extends Script implements PaintListener,
 		}
 	}
 
-	public int moveMouseoverobj() {
+	public void moveMouseoverobj() {
 		rock = null;
 		RSObject mithRock = findNearestUnoccupiedObject2(findObjects(16,
 				mithRockID));
@@ -2623,16 +2785,19 @@ public class SexyGuildMiner extends Script implements PaintListener,
 		}
 
 		if (rock == null) {
-			return random(200, 300);
+			return;
 		}
 		rock3 = rock;
+		if (chooseRandomRock.length > 0) {
+			return;
+		}
 		final Point Rockl = Calculations.tileToScreen(rock.getLocation());
 		final Point Rockl2 = tileToMinimap(rock.getLocation());
 		final Point mousel = getMouseLocation();
 		if (Rockl.x == -1 || Rockl.y == -1) {
 			if (Math.abs(Rockl2.x - mousel.x) <= 12
 					&& Math.abs(Rockl2.y - mousel.y) <= 12) {
-				return random(200, 300);
+				return;
 			} else {
 				// moveMouse(628 + random(-30, 30), 89 + random(-30, 30));
 				if (tileToMinimap(rock.getLocation()).getX() != -1
@@ -2640,18 +2805,73 @@ public class SexyGuildMiner extends Script implements PaintListener,
 					moveMouse(Rockl2.x + random(-5, 5), Rockl2.y
 							+ random(-5, 5));
 				}
-				return random(200, 300);
+				return;
 			}
 		}
-		if (getMenuItems().get(0).toLowerCase().contains("ine R".toLowerCase())
-				&& Math.abs(Rockl.x - mousel.x) <= 10
-				&& Math.abs(Rockl.y - mousel.y) <= 10) {
-			return random(200, 300);
-		} else {
-			moveMouse(Rockl.x, Rockl.y);
-			return random(200, 300);
+		try {
+			if (getMenuItems().get(0).toLowerCase().contains(
+					"ine R".toLowerCase())
+					&& Math.abs(Rockl.x - mousel.x) <= 10
+					&& Math.abs(Rockl.y - mousel.y) <= 10) {
+				return;
+			} else {
+				moveMouse(Rockl.x, Rockl.y);
+				return;
+			}
+		} catch (ArrayIndexOutOfBoundsException e) {
 		}
-		// return random(200, 300);
+	}
+
+	public void moveMouseOverInvItem() {
+		try {
+			for (int m = 0; m < toDrop.length; m++) {
+				int itemID = toDrop[m];
+				if (getCurrentTab() != TAB_INVENTORY
+						&& !RSInterface.getInterface(INTERFACE_BANK).isValid()
+						&& !RSInterface.getInterface(INTERFACE_STORE).isValid()) {
+					openTab(TAB_INVENTORY);
+				}
+
+				RSInterfaceChild inventory = getInventoryInterface();
+				if (inventory == null || inventory.getComponents() == null) {
+					return;
+				}
+
+				java.util.List<RSInterfaceComponent> possible = new ArrayList<RSInterfaceComponent>();
+				for (RSInterfaceComponent item : inventory.getComponents()) {
+					if (item != null && item.getComponentID() == itemID) {
+						possible.add(item);
+					}
+				}
+
+				if (possible.size() == 0) {
+					continue;
+				}
+
+				RSInterfaceComponent item = possible.get(random(0, Math.min(2,
+						possible.size())));
+				if (!item.isValid()) {
+					continue;
+				}
+				Rectangle pos = item.getArea();
+				if (pos.x == -1 || pos.y == -1 || pos.width == -1
+						|| pos.height == -1) {
+					continue;
+				}
+				int dx = (int) (pos.getWidth() - 4) / 2;
+				int dy = (int) (pos.getHeight() - 4) / 2;
+				int midx = (int) (pos.getMinX() + pos.getWidth() / 2);
+				int midy = (int) (pos.getMinY() + pos.getHeight() / 2);
+				Point mouselocation = getMouseLocation();
+				if (Math.abs(mouselocation.x - midx) > dx
+						|| Math.abs(mouselocation.y - midy) > dy) {
+					moveMouse(midx + random(-dx, dx), midy + random(-dy, dy));
+				}
+				return;
+			}
+		} catch (Exception e) {
+			return;
+		}
 	}
 
 	public int wieldPickaxe() {
@@ -2692,7 +2912,7 @@ public class SexyGuildMiner extends Script implements PaintListener,
 		final Point p = tileToMinimap(t);
 		if (p.x == -1 || p.y == -1) {
 			if (fs <= 5) {
-				final RSTile randTile = betweenBankAndLadderTiles[random(0,
+				randTile = betweenBankAndLadderTiles[random(0,
 						betweenBankAndLadderTiles.length)];
 				fs++;
 				return SGMWalk(randTile, x, y);
@@ -2712,19 +2932,36 @@ public class SexyGuildMiner extends Script implements PaintListener,
 	}
 
 	private RSObject findNearestUnoccupiedObject2(final RSObject... objects) {
-		RSObject nearestObj = null;
-		for (final RSObject object : objects) {
-			if (isObjectOccupied2(object)) {
-				continue;
+		if (chooseRandomRock.length == 0) {
+			RSObject nearestObj = null;
+			for (final RSObject object : objects) {
+				if (isObjectOccupied2(object)) {
+					continue;
+				}
+				if (nearestObj == null) {
+					nearestObj = object;
+				} else if (distanceTo(object.getLocation()) < distanceTo(nearestObj
+						.getLocation())) {
+					nearestObj = object;
+				}
 			}
-			if (nearestObj == null) {
-				nearestObj = object;
-			} else if (distanceTo(object.getLocation()) < distanceTo(nearestObj
-					.getLocation())) {
-				nearestObj = object;
+			return nearestObj;
+		} else {
+			chooseRandomRock = new RSObject[chooseRandomRock.length];
+			for (final RSObject object : objects) {
+				if (isObjectOccupied2(object)) {
+					continue;
+				}
+				insertObject(object);
 			}
+			int rocklimit = 0;
+			for (int m = 0; m < chooseRandomRock.length; m++) {
+				if (chooseRandomRock[m] != null) {
+					rocklimit = m;
+				}
+			}
+			return chooseRandomRock[random(0, rocklimit + 1)];
 		}
-		return nearestObj;
 	}
 
 	private boolean isObjectOccupied2(final RSObject obj) {
@@ -2817,6 +3054,9 @@ public class SexyGuildMiner extends Script implements PaintListener,
 				if (players[element] == null) {
 					continue;
 				}
+				if ((Bot.getClient().getBaseY() + (players[element].getY() >> 7)) > 9756) {
+					continue;
+				}
 				numberinarray++;
 			}
 			return numberinarray;
@@ -2836,8 +3076,8 @@ public class SexyGuildMiner extends Script implements PaintListener,
 	}
 
 	public int banking() {
-	  RSNPC banker = getNearestNPCByID(bankerID);
-	  RSObject bankbooth = getNearestObjectById(15, bankBoothID);
+		RSNPC banker = getNearestNPCByID(bankerID);
+		RSObject bankbooth = getNearestObjectById(15, bankBoothID);
 		if (!RSInterface.getInterface(Constants.INTERFACE_BANK).isValid()) {
 			while ((System.currentTimeMillis() - bankopendelay) < 3000
 					&& !bank.isOpen() && !getInterface(13).isValid()) {
@@ -3022,36 +3262,27 @@ public class SexyGuildMiner extends Script implements PaintListener,
 
 		if (isLoggedIn()) {
 			logout();
-			while (isLoggedIn()) {
+			while (isLoggedIn() || !getInterface(906).isValid()) {
 				wait(random(200, 400));
 			}
 		}
-		final int x = random(345, 415);
-		final int y = random(242, 250);
-
-		moveMouse(x, y);
-		wait(random(100, 200));
-		if (mouseInArea(453, 250, 307, 237)) {
-			clickMouse(true);
-		} else {
-			worldHop();
-		}
+		atInterface(getInterface(906).getChild(222));
 
 		wait(random(1000, 2000));
 
-		final int x2 = random(84, 296);
-		final int y2 = random(148, 450);
+		final int x = random(83, 691);
+		final int y = random(137, 436);
 
-		moveMouse(x2, y2);
+		moveMouse(x, y);
 		wait(random(100, 200));
 		clickMouse(true);
 		wait(random(100, 200));
 
 		boolean didWeLogIn = true;
 		wait(random(750, 1000));
-		if (RSInterface.getInterface(744).getChild(468).isValid()) {
+		if (RSInterface.getInterface(910).getChild(10).isValid()) {
 
-			final String RSText = RSInterface.getInterface(744).getChild(468)
+			final String RSText = RSInterface.getInterface(910).getChild(10)
 					.getText();
 
 			if (RSText.equals("World 1")) {
@@ -3375,6 +3606,18 @@ public class SexyGuildMiner extends Script implements PaintListener,
 		if (svrmsg.contains("channel you tried to join does not")) {
 			clanchatfail = 1;
 		}
+		if (svrmsg.contains("no coal in your bag")) {
+			coalBagFilled = false;
+			coalNeededToFillBag = 27;
+			coalBagEmpty = true;
+			coalInBag = 0;
+		}
+		if (svrmsg.contains("coal bag is already full")) {
+			coalBagFilled = true;
+			coalNeededToFillBag = 0;
+			coalBagEmpty = false;
+			coalInBag = 27;
+		}
 	}
 
 	public boolean WalkTileMM(final RSTile t) {
@@ -3408,7 +3651,7 @@ public class SexyGuildMiner extends Script implements PaintListener,
 	}
 
 	public class gui extends javax.swing.JFrame {
-		private static final long serialVersionUID = 1L;
+
 		/** Creates new form gui */
 		public gui() {
 			initComponents();
@@ -3419,184 +3662,134 @@ public class SexyGuildMiner extends Script implements PaintListener,
 		 * form. WARNING: Do NOT modify this code. The content of this method is
 		 * always regenerated by the Form Editor.
 		 */
+		@SuppressWarnings("unchecked")
 		// <editor-fold defaultstate="collapsed" desc="Generated Code">
 		private void initComponents() {
 
-			Title = new javax.swing.JLabel();
-			Version = new javax.swing.JLabel();
-			mineMith = new javax.swing.JCheckBox();
-			priorMith2 = new javax.swing.JCheckBox();
+			jTabbedPane1 = new javax.swing.JTabbedPane();
+			jPanel1 = new javax.swing.JPanel();
 			powermine2 = new javax.swing.JCheckBox();
 			WH = new javax.swing.JCheckBox();
+			mineMith = new javax.swing.JCheckBox();
+			priorMith2 = new javax.swing.JCheckBox();
 			WHnumber = new javax.swing.JTextField();
 			people = new javax.swing.JLabel();
-			RockSteal = new javax.swing.JLabel();
 			rostoption = new javax.swing.JComboBox();
-			Rest = new javax.swing.JCheckBox();
+			RockSteal = new javax.swing.JLabel();
+			priorMithlvl = new javax.swing.JComboBox();
 			Superheat = new javax.swing.JCheckBox();
 			Highalch = new javax.swing.JCheckBox();
-			Goal = new javax.swing.JCheckBox();
-			cmLevel = new javax.swing.JCheckBox();
-			mLevel = new javax.swing.JTextField();
-			Goal2Mining = new javax.swing.JLabel();
-			crMined = new javax.swing.JCheckBox();
-			rMined = new javax.swing.JTextField();
-			Goal3OresMined = new javax.swing.JLabel();
-			cTime = new javax.swing.JCheckBox();
-			hours = new javax.swing.JTextField();
+			jLabel4 = new javax.swing.JLabel();
+			randomRockNumber = new javax.swing.JTextField();
+			selectRandomRockCheck = new javax.swing.JCheckBox();
+			jPanel2 = new javax.swing.JPanel();
+			pickupSapphire = new javax.swing.JCheckBox();
+			pickupRuby = new javax.swing.JCheckBox();
+			pickupEmerald = new javax.swing.JCheckBox();
+			pickupDiamond = new javax.swing.JCheckBox();
+			jLabel1 = new javax.swing.JLabel();
+			jLabel2 = new javax.swing.JLabel();
+			pickupCoal = new javax.swing.JCheckBox();
+			pickupMith = new javax.swing.JCheckBox();
+			jPanel3 = new javax.swing.JPanel();
+			dropDiamond = new javax.swing.JCheckBox();
+			dropRuby = new javax.swing.JCheckBox();
+			dropEmerald = new javax.swing.JCheckBox();
+			dropSapphire = new javax.swing.JCheckBox();
+			jLabel3 = new javax.swing.JLabel();
+			jPanel4 = new javax.swing.JPanel();
 			colon1 = new javax.swing.JLabel();
 			mins = new javax.swing.JTextField();
+			cTime = new javax.swing.JCheckBox();
+			hours = new javax.swing.JTextField();
+			format = new javax.swing.JLabel();
 			colon2 = new javax.swing.JLabel();
 			secs = new javax.swing.JTextField();
-			format = new javax.swing.JLabel();
-			Start = new javax.swing.JButton();
-			SaveSettings = new javax.swing.JCheckBox();
-			PaintThemeText = new javax.swing.JLabel();
-			PaintTheme = new javax.swing.JComboBox();
-			updatecheck = new javax.swing.JCheckBox();
-			Delay1Text = new javax.swing.JLabel();
-			Delay1 = new javax.swing.JTextField();
-			Delay2Text = new javax.swing.JLabel();
-			Delay2 = new javax.swing.JTextField();
-			clanchatcheck = new javax.swing.JCheckBox();
-			jclanchat = new javax.swing.JTextField();
+			chatrespond = new javax.swing.JCheckBox();
+			mstext2 = new javax.swing.JLabel();
 			Rest2 = new javax.swing.JCheckBox();
 			mstext1 = new javax.swing.JLabel();
-			mstext2 = new javax.swing.JLabel();
-			priorMithlvl = new javax.swing.JComboBox();
-			chatrespond = new javax.swing.JCheckBox();
+			Goal3OresMined = new javax.swing.JLabel();
+			rMined = new javax.swing.JTextField();
+			Goal = new javax.swing.JCheckBox();
+			Delay1Text = new javax.swing.JLabel();
+			cmLevel = new javax.swing.JCheckBox();
+			Delay1 = new javax.swing.JTextField();
+			mLevel = new javax.swing.JTextField();
+			Delay2Text = new javax.swing.JLabel();
+			Goal2Mining = new javax.swing.JLabel();
+			Delay2 = new javax.swing.JTextField();
+			clanchatcheck = new javax.swing.JCheckBox();
+			Rest = new javax.swing.JCheckBox();
+			jclanchat = new javax.swing.JTextField();
+			crMined = new javax.swing.JCheckBox();
+			Goal3OresMined1 = new javax.swing.JLabel();
+			cMined = new javax.swing.JTextField();
+			ccMined = new javax.swing.JCheckBox();
+			Goal3OresMined2 = new javax.swing.JLabel();
+			mMined = new javax.swing.JTextField();
+			cmMined = new javax.swing.JCheckBox();
+			Start = new javax.swing.JButton();
+			updatecheck = new javax.swing.JCheckBox();
+			SaveSettings = new javax.swing.JCheckBox();
+			PaintTheme = new javax.swing.JComboBox();
+			PaintThemeText = new javax.swing.JLabel();
+			Title = new javax.swing.JLabel();
+			Version = new javax.swing.JLabel();
+			autoHideCheck = new javax.swing.JCheckBox();
 
-			setTitle("Sexy Guild Miner");
-			setCursor(new java.awt.Cursor(java.awt.Cursor.DEFAULT_CURSOR));
-
-			Title.setFont(new java.awt.Font("Tahoma", 3, 24));
-			Title.setForeground(new java.awt.Color(153, 51, 255));
-			Title.setText("Sexy Guild Miner");
-
-			Version.setText("v" + getVersion());
-
-			mineMith.setText("Mine mithril rocks");
-			mineMith.addActionListener(new java.awt.event.ActionListener() {
-				public void actionPerformed(java.awt.event.ActionEvent evt) {
-					mineMithActionPerformed(evt);
-				}
-			});
-
-			priorMith2.setText("Prioritize Mith Ores Lvl:");
+			setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
+			setResizable(false);
 
 			powermine2.setText("Powermine");
 
 			WH.setText("WorldHop if more than");
 
+			mineMith.setText("Mine mithril rocks");
+
+			priorMith2.setText("Prioritize Mith Ores Lvl:");
+
 			WHnumber.setText("8");
 
 			people.setText(" people(Includes you)");
 
-			RockSteal.setText("Rock Steal?");
-
 			rostoption.setModel(new javax.swing.DefaultComboBoxModel(
 					new String[] { "No", "Yes", "Randomized" }));
 
-			Rest.setText("Rest(Walk) on the way to bank and back");
+			RockSteal.setText("Rock Steal?");
+
+			priorMithlvl.setModel(new javax.swing.DefaultComboBoxModel(
+					new String[] { "1", "2" }));
 
 			Superheat.setText("Superheat Mithril Bars");
 
 			Highalch.setText("Auto High-Alchemy");
 
-			Goal.setText("Set a Goal: Logout");
+			jLabel4.setText("rocks");
 
-			cmLevel.setText("After Level");
+			randomRockNumber.setText("5");
 
-			mLevel.setText("0");
+			selectRandomRockCheck
+					.setText("Choose a random rock from a selection of");
 
-			Goal2Mining.setText("Mining");
-
-			crMined.setText("After");
-
-			rMined.setText("0");
-
-			Goal3OresMined.setText("Ores Mined");
-
-			cTime.setText("After");
-
-			hours.setText("0");
-
-			colon1.setText(":");
-
-			mins.setText("0");
-
-			colon2.setText(":");
-
-			secs.setText("0");
-
-			format.setText("(hrs:mins:secs)");
-
-			Start.setText("Start");
-			Start.addActionListener(new java.awt.event.ActionListener() {
-				public void actionPerformed(java.awt.event.ActionEvent evt) {
-					StartActionPerformed(evt);
-				}
-			});
-
-			SaveSettings.setText("Save Settings");
-
-			PaintThemeText.setText("Paint Theme:");
-
-			PaintTheme.setModel(new javax.swing.DefaultComboBoxModel(
-					new String[] { "Classic", "Zebra", "Tiger", "Rainbow",
-							"Yellow & Black", "Red & Black", "Cyan & Blue",
-							"Lime & Black" }));
-
-			updatecheck.setText("Check for Updates");
-
-			Delay1Text.setText("Delay before clicking the next rock:");
-
-			Delay1.setText("0");
-
-			Delay2Text.setText("Delay before finding the next rock again:");
-
-			Delay2.setText("0");
-
-			clanchatcheck.setText("Join Clan Chat:");
-
-			Rest2.setText("Rest(Walk) when below 15-25 energy");
-
-			mstext1.setText("ms");
-
-			mstext2.setText("ms");
-
-			priorMithlvl.setModel(new javax.swing.DefaultComboBoxModel(
-					new String[] { "1", "2" }));
-
-			chatrespond.setText("Chat Responder");
-
-			javax.swing.GroupLayout layout = new javax.swing.GroupLayout(
-					getContentPane());
-			getContentPane().setLayout(layout);
-			layout
-					.setHorizontalGroup(layout
+			javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(
+					jPanel1);
+			jPanel1.setLayout(jPanel1Layout);
+			jPanel1Layout
+					.setHorizontalGroup(jPanel1Layout
 							.createParallelGroup(
 									javax.swing.GroupLayout.Alignment.LEADING)
 							.addGroup(
-									layout
+									jPanel1Layout
 											.createSequentialGroup()
+											.addContainerGap()
 											.addGroup(
-													layout
+													jPanel1Layout
 															.createParallelGroup(
 																	javax.swing.GroupLayout.Alignment.LEADING)
 															.addGroup(
-																	layout
+																	jPanel1Layout
 																			.createSequentialGroup()
-																			.addGap(
-																					229,
-																					229,
-																					229)
-																			.addComponent(
-																					Version))
-															.addGroup(
-																	layout
-																			.createSequentialGroup()
-																			.addContainerGap()
 																			.addComponent(
 																					mineMith)
 																			.addPreferredGap(
@@ -3611,267 +3804,80 @@ public class SexyGuildMiner extends Script implements PaintListener,
 																					javax.swing.GroupLayout.DEFAULT_SIZE,
 																					javax.swing.GroupLayout.PREFERRED_SIZE))
 															.addGroup(
-																	layout
+																	jPanel1Layout
 																			.createSequentialGroup()
-																			.addGap(
-																					40,
-																					40,
-																					40)
 																			.addComponent(
-																					Title,
+																					WH,
 																					javax.swing.GroupLayout.PREFERRED_SIZE,
-																					209,
+																					133,
+																					javax.swing.GroupLayout.PREFERRED_SIZE)
+																			.addPreferredGap(
+																					javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+																			.addComponent(
+																					WHnumber,
+																					javax.swing.GroupLayout.PREFERRED_SIZE,
+																					25,
+																					javax.swing.GroupLayout.PREFERRED_SIZE)
+																			.addPreferredGap(
+																					javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+																			.addComponent(
+																					people))
+															.addComponent(
+																	powermine2)
+															.addGroup(
+																	jPanel1Layout
+																			.createSequentialGroup()
+																			.addPreferredGap(
+																					javax.swing.LayoutStyle.ComponentPlacement.RELATED,
+																					4,
+																					javax.swing.GroupLayout.PREFERRED_SIZE)
+																			.addComponent(
+																					RockSteal)
+																			.addPreferredGap(
+																					javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+																			.addComponent(
+																					rostoption,
+																					javax.swing.GroupLayout.PREFERRED_SIZE,
+																					javax.swing.GroupLayout.DEFAULT_SIZE,
 																					javax.swing.GroupLayout.PREFERRED_SIZE))
+															.addComponent(
+																	Superheat)
+															.addComponent(
+																	Highalch)
 															.addGroup(
-																	layout
+																	jPanel1Layout
 																			.createSequentialGroup()
-																			.addContainerGap()
-																			.addGroup(
-																					layout
-																							.createParallelGroup(
-																									javax.swing.GroupLayout.Alignment.LEADING)
-																							.addGroup(
-																									layout
-																											.createSequentialGroup()
-																											.addComponent(
-																													WH,
-																													javax.swing.GroupLayout.PREFERRED_SIZE,
-																													133,
-																													javax.swing.GroupLayout.PREFERRED_SIZE)
-																											.addPreferredGap(
-																													javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-																											.addComponent(
-																													WHnumber,
-																													javax.swing.GroupLayout.PREFERRED_SIZE,
-																													25,
-																													javax.swing.GroupLayout.PREFERRED_SIZE)
-																											.addPreferredGap(
-																													javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-																											.addComponent(
-																													people))
-																							.addGroup(
-																									layout
-																											.createSequentialGroup()
-																											.addPreferredGap(
-																													javax.swing.LayoutStyle.ComponentPlacement.RELATED,
-																													4,
-																													javax.swing.GroupLayout.PREFERRED_SIZE)
-																											.addComponent(
-																													RockSteal)
-																											.addPreferredGap(
-																													javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-																											.addComponent(
-																													rostoption,
-																													javax.swing.GroupLayout.PREFERRED_SIZE,
-																													javax.swing.GroupLayout.DEFAULT_SIZE,
-																													javax.swing.GroupLayout.PREFERRED_SIZE))
-																							.addComponent(
-																									powermine2)))
-															.addGroup(
-																	layout
-																			.createSequentialGroup()
-																			.addContainerGap()
-																			.addGroup(
-																					layout
-																							.createParallelGroup(
-																									javax.swing.GroupLayout.Alignment.LEADING)
-																							.addComponent(
-																									Rest)
-																							.addGroup(
-																									layout
-																											.createSequentialGroup()
-																											.addComponent(
-																													clanchatcheck)
-																											.addPreferredGap(
-																													javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-																											.addComponent(
-																													jclanchat,
-																													javax.swing.GroupLayout.PREFERRED_SIZE,
-																													100,
-																													javax.swing.GroupLayout.PREFERRED_SIZE))
-																							.addComponent(
-																									Superheat)
-																							.addComponent(
-																									Highalch)
-																							.addComponent(
-																									Rest2)
-																							.addComponent(
-																									chatrespond)
-																							.addGroup(
-																									layout
-																											.createSequentialGroup()
-																											.addGap(
-																													21,
-																													21,
-																													21)
-																											.addGroup(
-																													layout
-																															.createParallelGroup(
-																																	javax.swing.GroupLayout.Alignment.LEADING)
-																															.addGroup(
-																																	layout
-																																			.createSequentialGroup()
-																																			.addPreferredGap(
-																																					javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-																																			.addComponent(
-																																					cTime)
-																																			.addPreferredGap(
-																																					javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-																																			.addComponent(
-																																					hours,
-																																					javax.swing.GroupLayout.PREFERRED_SIZE,
-																																					25,
-																																					javax.swing.GroupLayout.PREFERRED_SIZE)
-																																			.addPreferredGap(
-																																					javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-																																			.addComponent(
-																																					colon1)
-																																			.addPreferredGap(
-																																					javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-																																			.addComponent(
-																																					mins,
-																																					javax.swing.GroupLayout.PREFERRED_SIZE,
-																																					25,
-																																					javax.swing.GroupLayout.PREFERRED_SIZE)
-																																			.addPreferredGap(
-																																					javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-																																			.addComponent(
-																																					colon2)
-																																			.addPreferredGap(
-																																					javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-																																			.addComponent(
-																																					secs,
-																																					javax.swing.GroupLayout.PREFERRED_SIZE,
-																																					25,
-																																					javax.swing.GroupLayout.PREFERRED_SIZE))
-																															.addGroup(
-																																	layout
-																																			.createSequentialGroup()
-																																			.addComponent(
-																																					cmLevel)
-																																			.addPreferredGap(
-																																					javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-																																			.addComponent(
-																																					mLevel,
-																																					javax.swing.GroupLayout.PREFERRED_SIZE,
-																																					25,
-																																					javax.swing.GroupLayout.PREFERRED_SIZE)
-																																			.addPreferredGap(
-																																					javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-																																			.addComponent(
-																																					Goal2Mining))
-																															.addGroup(
-																																	layout
-																																			.createSequentialGroup()
-																																			.addComponent(
-																																					crMined)
-																																			.addPreferredGap(
-																																					javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-																																			.addComponent(
-																																					rMined,
-																																					javax.swing.GroupLayout.PREFERRED_SIZE,
-																																					25,
-																																					javax.swing.GroupLayout.PREFERRED_SIZE)
-																																			.addPreferredGap(
-																																					javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-																																			.addComponent(
-																																					Goal3OresMined)))
-																											.addPreferredGap(
-																													javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-																											.addComponent(
-																													format))
-																							.addGroup(
-																									layout
-																											.createSequentialGroup()
-																											.addComponent(
-																													Delay1Text)
-																											.addPreferredGap(
-																													javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-																											.addComponent(
-																													Delay1,
-																													javax.swing.GroupLayout.PREFERRED_SIZE,
-																													35,
-																													javax.swing.GroupLayout.PREFERRED_SIZE)
-																											.addPreferredGap(
-																													javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-																											.addComponent(
-																													mstext1))
-																							.addGroup(
-																									layout
-																											.createSequentialGroup()
-																											.addComponent(
-																													Delay2Text)
-																											.addPreferredGap(
-																													javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-																											.addComponent(
-																													Delay2,
-																													javax.swing.GroupLayout.PREFERRED_SIZE,
-																													35,
-																													javax.swing.GroupLayout.PREFERRED_SIZE)
-																											.addPreferredGap(
-																													javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-																											.addComponent(
-																													mstext2))
-																							.addGroup(
-																									layout
-																											.createSequentialGroup()
-																											.addComponent(
-																													PaintThemeText)
-																											.addPreferredGap(
-																													javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-																											.addComponent(
-																													PaintTheme,
-																													javax.swing.GroupLayout.PREFERRED_SIZE,
-																													javax.swing.GroupLayout.DEFAULT_SIZE,
-																													javax.swing.GroupLayout.PREFERRED_SIZE))
-																							.addGroup(
-																									layout
-																											.createSequentialGroup()
-																											.addComponent(
-																													Start)
-																											.addPreferredGap(
-																													javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-																											.addComponent(
-																													updatecheck)
-																											.addGap(
-																													2,
-																													2,
-																													2)
-																											.addComponent(
-																													SaveSettings))
-																							.addComponent(
-																									Goal))))
-											.addContainerGap(
-													javax.swing.GroupLayout.DEFAULT_SIZE,
+																			.addComponent(
+																					selectRandomRockCheck)
+																			.addPreferredGap(
+																					javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+																			.addComponent(
+																					randomRockNumber,
+																					javax.swing.GroupLayout.PREFERRED_SIZE,
+																					25,
+																					javax.swing.GroupLayout.PREFERRED_SIZE)
+																			.addPreferredGap(
+																					javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+																			.addComponent(
+																					jLabel4)))
+											.addContainerGap(21,
 													Short.MAX_VALUE)));
-			layout
-					.setVerticalGroup(layout
+			jPanel1Layout
+					.setVerticalGroup(jPanel1Layout
 							.createParallelGroup(
 									javax.swing.GroupLayout.Alignment.LEADING)
 							.addGroup(
-									layout
+									jPanel1Layout
 											.createSequentialGroup()
 											.addContainerGap()
-											.addComponent(Title)
-											.addPreferredGap(
-													javax.swing.LayoutStyle.ComponentPlacement.RELATED)
 											.addGroup(
-													layout
+													jPanel1Layout
 															.createParallelGroup(
 																	javax.swing.GroupLayout.Alignment.TRAILING)
+															.addComponent(
+																	mineMith)
 															.addGroup(
-																	layout
-																			.createSequentialGroup()
-																			.addComponent(
-																					Version)
-																			.addGap(
-																					18,
-																					18,
-																					18)
-																			.addComponent(
-																					mineMith))
-															.addGroup(
-																	layout
+																	jPanel1Layout
 																			.createParallelGroup(
 																					javax.swing.GroupLayout.Alignment.BASELINE)
 																			.addComponent(
@@ -3890,11 +3896,11 @@ public class SexyGuildMiner extends Script implements PaintListener,
 											.addPreferredGap(
 													javax.swing.LayoutStyle.ComponentPlacement.RELATED)
 											.addGroup(
-													layout
+													jPanel1Layout
 															.createParallelGroup(
 																	javax.swing.GroupLayout.Alignment.LEADING)
 															.addGroup(
-																	layout
+																	jPanel1Layout
 																			.createParallelGroup(
 																					javax.swing.GroupLayout.Alignment.BASELINE)
 																			.addComponent(
@@ -3908,7 +3914,7 @@ public class SexyGuildMiner extends Script implements PaintListener,
 											.addPreferredGap(
 													javax.swing.LayoutStyle.ComponentPlacement.RELATED)
 											.addGroup(
-													layout
+													jPanel1Layout
 															.createParallelGroup(
 																	javax.swing.GroupLayout.Alignment.BASELINE)
 															.addComponent(
@@ -3920,19 +3926,465 @@ public class SexyGuildMiner extends Script implements PaintListener,
 																	javax.swing.GroupLayout.PREFERRED_SIZE))
 											.addPreferredGap(
 													javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+											.addComponent(Superheat)
+											.addPreferredGap(
+													javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+											.addComponent(Highalch)
+											.addPreferredGap(
+													javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+											.addGroup(
+													jPanel1Layout
+															.createParallelGroup(
+																	javax.swing.GroupLayout.Alignment.BASELINE)
+															.addComponent(
+																	randomRockNumber,
+																	javax.swing.GroupLayout.PREFERRED_SIZE,
+																	20,
+																	javax.swing.GroupLayout.PREFERRED_SIZE)
+															.addComponent(
+																	jLabel4)
+															.addComponent(
+																	selectRandomRockCheck))
+											.addContainerGap(135,
+													Short.MAX_VALUE)));
+
+			jTabbedPane1.addTab("General", jPanel1);
+
+			pickupSapphire.setText("Sapphire");
+
+			pickupRuby.setText("Ruby");
+
+			pickupEmerald.setText("Emerald");
+
+			pickupDiamond.setText("Diamond");
+
+			jLabel1.setText("Gems:");
+
+			jLabel2.setText("Ores:");
+
+			pickupCoal.setText("Coal");
+
+			pickupMith.setText("Mithril");
+
+			javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(
+					jPanel2);
+			jPanel2.setLayout(jPanel2Layout);
+			jPanel2Layout
+					.setHorizontalGroup(jPanel2Layout
+							.createParallelGroup(
+									javax.swing.GroupLayout.Alignment.LEADING)
+							.addGroup(
+									jPanel2Layout
+											.createSequentialGroup()
+											.addContainerGap()
+											.addGroup(
+													jPanel2Layout
+															.createParallelGroup(
+																	javax.swing.GroupLayout.Alignment.LEADING)
+															.addGroup(
+																	jPanel2Layout
+																			.createSequentialGroup()
+																			.addGap(
+																					10,
+																					10,
+																					10)
+																			.addGroup(
+																					jPanel2Layout
+																							.createParallelGroup(
+																									javax.swing.GroupLayout.Alignment.LEADING)
+																							.addComponent(
+																									pickupSapphire)
+																							.addComponent(
+																									pickupEmerald)
+																							.addComponent(
+																									pickupRuby)
+																							.addComponent(
+																									pickupDiamond)))
+															.addComponent(
+																	jLabel1)
+															.addComponent(
+																	jLabel2)
+															.addGroup(
+																	jPanel2Layout
+																			.createSequentialGroup()
+																			.addGap(
+																					10,
+																					10,
+																					10)
+																			.addGroup(
+																					jPanel2Layout
+																							.createParallelGroup(
+																									javax.swing.GroupLayout.Alignment.LEADING)
+																							.addComponent(
+																									pickupMith)
+																							.addComponent(
+																									pickupCoal))))
+											.addContainerGap(221,
+													Short.MAX_VALUE)));
+			jPanel2Layout
+					.setVerticalGroup(jPanel2Layout
+							.createParallelGroup(
+									javax.swing.GroupLayout.Alignment.LEADING)
+							.addGroup(
+									jPanel2Layout
+											.createSequentialGroup()
+											.addContainerGap()
+											.addComponent(jLabel1)
+											.addPreferredGap(
+													javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+											.addComponent(pickupSapphire)
+											.addPreferredGap(
+													javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+											.addComponent(pickupEmerald)
+											.addPreferredGap(
+													javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+											.addComponent(pickupRuby)
+											.addPreferredGap(
+													javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+											.addComponent(pickupDiamond)
+											.addPreferredGap(
+													javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+											.addComponent(jLabel2)
+											.addPreferredGap(
+													javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+											.addComponent(pickupCoal)
+											.addPreferredGap(
+													javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+											.addComponent(pickupMith)
+											.addContainerGap(134,
+													Short.MAX_VALUE)));
+
+			jTabbedPane1.addTab("Pick-up", jPanel2);
+
+			dropDiamond.setText("Diamond");
+
+			dropRuby.setText("Ruby");
+
+			dropEmerald.setText("Emerald");
+
+			dropSapphire.setText("Sapphire");
+
+			jLabel3.setText("Gems:");
+
+			javax.swing.GroupLayout jPanel3Layout = new javax.swing.GroupLayout(
+					jPanel3);
+			jPanel3.setLayout(jPanel3Layout);
+			jPanel3Layout
+					.setHorizontalGroup(jPanel3Layout
+							.createParallelGroup(
+									javax.swing.GroupLayout.Alignment.LEADING)
+							.addGroup(
+									jPanel3Layout
+											.createSequentialGroup()
+											.addContainerGap()
+											.addGroup(
+													jPanel3Layout
+															.createParallelGroup(
+																	javax.swing.GroupLayout.Alignment.LEADING)
+															.addGroup(
+																	jPanel3Layout
+																			.createSequentialGroup()
+																			.addGap(
+																					10,
+																					10,
+																					10)
+																			.addGroup(
+																					jPanel3Layout
+																							.createParallelGroup(
+																									javax.swing.GroupLayout.Alignment.LEADING)
+																							.addComponent(
+																									dropSapphire)
+																							.addComponent(
+																									dropEmerald)
+																							.addComponent(
+																									dropRuby)
+																							.addComponent(
+																									dropDiamond)))
+															.addComponent(
+																	jLabel3))
+											.addContainerGap(221,
+													Short.MAX_VALUE)));
+			jPanel3Layout
+					.setVerticalGroup(jPanel3Layout
+							.createParallelGroup(
+									javax.swing.GroupLayout.Alignment.LEADING)
+							.addGroup(
+									jPanel3Layout
+											.createSequentialGroup()
+											.addContainerGap()
+											.addComponent(jLabel3)
+											.addPreferredGap(
+													javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+											.addComponent(dropSapphire)
+											.addPreferredGap(
+													javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+											.addComponent(dropEmerald)
+											.addPreferredGap(
+													javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+											.addComponent(dropRuby)
+											.addPreferredGap(
+													javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+											.addComponent(dropDiamond)
+											.addContainerGap(198,
+													Short.MAX_VALUE)));
+
+			jTabbedPane1.addTab("Drop", jPanel3);
+
+			colon1.setText(":");
+
+			mins.setText("0");
+
+			cTime.setText("After");
+
+			hours.setText("0");
+
+			format.setText("(hrs:mins:secs)");
+
+			colon2.setText(":");
+
+			secs.setText("0");
+
+			chatrespond.setText("Chat Responder");
+
+			mstext2.setText("ms");
+
+			Rest2.setText("Rest(Walk) when below 15-25 energy");
+
+			mstext1.setText("ms");
+
+			Goal3OresMined.setText("Ores Mined");
+
+			rMined.setText("0");
+
+			Goal.setText("Set a Goal: Logout");
+
+			Delay1Text.setText("Delay before clicking the next rock:");
+
+			cmLevel.setText("After Level");
+
+			Delay1.setText("500");
+
+			mLevel.setText("0");
+
+			Delay2Text.setText("Delay before finding the next rock again:");
+
+			Goal2Mining.setText("Mining");
+
+			Delay2.setText("500");
+
+			clanchatcheck.setText("Join Clan Chat:");
+
+			Rest.setText("Rest(Walk) on the way to bank and back");
+
+			crMined.setText("After");
+
+			Goal3OresMined1.setText("Coal Mined");
+
+			cMined.setText("0");
+
+			ccMined.setText("After");
+
+			Goal3OresMined2.setText("Mithril Mined");
+
+			mMined.setText("0");
+
+			cmMined.setText("After");
+
+			javax.swing.GroupLayout jPanel4Layout = new javax.swing.GroupLayout(
+					jPanel4);
+			jPanel4.setLayout(jPanel4Layout);
+			jPanel4Layout
+					.setHorizontalGroup(jPanel4Layout
+							.createParallelGroup(
+									javax.swing.GroupLayout.Alignment.LEADING)
+							.addGroup(
+									jPanel4Layout
+											.createSequentialGroup()
+											.addContainerGap()
+											.addGroup(
+													jPanel4Layout
+															.createParallelGroup(
+																	javax.swing.GroupLayout.Alignment.LEADING)
+															.addGroup(
+																	jPanel4Layout
+																			.createSequentialGroup()
+																			.addGap(
+																					21,
+																					21,
+																					21)
+																			.addGroup(
+																					jPanel4Layout
+																							.createParallelGroup(
+																									javax.swing.GroupLayout.Alignment.LEADING)
+																							.addGroup(
+																									jPanel4Layout
+																											.createSequentialGroup()
+																											.addComponent(
+																													cmLevel)
+																											.addPreferredGap(
+																													javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+																											.addComponent(
+																													mLevel,
+																													javax.swing.GroupLayout.PREFERRED_SIZE,
+																													25,
+																													javax.swing.GroupLayout.PREFERRED_SIZE)
+																											.addPreferredGap(
+																													javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+																											.addComponent(
+																													Goal2Mining))
+																							.addGroup(
+																									jPanel4Layout
+																											.createSequentialGroup()
+																											.addComponent(
+																													crMined)
+																											.addPreferredGap(
+																													javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+																											.addComponent(
+																													rMined,
+																													javax.swing.GroupLayout.PREFERRED_SIZE,
+																													25,
+																													javax.swing.GroupLayout.PREFERRED_SIZE)
+																											.addPreferredGap(
+																													javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+																											.addComponent(
+																													Goal3OresMined))
+																							.addGroup(
+																									jPanel4Layout
+																											.createSequentialGroup()
+																											.addComponent(
+																													ccMined)
+																											.addPreferredGap(
+																													javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+																											.addComponent(
+																													cMined,
+																													javax.swing.GroupLayout.PREFERRED_SIZE,
+																													25,
+																													javax.swing.GroupLayout.PREFERRED_SIZE)
+																											.addPreferredGap(
+																													javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+																											.addComponent(
+																													Goal3OresMined1))
+																							.addGroup(
+																									jPanel4Layout
+																											.createSequentialGroup()
+																											.addComponent(
+																													cmMined)
+																											.addPreferredGap(
+																													javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+																											.addComponent(
+																													mMined,
+																													javax.swing.GroupLayout.PREFERRED_SIZE,
+																													25,
+																													javax.swing.GroupLayout.PREFERRED_SIZE)
+																											.addPreferredGap(
+																													javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+																											.addComponent(
+																													Goal3OresMined2))
+																							.addGroup(
+																									jPanel4Layout
+																											.createSequentialGroup()
+																											.addComponent(
+																													cTime)
+																											.addPreferredGap(
+																													javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+																											.addComponent(
+																													hours,
+																													javax.swing.GroupLayout.PREFERRED_SIZE,
+																													25,
+																													javax.swing.GroupLayout.PREFERRED_SIZE)
+																											.addPreferredGap(
+																													javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+																											.addComponent(
+																													colon1)
+																											.addPreferredGap(
+																													javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+																											.addComponent(
+																													mins,
+																													javax.swing.GroupLayout.PREFERRED_SIZE,
+																													25,
+																													javax.swing.GroupLayout.PREFERRED_SIZE)
+																											.addPreferredGap(
+																													javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+																											.addComponent(
+																													colon2)
+																											.addPreferredGap(
+																													javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+																											.addComponent(
+																													secs,
+																													javax.swing.GroupLayout.PREFERRED_SIZE,
+																													25,
+																													javax.swing.GroupLayout.PREFERRED_SIZE)
+																											.addPreferredGap(
+																													javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+																											.addComponent(
+																													format))))
+															.addComponent(Goal)
+															.addComponent(Rest)
+															.addComponent(Rest2)
+															.addGroup(
+																	jPanel4Layout
+																			.createSequentialGroup()
+																			.addComponent(
+																					clanchatcheck)
+																			.addPreferredGap(
+																					javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+																			.addComponent(
+																					jclanchat,
+																					javax.swing.GroupLayout.PREFERRED_SIZE,
+																					100,
+																					javax.swing.GroupLayout.PREFERRED_SIZE))
+															.addComponent(
+																	chatrespond)
+															.addGroup(
+																	jPanel4Layout
+																			.createSequentialGroup()
+																			.addComponent(
+																					Delay1Text)
+																			.addPreferredGap(
+																					javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+																			.addComponent(
+																					Delay1,
+																					javax.swing.GroupLayout.PREFERRED_SIZE,
+																					35,
+																					javax.swing.GroupLayout.PREFERRED_SIZE)
+																			.addPreferredGap(
+																					javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+																			.addComponent(
+																					mstext1))
+															.addGroup(
+																	jPanel4Layout
+																			.createSequentialGroup()
+																			.addComponent(
+																					Delay2Text)
+																			.addPreferredGap(
+																					javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+																			.addComponent(
+																					Delay2,
+																					javax.swing.GroupLayout.PREFERRED_SIZE,
+																					35,
+																					javax.swing.GroupLayout.PREFERRED_SIZE)
+																			.addPreferredGap(
+																					javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+																			.addComponent(
+																					mstext2)))
+											.addContainerGap(45,
+													Short.MAX_VALUE)));
+			jPanel4Layout
+					.setVerticalGroup(jPanel4Layout
+							.createParallelGroup(
+									javax.swing.GroupLayout.Alignment.LEADING)
+							.addGroup(
+									jPanel4Layout
+											.createSequentialGroup()
+											.addContainerGap()
 											.addComponent(Rest2)
 											.addPreferredGap(
 													javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
 											.addComponent(Rest)
 											.addPreferredGap(
-													javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-											.addComponent(Superheat)
-											.addPreferredGap(
-													javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-											.addComponent(Highalch)
-											.addGap(2, 2, 2)
+													javax.swing.LayoutStyle.ComponentPlacement.RELATED)
 											.addGroup(
-													layout
+													jPanel4Layout
 															.createParallelGroup(
 																	javax.swing.GroupLayout.Alignment.BASELINE)
 															.addComponent(
@@ -3945,12 +4397,12 @@ public class SexyGuildMiner extends Script implements PaintListener,
 											.addGap(2, 2, 2)
 											.addComponent(chatrespond)
 											.addPreferredGap(
-													javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+													javax.swing.LayoutStyle.ComponentPlacement.RELATED)
 											.addComponent(Goal)
 											.addPreferredGap(
 													javax.swing.LayoutStyle.ComponentPlacement.RELATED)
 											.addGroup(
-													layout
+													jPanel4Layout
 															.createParallelGroup(
 																	javax.swing.GroupLayout.Alignment.BASELINE)
 															.addComponent(
@@ -3965,7 +4417,7 @@ public class SexyGuildMiner extends Script implements PaintListener,
 											.addPreferredGap(
 													javax.swing.LayoutStyle.ComponentPlacement.RELATED)
 											.addGroup(
-													layout
+													jPanel4Layout
 															.createParallelGroup(
 																	javax.swing.GroupLayout.Alignment.BASELINE)
 															.addComponent(
@@ -3980,7 +4432,37 @@ public class SexyGuildMiner extends Script implements PaintListener,
 											.addPreferredGap(
 													javax.swing.LayoutStyle.ComponentPlacement.RELATED)
 											.addGroup(
-													layout
+													jPanel4Layout
+															.createParallelGroup(
+																	javax.swing.GroupLayout.Alignment.BASELINE)
+															.addComponent(
+																	ccMined)
+															.addComponent(
+																	cMined,
+																	javax.swing.GroupLayout.PREFERRED_SIZE,
+																	20,
+																	javax.swing.GroupLayout.PREFERRED_SIZE)
+															.addComponent(
+																	Goal3OresMined1))
+											.addPreferredGap(
+													javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+											.addGroup(
+													jPanel4Layout
+															.createParallelGroup(
+																	javax.swing.GroupLayout.Alignment.BASELINE)
+															.addComponent(
+																	cmMined)
+															.addComponent(
+																	mMined,
+																	javax.swing.GroupLayout.PREFERRED_SIZE,
+																	20,
+																	javax.swing.GroupLayout.PREFERRED_SIZE)
+															.addComponent(
+																	Goal3OresMined2))
+											.addPreferredGap(
+													javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+											.addGroup(
+													jPanel4Layout
 															.createParallelGroup(
 																	javax.swing.GroupLayout.Alignment.BASELINE)
 															.addComponent(cTime)
@@ -4008,7 +4490,7 @@ public class SexyGuildMiner extends Script implements PaintListener,
 											.addPreferredGap(
 													javax.swing.LayoutStyle.ComponentPlacement.RELATED)
 											.addGroup(
-													layout
+													jPanel4Layout
 															.createParallelGroup(
 																	javax.swing.GroupLayout.Alignment.BASELINE)
 															.addComponent(
@@ -4023,7 +4505,7 @@ public class SexyGuildMiner extends Script implements PaintListener,
 											.addPreferredGap(
 													javax.swing.LayoutStyle.ComponentPlacement.RELATED)
 											.addGroup(
-													layout
+													jPanel4Layout
 															.createParallelGroup(
 																	javax.swing.GroupLayout.Alignment.BASELINE)
 															.addComponent(
@@ -4035,8 +4517,140 @@ public class SexyGuildMiner extends Script implements PaintListener,
 																	javax.swing.GroupLayout.PREFERRED_SIZE)
 															.addComponent(
 																	mstext2))
+											.addContainerGap(
+													javax.swing.GroupLayout.DEFAULT_SIZE,
+													Short.MAX_VALUE)));
+
+			jTabbedPane1.addTab("Miscellaneous", jPanel4);
+
+			Start.setText("Start");
+			Start.addActionListener(new java.awt.event.ActionListener() {
+
+				public void actionPerformed(java.awt.event.ActionEvent evt) {
+					StartActionPerformed(evt);
+				}
+			});
+
+			updatecheck.setText("Check for Updates");
+
+			SaveSettings.setText("Save Settings");
+
+			PaintTheme.setModel(new javax.swing.DefaultComboBoxModel(
+					new String[] { "Classic", "Zebra", "Tiger", "Rainbow",
+							"Yellow & Black", "Red & Black", "Cyan & Blue",
+							"Lime & Black" }));
+
+			PaintThemeText.setText("Paint Theme:");
+
+			Title.setFont(new java.awt.Font("Tahoma", 3, 24));
+			Title.setForeground(new java.awt.Color(153, 51, 255));
+			Title.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+			Title.setText("Sexy Guild Miner");
+
+			Version.setText("v" + getVersion());
+
+			autoHideCheck.setText("Auto-hide paint");
+
+			javax.swing.GroupLayout layout = new javax.swing.GroupLayout(
+					getContentPane());
+			getContentPane().setLayout(layout);
+			layout
+					.setHorizontalGroup(layout
+							.createParallelGroup(
+									javax.swing.GroupLayout.Alignment.LEADING)
+							.addGroup(
+									layout
+											.createSequentialGroup()
+											.addGroup(
+													layout
+															.createParallelGroup(
+																	javax.swing.GroupLayout.Alignment.LEADING)
+															.addGroup(
+																	layout
+																			.createSequentialGroup()
+																			.addGap(
+																					253,
+																					253,
+																					253)
+																			.addComponent(
+																					Version))
+															.addGroup(
+																	layout
+																			.createSequentialGroup()
+																			.addContainerGap()
+																			.addComponent(
+																					Title,
+																					javax.swing.GroupLayout.DEFAULT_SIZE,
+																					313,
+																					Short.MAX_VALUE))
+															.addGroup(
+																	layout
+																			.createSequentialGroup()
+																			.addContainerGap()
+																			.addComponent(
+																					jTabbedPane1,
+																					javax.swing.GroupLayout.PREFERRED_SIZE,
+																					313,
+																					javax.swing.GroupLayout.PREFERRED_SIZE))
+															.addGroup(
+																	layout
+																			.createSequentialGroup()
+																			.addGap(
+																					34,
+																					34,
+																					34)
+																			.addComponent(
+																					PaintThemeText)
+																			.addPreferredGap(
+																					javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+																			.addComponent(
+																					PaintTheme,
+																					javax.swing.GroupLayout.PREFERRED_SIZE,
+																					javax.swing.GroupLayout.DEFAULT_SIZE,
+																					javax.swing.GroupLayout.PREFERRED_SIZE)
+																			.addPreferredGap(
+																					javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+																			.addComponent(
+																					autoHideCheck))
+															.addGroup(
+																	layout
+																			.createSequentialGroup()
+																			.addGap(
+																					23,
+																					23,
+																					23)
+																			.addComponent(
+																					Start,
+																					javax.swing.GroupLayout.PREFERRED_SIZE,
+																					71,
+																					javax.swing.GroupLayout.PREFERRED_SIZE)
+																			.addPreferredGap(
+																					javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+																			.addComponent(
+																					updatecheck)
+																			.addPreferredGap(
+																					javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+																			.addComponent(
+																					SaveSettings)))
+											.addContainerGap()));
+			layout
+					.setVerticalGroup(layout
+							.createParallelGroup(
+									javax.swing.GroupLayout.Alignment.LEADING)
+							.addGroup(
+									layout
+											.createSequentialGroup()
+											.addContainerGap()
+											.addComponent(Title)
 											.addPreferredGap(
 													javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+											.addComponent(Version)
+											.addGap(11, 11, 11)
+											.addComponent(
+													jTabbedPane1,
+													javax.swing.GroupLayout.DEFAULT_SIZE,
+													342, Short.MAX_VALUE)
+											.addGap(9, 9, 9)
 											.addGroup(
 													layout
 															.createParallelGroup(
@@ -4050,7 +4664,9 @@ public class SexyGuildMiner extends Script implements PaintListener,
 																	PaintTheme,
 																	javax.swing.GroupLayout.PREFERRED_SIZE,
 																	javax.swing.GroupLayout.DEFAULT_SIZE,
-																	javax.swing.GroupLayout.PREFERRED_SIZE))
+																	javax.swing.GroupLayout.PREFERRED_SIZE)
+															.addComponent(
+																	autoHideCheck))
 											.addPreferredGap(
 													javax.swing.LayoutStyle.ComponentPlacement.RELATED)
 											.addGroup(
@@ -4059,21 +4675,15 @@ public class SexyGuildMiner extends Script implements PaintListener,
 																	javax.swing.GroupLayout.Alignment.BASELINE)
 															.addComponent(Start)
 															.addComponent(
-																	SaveSettings)
+																	updatecheck)
 															.addComponent(
-																	updatecheck))
-											.addContainerGap(
-													javax.swing.GroupLayout.DEFAULT_SIZE,
-													Short.MAX_VALUE)));
+																	SaveSettings))
+											.addContainerGap()));
 
 			pack();
 		}// </editor-fold>
 
-		private void mineMithActionPerformed(java.awt.event.ActionEvent evt) {// GEN-FIRST:event_mineMithActionPerformed
-
-		}// GEN-LAST:event_mineMithActionPerformed
-
-		private void StartActionPerformed(java.awt.event.ActionEvent evt) {// GEN-FIRST:event_StartActionPerformed
+		private void StartActionPerformed(java.awt.event.ActionEvent evt) {
 			if (mineMith.isSelected()) {
 				miningMith = true;
 			} else {
@@ -4119,6 +4729,50 @@ public class SexyGuildMiner extends Script implements PaintListener,
 			if (chatrespond.isSelected()) {
 				respondtochat = true;
 			}
+			ArrayList<Integer> toPickList = new ArrayList<Integer>();
+			if (pickupMith.isSelected()) {
+				toPickList.add(new Integer(447));
+			}
+			if (pickupCoal.isSelected()) {
+				toPickList.add(new Integer(453));
+			}
+			if (pickupSapphire.isSelected()) {
+				toPickList.add(new Integer(1623));
+			}
+			if (pickupEmerald.isSelected()) {
+				toPickList.add(new Integer(1621));
+			}
+			if (pickupRuby.isSelected()) {
+				toPickList.add(new Integer(1619));
+			}
+			if (pickupDiamond.isSelected()) {
+				toPickList.add(new Integer(1617));
+			}
+			toPick = new int[toPickList.size()];
+			for (int i = 0; i < toPickList.size(); i++) {
+				toPick[i] = ((Integer) toPickList.get(i)).intValue();
+			}
+			ArrayList<Integer> toDropList = new ArrayList<Integer>();
+			if (dropSapphire.isSelected()) {
+				toDropList.add(new Integer(1623));
+			}
+			if (dropEmerald.isSelected()) {
+				toDropList.add(new Integer(1621));
+			}
+			if (dropRuby.isSelected()) {
+				toDropList.add(new Integer(1619));
+			}
+			if (dropDiamond.isSelected()) {
+				toDropList.add(new Integer(1617));
+			}
+			toDrop = new int[toDropList.size()];
+			for (int i = 0; i < toDropList.size(); i++) {
+				toDrop[i] = ((Integer) toDropList.get(i)).intValue();
+			}
+			if (selectRandomRockCheck.isSelected()) {
+				chooseRandomRock = new RSObject[Integer
+						.parseInt(randomRockNumber.getText())];
+			}
 			if (Goal.isSelected()) {
 				if (cmLevel.isSelected()) {
 					Goal2 = 1;
@@ -4127,6 +4781,14 @@ public class SexyGuildMiner extends Script implements PaintListener,
 				if (crMined.isSelected()) {
 					Goal3 = 1;
 					oMined2 = Integer.parseInt(rMined.getText());
+				}
+				if (ccMined.isSelected()) {
+					Goal5 = 1;
+					cMined2 = Integer.parseInt(cMined.getText());
+				}
+				if (cmMined.isSelected()) {
+					Goal6 = 1;
+					mMined2 = Integer.parseInt(mMined.getText());
 				}
 				if (cTime.isSelected()) {
 					Goal4 = 1;
@@ -4159,6 +4821,9 @@ public class SexyGuildMiner extends Script implements PaintListener,
 			}
 			if (PaintTheme2.equals("Lime & Black")) {
 				Color = 8;
+			}
+			if (autoHideCheck.isSelected()) {
+				autoHidePaint = true;
 			}
 			if (updatecheck.isSelected()) {
 				getupdate = 1;
@@ -4194,8 +4859,30 @@ public class SexyGuildMiner extends Script implements PaintListener,
 				settings += "Rest2acd" + Rest2.isSelected() + "agc";
 				settings += "priorMithlvlacd" + priorMithlvl.getSelectedItem()
 						+ "agc";
-				settings += "chatrespondacd" + chatrespond.isSelected()
-						+ "agcabc";
+				settings += "chatrespondacd" + chatrespond.isSelected() + "agc";
+				settings += "dropSapphire" + dropSapphire.isSelected() + "agc";
+				settings += "dropEmerald" + dropEmerald.isSelected() + "agc";
+				settings += "dropRuby" + dropRuby.isSelected() + "agc";
+				settings += "dropDiamond" + dropDiamond.isSelected() + "agc";
+				settings += "pickupSapphire" + pickupSapphire.isSelected()
+						+ "agc";
+				settings += "pickupEmerald" + pickupEmerald.isSelected()
+						+ "agc";
+				settings += "pickupRuby" + pickupRuby.isSelected() + "agc";
+				settings += "pickupDiamond" + pickupDiamond.isSelected()
+						+ "agc";
+				settings += "pickupCoal" + pickupCoal.isSelected() + "agc";
+				settings += "pickupMith" + pickupMith.isSelected() + "agc";
+				settings += "selectRandomRockCheck"
+						+ selectRandomRockCheck.isSelected() + "agc";
+				settings += "randomRockNumber" + randomRockNumber.getText()
+						+ "agc";
+				settings += "ccMinedacd" + ccMined.isSelected() + "agc";
+				settings += "cMinedacd" + cMined.getText() + "agc";
+				settings += "cmMinedacd" + cmMined.isSelected() + "agc";
+				settings += "mMinedacd" + mMined.getText() + "agc";
+				settings += "autoHidePaint" + autoHideCheck.isSelected()
+						+ "agc";
 				try {
 					FileWriter fstream = new FileWriter("SexyGuildMiner.ini");
 					BufferedWriter out = new BufferedWriter(fstream);
@@ -4208,19 +4895,7 @@ public class SexyGuildMiner extends Script implements PaintListener,
 			delay2 = Integer.parseInt(Delay2.getText());
 			startScript = true;
 			gui.setVisible(false);
-		}// GEN-LAST:event_StartActionPerformed
-
-		/**
-		 * @param args
-		 *            the command line arguments
-		 */
-		// public static void main(String args[]) {
-		// java.awt.EventQueue.invokeLater(new Runnable() {
-		// public void run() {
-		// new gui().setVisible(true);
-		// }
-		// });
-		// }
+		}
 
 		// Variables declaration - do not modify
 		private javax.swing.JTextField Delay1;
@@ -4230,6 +4905,8 @@ public class SexyGuildMiner extends Script implements PaintListener,
 		private javax.swing.JCheckBox Goal;
 		private javax.swing.JLabel Goal2Mining;
 		private javax.swing.JLabel Goal3OresMined;
+		private javax.swing.JLabel Goal3OresMined1;
+		private javax.swing.JLabel Goal3OresMined2;
 		private javax.swing.JCheckBox Highalch;
 		private javax.swing.JComboBox PaintTheme;
 		private javax.swing.JLabel PaintThemeText;
@@ -4243,31 +4920,55 @@ public class SexyGuildMiner extends Script implements PaintListener,
 		private javax.swing.JLabel Version;
 		private javax.swing.JCheckBox WH;
 		private javax.swing.JTextField WHnumber;
+		private javax.swing.JCheckBox autoHideCheck;
+		private javax.swing.JTextField cMined;
 		private javax.swing.JCheckBox cTime;
+		private javax.swing.JCheckBox ccMined;
 		private javax.swing.JCheckBox chatrespond;
 		private javax.swing.JCheckBox clanchatcheck;
 		private javax.swing.JCheckBox cmLevel;
+		private javax.swing.JCheckBox cmMined;
 		private javax.swing.JLabel colon1;
 		private javax.swing.JLabel colon2;
 		private javax.swing.JCheckBox crMined;
+		private javax.swing.JCheckBox dropDiamond;
+		private javax.swing.JCheckBox dropEmerald;
+		private javax.swing.JCheckBox dropRuby;
+		private javax.swing.JCheckBox dropSapphire;
 		private javax.swing.JLabel format;
 		private javax.swing.JTextField hours;
+		private javax.swing.JLabel jLabel1;
+		private javax.swing.JLabel jLabel2;
+		private javax.swing.JLabel jLabel3;
+		private javax.swing.JLabel jLabel4;
+		private javax.swing.JPanel jPanel1;
+		private javax.swing.JPanel jPanel2;
+		private javax.swing.JPanel jPanel3;
+		private javax.swing.JPanel jPanel4;
+		private javax.swing.JTabbedPane jTabbedPane1;
 		private javax.swing.JTextField jclanchat;
 		private javax.swing.JTextField mLevel;
+		private javax.swing.JTextField mMined;
 		private javax.swing.JCheckBox mineMith;
 		private javax.swing.JTextField mins;
 		private javax.swing.JLabel mstext1;
 		private javax.swing.JLabel mstext2;
 		private javax.swing.JLabel people;
+		private javax.swing.JCheckBox pickupCoal;
+		private javax.swing.JCheckBox pickupDiamond;
+		private javax.swing.JCheckBox pickupEmerald;
+		private javax.swing.JCheckBox pickupMith;
+		private javax.swing.JCheckBox pickupRuby;
+		private javax.swing.JCheckBox pickupSapphire;
 		private javax.swing.JCheckBox powermine2;
 		private javax.swing.JCheckBox priorMith2;
 		private javax.swing.JComboBox priorMithlvl;
 		private javax.swing.JTextField rMined;
+		private javax.swing.JTextField randomRockNumber;
 		private javax.swing.JComboBox rostoption;
 		private javax.swing.JTextField secs;
+		private javax.swing.JCheckBox selectRandomRockCheck;
 		private javax.swing.JCheckBox updatecheck;
 		// End of variables declaration
-
 	}
-
 }
