@@ -41,9 +41,9 @@ import org.rsbot.util.GlobalConfiguration;
  * RSBot AIO Firemaker
  * 
  * @author Jacmob
- * @version 1.31
+ * @version 1.32
  */
-@ScriptManifest(authors = { "Jacmob" }, category = "Firemaking", name = "AIO Firemaker", version = 1.31, description = "<html><body style='font-family: Arial; padding: 0px; text-align: center; background-color: #EEDDAA;'><div style=\"background-color: #BB3300; width: 100%; height: 34px; border: 3px coral solid;\"><h1 style=\"font-size: 13px; color: #FFFF00;\">AIO Firemaker</h1></div><br />The intelligent, all-in-one firemaker by Jacmob.<br />Select your account and press OK.<br /><br /><small>Your bank must be scrolled all the way up.</small></body></html>")
+@ScriptManifest(authors = { "Jacmob" }, category = "Firemaking", name = "AIO Firemaker", version = 1.32, description = "<html><body style='font-family: Arial; padding: 0px; text-align: center; background-color: #EEDDAA;'><div style=\"background-color: #BB3300; width: 100%; height: 34px; border: 3px coral solid;\"><h1 style=\"font-size: 13px; color: #FFFF00;\">AIO Firemaker</h1></div><br />The intelligent, all-in-one firemaker by Jacmob.<br />Select your account and press OK.<br /><br /><small>Your bank must be scrolled all the way up.</small></body></html>")
 public class AIOFiremaker extends Script implements PaintListener {
 
 	private enum State {
@@ -173,14 +173,16 @@ public class AIOFiremaker extends Script implements PaintListener {
 		}
 	}
 
-	private RSTile getClosestTileInRegion(final RSTile tile) {
-		if (tileInRegion(tile)) {
-			return tile;
+	private RSTile getClosestTileInRegion(RSTile tile) {
+		RSTile loc = getMyPlayer().getLocation();
+		for (int i = 0; i < 1000; ++i) {
+			if (tileInRegion(tile)) {
+				return tile;
+			}
+			tile = new RSTile((loc.getX() + tile.getX()) / 2,
+					(loc.getY() + tile.getY()) / 2);
 		}
-		final RSTile loc = getMyPlayer().getLocation();
-		final RSTile walk = new RSTile((loc.getX() + tile.getX()) / 2, (loc
-				.getY() + tile.getY()) / 2);
-		return tileInRegion(walk) ? walk : getClosestTileInRegion(walk);
+		return null;
 	}
 
 	private String getFormattedTime(final long timeMillis) {
@@ -340,39 +342,30 @@ public class AIOFiremaker extends Script implements PaintListener {
 
 	@Override
 	public int loop() {
-		if (scriptStartTime == -1
-				&& skills.getRealSkillLevel(Constants.STAT_FIREMAKING) > 1) {
-			final int fireLevel = skills
-					.getRealSkillLevel(Constants.STAT_FIREMAKING);
+		if (scriptStartTime == -1 && skills.getRealSkillLevel(Constants.STAT_FIREMAKING) > 1) {
+			final int fireLevel = skills.getRealSkillLevel(Constants.STAT_FIREMAKING);
 			scriptStartTime = System.currentTimeMillis();
-			scriptStartXP = skills
-					.getCurrentSkillExp(Constants.STAT_FIREMAKING);
+			scriptStartXP = skills.getCurrentSkillExp(Constants.STAT_FIREMAKING);
 
 			if (equipmentContains(FIRE_RING, FLAME_GLOVES)) {
-				log
-						.info("Your ring and gloves will grant you 5% extra XP per log.");
+				log.info("Your ring and gloves will grant you 5% extra XP per log.");
 				XPMultiplier = 1.05;
 				EQString = " (+5%)";
 			} else if (equipmentContains(FIRE_RING)) {
-				log
-						.info("Your Ring of Fire will grant you 2% extra XP per log.");
+				log.info("Your Ring of Fire will grant you 2% extra XP per log.");
 				if (fireLevel >= 79) {
-					log
-							.info("Flame Gloves with your ring would grant you 5% extra XP per log.");
+					log.info("Flame Gloves with your ring would grant you 5% extra XP per log.");
 				}
 				XPMultiplier = 1.02;
 				EQString = " (+2%)";
 			} else if (equipmentContains(FLAME_GLOVES)) {
-				log
-						.info("A Ring of Fire with your gloves would grant you 5% extra XP per log.");
+				log.info("A Ring of Fire with your gloves would grant you 5% extra XP per log.");
 				XPMultiplier = 1.02;
 				EQString = " (+2%)";
 			} else if (fireLevel >= 79) {
-				log
-						.info("A Ring of Fire and Flame Gloves would grant you 5% extra XP per log.");
+				log.info("A Ring of Fire and Flame Gloves would grant you 5% extra XP per log.");
 			} else if (fireLevel >= 62) {
-				log
-						.info("A Ring of Fire from 'All Fired Up' would grant you 2% extra XP per log.");
+				log.info("A Ring of Fire from 'All Fired Up' would grant you 2% extra XP per log.");
 			}
 		}
 		final State state = getState();
@@ -413,7 +406,7 @@ public class AIOFiremaker extends Script implements PaintListener {
 								nextMinRunEnergy = random(20, 50);
 							}
 							if (distanceTo(nextTile) < 16) {
-								walkTo(nextTile, 0, 0);
+								walkTo(nextTile);
 								wait(random(200, 500));
 							} else {
 								walkTo(nextTile);
@@ -444,6 +437,9 @@ public class AIOFiremaker extends Script implements PaintListener {
 					checkXP();
 				}
 				if (!itemClicked) {
+					while (getMyPlayer().isMoving()) {
+						wait(random(10, 20));
+					}
 					clickInventoryItem(TINDERBOX);
 					itemClicked = true;
 					wait(random(10, 100));
@@ -493,8 +489,10 @@ public class AIOFiremaker extends Script implements PaintListener {
 					checkXP();
 				}
 				int tries = 0;
-				while (tries < 5
-						&& (nextTile != null && distanceTo(nextTile) != 0 || distanceTo(currTile) == 0)) {
+				while (tries < 5 &&
+						(nextTile != null &&
+						distanceTo(nextTile) != 0 ||
+						distanceTo(currTile) == 0)) {
 					wait(random(100, 150));
 					tries++;
 				}
@@ -531,11 +529,11 @@ public class AIOFiremaker extends Script implements PaintListener {
 			} else if (distanceTo(bankLoc) < 4) {
 				rotateTowards(bankLoc);
 			} else if (Location.randomness == -1) {
-				walkTo(bankLoc, 1, 1);
+				walkTo(bankLoc);
 			} else {
 				walkTo(new RSTile(Location.bank.getX()
-						+ random(0, Location.randomness + 1), Location.bank
-						.getY()
+						+ random(0, Location.randomness + 1),
+						Location.bank.getY()
 						+ random(0, Location.randomness + 1)));
 			}
 			break;
@@ -829,7 +827,9 @@ public class AIOFiremaker extends Script implements PaintListener {
 		RSTile[] path = null;
 		if (Methods.distanceBetween(tile, dest) > 1) {
 			dest = getClosestTileInRegion(tile);
-			path = pathFinder.findPath(getMyPlayer().getLocation(), dest);
+			if (dest != null) {
+				path = pathFinder.findPath(getMyPlayer().getLocation(), dest);
+			}
 		}
 		if (path == null) {
 			return false;
@@ -843,7 +843,7 @@ public class AIOFiremaker extends Script implements PaintListener {
 						break;
 					}
 				}
-				walkTo(checkTile(path[i]), 1, 1);
+				walkTo(checkTile(path[i]));
 				wait(random(200, 400));
 				final RSTile cdest = getDestination();
 				if (cdest != null && distanceTo(cdest) > 6) {
