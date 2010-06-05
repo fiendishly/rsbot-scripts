@@ -41,9 +41,9 @@ import org.rsbot.util.GlobalConfiguration;
  * RSBot AIO Firemaker
  * 
  * @author Jacmob
- * @version 1.32
+ * @version 1.33
  */
-@ScriptManifest(authors = { "Jacmob" }, category = "Firemaking", name = "AIO Firemaker", version = 1.32, description = "<html><body style='font-family: Arial; padding: 0px; text-align: center; background-color: #EEDDAA;'><div style=\"background-color: #BB3300; width: 100%; height: 34px; border: 3px coral solid;\"><h1 style=\"font-size: 13px; color: #FFFF00;\">AIO Firemaker</h1></div><br />The intelligent, all-in-one firemaker by Jacmob.<br />Select your account and press OK.<br /><br /><small>Your bank must be scrolled all the way up.</small></body></html>")
+@ScriptManifest(authors = { "Jacmob" }, category = "Firemaking", name = "AIO Firemaker", version = 1.33, description = "<html><body style='font-family: Arial; padding: 0px; text-align: center; background-color: #EEDDAA;'><div style=\"background-color: #BB3300; width: 100%; height: 34px; border: 3px coral solid;\"><h1 style=\"font-size: 13px; color: #FFFF00;\">AIO Firemaker</h1></div><br />The intelligent, all-in-one firemaker by Jacmob.<br />Select your account and press OK.<br /><br /><small>Your bank must be scrolled all the way up.</small></body></html>")
 public class AIOFiremaker extends Script implements PaintListener {
 
 	private enum State {
@@ -524,11 +524,13 @@ public class AIOFiremaker extends Script implements PaintListener {
 					}
 				} else {
 					wait(random(200, 400));
-					rotateCamera();
+					if (!openBank()) {
+						rotateCamera();
+					}
 				}
-			} else if (distanceTo(bankLoc) < 4) {
+			} /*else if (distanceTo(bankLoc) < 4) {
 				rotateTowards(bankLoc);
-			} else if (Location.randomness == -1) {
+			}*/ else if (Location.randomness == -1) {
 				walkTo(bankLoc);
 			} else {
 				walkTo(new RSTile(Location.bank.getX()
@@ -785,7 +787,7 @@ public class AIOFiremaker extends Script implements PaintListener {
 		setCameraRotation(angle);
 	}
 
-	private void rotateTowards(final RSTile tile) {
+	/*private void rotateTowards(final RSTile tile) {
 		final int angle = getAngleToTile(tile);
 		char LR = KeyEvent.VK_LEFT;
 		if (angle < getCameraAngle()) {
@@ -795,7 +797,7 @@ public class AIOFiremaker extends Script implements PaintListener {
 		wait(random(200, 400));
 		Bot.getInputManager().releaseKey(LR);
 		wait(random(50, 100));
-	}
+	}*/
 
 	private boolean tileInRegion(final RSTile tile) {
 		final int tileX = tile.getX() - Bot.getClient().getBaseX(), tileY = tile
@@ -843,7 +845,7 @@ public class AIOFiremaker extends Script implements PaintListener {
 						break;
 					}
 				}
-				walkTo(checkTile(path[i]));
+				walkTileMM(checkTile(path[i]));
 				wait(random(200, 400));
 				final RSTile cdest = getDestination();
 				if (cdest != null && distanceTo(cdest) > 6) {
