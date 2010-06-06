@@ -62,16 +62,18 @@ import org.rsbot.util.ScreenshotUtil;
 
 /**
  * @author SpeedWing
- * @version 3.035 (c)2009-2010 SpeedWing, No one except SpeedWing has the right
+ * @version 3.036 (c)2009-2010 SpeedWing, No one except SpeedWing has the right
  *          to modify and/or spread this script without the permission of
  *          SpeedWing.
  */
-@ScriptManifest(authors = { "SpeedWing" }, category = "Runecraft", name = "RuneSpeed AIO Runecrafter", version = 3.035, description = "<html>\n"
+
+// TODO add the collection box save
+
+@ScriptManifest(authors = { "SpeedWing" }, category = "Runecraft", name = "RuneSpeed AIO Runecrafter", version = 3.036, description = "<html>\n"
 		+ "<body style='font-family: Calibri; color:white; padding: 0px; text-align: center; background-color: black;'>"
 		+ "<img src=\"http://speedwing.ucoz.com/RuneSpeed/RuneSpeed_description.png\" /><br>")
 public class RuneSpeed extends Script implements PaintListener,
 		ServerMessageListener {
-	// INTS
 	int essence[] = { 1436, 7936 }, Runes[] = { 556, 558, 555, 557, 554, 559 },
 			AllDone, Rune, Tiara, AirTiara = 5527, EarthTiara = 5535,
 			FireTiara = 5537, WaterTiara = 5531, MindTiara = 5529,
@@ -1630,6 +1632,10 @@ public class RuneSpeed extends Script implements PaintListener,
 	}
 
 	public int loop() {
+		if (getInterface(109).isValid())
+			if (atInterface(109, 13))
+				wait(2000);
+
 		if (banking || altarwalk || getDuel || getessence || getGlory
 				|| getTele || inbank)
 			updateStats(false);
@@ -1844,7 +1850,7 @@ public class RuneSpeed extends Script implements PaintListener,
 						final int ringplace = Item.getRelativeY();
 						if (ringplace > 270 || ringplace < 1) {
 							log
-									.warning("Place all your Dueling Rings(2)-(8) visibile in the bank");
+									.warning("Place all your Dueling Rings (2) til (8) visibile in the bank");
 							stopScript();
 						}
 					}
@@ -1886,7 +1892,7 @@ public class RuneSpeed extends Script implements PaintListener,
 						final int itemPlace = Item.getRelativeY();
 						if (itemPlace > 270 || itemPlace < 1) {
 							log
-									.warning("Place all your Glorys visibile in the bank");
+									.warning("Place all your Glorys( 1 til 4) visibile in the bank");
 							stopScript();
 						}
 					}
@@ -1961,15 +1967,17 @@ public class RuneSpeed extends Script implements PaintListener,
 							bank.withdraw(curTab, 1);
 					}
 				}
-				final RSInterfaceChild Item = bank
-						.getItemByID(arrayBankItemByID(essence));
-				if (Item != null) {
-					final int essplace = Item.getRelativeY();
-					if (essplace > 270 || essplace < 1) {
-						log.warning("Place the Essence visibile in the Bank");
-						stopScript();
-					}
-				}
+				// final RSInterfaceChild Item = bank
+				// .getItemByID(arrayBankItemByID(essence));
+				// removed this, might add it back later, but for now I can
+				// remove it.
+				// if (Item != null) {
+				// final int essplace = Item.getRelativeY();
+				// if (essplace > 270 || essplace < 1) {
+				// log.warning("Place the Essence visibile in the Bank");
+				// stopScript();
+				// }
+				// }
 				if (arrayInvCount(essence) > 1) {
 					changePath();
 					getessence = false;
@@ -3049,8 +3057,7 @@ public class RuneSpeed extends Script implements PaintListener,
 	public void updateStats(boolean update) {
 		if (System.currentTimeMillis() - lastUpdateMillis > 300000 || update) {
 			if (lastExp == 0)
-				lastExp = skills
-						.getCurrentSkillExp(Constants.STAT_RUNECRAFTING);
+				lastExp = startExp;
 			if (lastUpdateMillis == 0)
 				lastUpdateMillis = startTime;
 

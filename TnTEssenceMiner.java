@@ -31,7 +31,7 @@ import org.rsbot.script.wrappers.RSObject;
 import org.rsbot.script.wrappers.RSPlayer;
 import org.rsbot.script.wrappers.RSTile;
 
-@ScriptManifest( authors = {"TwistedMind"}, category = "Mining", version = 1.34, name = "TnT Essence Miner", description = "This script mines rune essence in Varrock and Yanille.")
+@ScriptManifest( authors = {"TwistedMind"}, category = "Mining", version = 1.37, name = "TnT Essence Miner", description = "<html><body bgcolor=\"#000033\" text=\"#FFFFFF\" link=\"#00CC00\"><div align=\"center\"><font face=\"Century Gothic\"><h1>TnT Essence Miner</h1></font></div><br><br><div align=\"center\"><font face=\"Century Gothic\"><b>This script mines Rune essence and Pure essence in Varrock and Yanille!</b><br><br>This script still contains some working methods of Garrett's script and I credit him for that!<br>This script also has a built in updater, that asks you if it can update on start-up!</font><h5> (Note: If you choose yes, this establishes a connection to my website, to download the newer version of the script. After it finishes downloading, it writes the file onto your hard drive!!!)</h5><br><br><h3><font face=\"Century Gothic\">RSBot Thread: <a href=\"http://www.rsbot.org/vb/showthread.php?t=275420\">http://www.rsbot.org/vb/showthread.php?t=275420</a><br><br>Happy botting!<br><b>TwistedMind</b></font></div></body></html>")
 public class TnTEssenceMiner extends Script implements PaintListener, ServerMessageListener{
 	
 	public double version = getClass().getAnnotation(ScriptManifest.class).version();
@@ -53,6 +53,7 @@ public class TnTEssenceMiner extends Script implements PaintListener, ServerMess
 	final RSTile yanilleDoorCheck = new RSTile(2596, 3088);
 	final RSTile varrockDoorCheck = new RSTile(3253, 3398);
 	final int varrockUpStairsArea[] = { 3257, 3423, 3250, 3416 };
+	final int yanilleDownStairsArea[] = {2594, 9489, 2582, 9484};
 	final RSTile varrockPath[] = { new RSTile(3253, 3421),new RSTile(3258, 3411), new RSTile(3253, 3401), new RSTile(3253, 3400) };
 	final RSTile yanillePath[] = {new RSTile(2611, 3093), new RSTile(2604,3090), new RSTile(2597, 3087)};
 	final RSTile[] miningTiles = { new RSTile(2927, 4818), new RSTile(2931, 4818), new RSTile(2931, 4814),
@@ -66,7 +67,7 @@ public class TnTEssenceMiner extends Script implements PaintListener, ServerMess
 	int useX = 0;
 	int useY = 0;
 	public String status = "Loading...";
-	public int value, lulz;
+	public int value;
 	public boolean foundValue, mineVar;
 
 	public enum State{
@@ -117,7 +118,7 @@ public class TnTEssenceMiner extends Script implements PaintListener, ServerMess
 	public int loop() {
 		try{
 			if(startXP <= 1){
-				if(skills.getCurrentSkillExp(STAT_MINING) <= 0){
+				if(skills.getCurrentSkillExp(STAT_MINING) <= 0 && skills.getCurrentSkillExp(STAT_WOODCUTTING) <= 0){
 					return 1;
 				}
 			}
@@ -142,6 +143,28 @@ public class TnTEssenceMiner extends Script implements PaintListener, ServerMess
 					wait(random(1500, 2000));
 				}
 				return random(50, 100);
+			}
+			if(playerInArea(yanilleDownStairsArea)){
+				RSObject ladder = getNearestObjectByID(1757);
+				if(ladder != null){
+					if(tileOnScreen(ladder.getLocation())){
+						atObject(ladder, "Climb");
+					}else{
+						walk(ladder.getLocation());
+					}
+					return random(1000,2000);
+				}
+			}
+			if(playerInArea(mageGuild) && getPlane() == 1){
+				RSObject ladder = getNearestObjectByID(1723);
+				if(ladder != null){
+					if(tileOnScreen(ladder.getLocation())){
+						atObject(ladder, "Climb");
+					}else{
+						walk(ladder.getLocation());
+					}
+					return random(1000,2000);
+				}
 			}
 			
 			getMouseSpeed();
@@ -172,7 +195,13 @@ public class TnTEssenceMiner extends Script implements PaintListener, ServerMess
 						walkTileOnScreen(nearestTile);
 					}
 				}
-				waitToMove(1000);
+				while(getMyPlayer().getAnimation() == -1){
+					wait(random(1000,2000));
+					if(getMyPlayer().getAnimation() != -1){
+						break;
+					}
+					onTile(nearestTile, "Mine", useX, useY, 0);
+				}
 				return random(1000,2000);
 			case Aubury:
 				if(!doorCheckVar()){
@@ -214,6 +243,14 @@ public class TnTEssenceMiner extends Script implements PaintListener, ServerMess
 						walkPathMM(yanillePath);
 						return random(1000,2000);
 					}
+					int failCount = 0;
+					while(!playerInArea(mageGuild)){
+						wait(10);
+						failCount++;
+						if(failCount >= 350){
+							break;
+						}
+					}
 				}else{
 					RSNPC Distentor = getNearestNPCByID(462);
 					if(Distentor != null){
@@ -232,6 +269,7 @@ public class TnTEssenceMiner extends Script implements PaintListener, ServerMess
 							return random(2000,4000);
 					}
 				}
+				return 1;
 			case ExitPortal:
 				RSObject portal = getNearestObjectByID(2492);
 				if(portal != null){
@@ -300,14 +338,23 @@ public class TnTEssenceMiner extends Script implements PaintListener, ServerMess
 							return random(500,800);
 						}
 					}
-					return random(500,1000);
+					int failCount = 0;
+					while(getInventoryCount() >= 28){
+						wait(random(50,150));
+						failCount++;
+						if(failCount >= 15){
+							break;
+						}
+					}
+					return 1;
 				}
 			case BankYanille:
 				if(playerInArea(mageGuild)){
 					if (!onTile(yanilleDoor, "Open", random(0.1, 0.2), random(-0.5, 0.5), random(40, 50))){
-						walkTileOnScreen(new RSTile(yanilleDoor.getX(), yanilleDoor.getY() + 3));
+						walk(yanilleDoor);
 						return random(1000,2000);
 					}
+					return random(1000,3000);
 				}else{
 					if(!bank.isOpen()){
 						int rand = random(1,3);
@@ -360,7 +407,15 @@ public class TnTEssenceMiner extends Script implements PaintListener, ServerMess
 								return random(500,800);
 							}
 						}
-						return random(500,1000);
+						int failCount = 0;
+						while(getInventoryCount() >= 28){
+							wait(random(50,150));
+							failCount++;
+							if(failCount >= 15){
+								break;
+							}
+						}
+						return 1;
 					}
 				}
 			case Walk2BankVar:
@@ -373,7 +428,7 @@ public class TnTEssenceMiner extends Script implements PaintListener, ServerMess
 			case Walk2BankYan:
 				if(playerInArea(mageGuild)){
 					if (!onTile(yanilleDoor, "Open", random(0.1, 0.2), random(-0.5, 0.5), random(40, 50))){
-						walkTileOnScreen(new RSTile(yanilleDoor.getX(), yanilleDoor.getY() + 3));
+						walkTileOnScreen(new RSTile(yanilleDoor.getX() + random(2,4), yanilleDoor.getY()));
 						return random(1000,2000);
 					}
 				}else{
@@ -576,25 +631,6 @@ public class TnTEssenceMiner extends Script implements PaintListener, ServerMess
 		}
 		return true;
 	}
-	
-	public boolean doorCheckYan(){
-		int failCount;
-		if (getObjectAt(yanilleDoorCheck) != null && distanceTo(new RSTile(3253, 3402)) <= 3) {
-			if (onTile(yanilleDoor, "Open", random(0.39, 0.61),	random(0, 0.05), random(20, 50))) {
-				failCount = 0;
-				while (getObjectAt(yanilleDoor) == null && failCount < 40) {
-					wait(random(50, 100));
-					failCount++;
-				}
-			}
-			if (getObjectAt(yanilleDoor) == null) {
-				wait(random(50, 100));
-			}
-		}else{
-			return false;
-		}
-		return true;
-	}
 
 	public boolean playerInArea(final int[] area) {
 		final int x = getMyPlayer().getLocation().getX();
@@ -671,15 +707,6 @@ public class TnTEssenceMiner extends Script implements PaintListener, ServerMess
 		} catch (final Exception e) {
 		}
 		return false;
-	}
-	
-	public double pointDistance(final Point point) {
-		if (point == null) {
-			return Integer.MAX_VALUE;
-		}
-		final Point mouse = new Point(Bot.getInputManager().getX(), Bot
-				.getInputManager().getY());
-		return mouse.distance(point);
 	}
 	//------------------
     public class Antiban implements Runnable{
